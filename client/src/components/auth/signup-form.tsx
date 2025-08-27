@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Mail, Lock, User, Building2, AlertCircle, CheckCircle } from "lucide-react";
-import { GoogleAuthButton } from "./google-auth-button";
+// Google OAuth disabled
 import { USER_ROLES, THERAPEUTIC_AREAS } from "@shared/schema";
 
 const signupSchema = z.object({
@@ -92,9 +92,7 @@ export function SignupForm({ onSuccess, onSwitchToLogin, isLoading = false }: Si
     }
   };
 
-  const handleGoogleSignup = () => {
-    window.location.href = '/api/auth/google';
-  };
+  // Google OAuth removed
 
   const handleRoleChange = (role: string) => {
     setSelectedRole(role);
@@ -145,20 +143,7 @@ export function SignupForm({ onSuccess, onSwitchToLogin, isLoading = false }: Si
         </Alert>
       )}
 
-      <GoogleAuthButton 
-        onClick={handleGoogleSignup}
-        disabled={isLoading || isSubmitting}
-        variant="signup"
-      />
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-gray-500">Or create account with email</span>
-        </div>
-      </div>
+      {/* Google OAuth removed - Email/password authentication only */}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">

@@ -1,56 +1,10 @@
 import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcryptjs";
 import { storage } from "./storage";
 import type { User } from "@shared/schema";
 
-// Google OAuth Strategy
-export function setupGoogleStrategy() {
-  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    console.warn("Google OAuth credentials not provided - Google login will be disabled");
-    return;
-  }
-
-  passport.use('google', new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/api/auth/google/callback"
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      // Check if user exists with Google ID
-      let user = await storage.getUserByEmail(profile.emails?.[0]?.value || '');
-      
-      if (user) {
-        // Update existing user with Google info if needed
-        if (user.provider !== 'google') {
-          user = await storage.updateUser(user.id, {
-            provider: 'google',
-            profileImageUrl: profile.photos?.[0]?.value,
-            emailVerified: true
-          });
-        }
-      } else {
-        // Create new user from Google profile
-        user = await storage.upsertUser({
-          email: profile.emails?.[0]?.value || '',
-          firstName: profile.name?.givenName || '',
-          lastName: profile.name?.familyName || '',
-          profileImageUrl: profile.photos?.[0]?.value,
-          provider: 'google',
-          emailVerified: true,
-          role: 'student' // Default role, can be changed by admin
-        });
-      }
-
-      return done(null, user);
-    } catch (error) {
-      console.error('Google OAuth error:', error);
-      return done(error, undefined);
-    }
-  }));
-}
+// Google OAuth disabled - using email/password authentication only
 
 // Email/Password Strategy
 export function setupLocalStrategy() {
@@ -67,7 +21,7 @@ export function setupLocalStrategy() {
       }
 
       if (!user.hashedPassword) {
-        return done(null, false, { message: 'Please use Google login or reset your password' });
+        return done(null, false, { message: 'Please reset your password to continue' });
       }
 
       const isValidPassword = await bcrypt.compare(password, user.hashedPassword);
@@ -147,9 +101,9 @@ export function validatePassword(password: string): { isValid: boolean; errors: 
   };
 }
 
-// Initialize all authentication strategies
+// Initialize authentication strategies  
 export function initializeAuthStrategies() {
-  setupGoogleStrategy();
   setupLocalStrategy();
   setupPassportSerialization();
+  console.log("Authentication initialized: Email/Password only");
 }

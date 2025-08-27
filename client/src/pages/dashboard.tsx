@@ -188,17 +188,17 @@ export default function StudentDashboard() {
                     <Target className="w-5 h-5 mr-2 text-orange-600" />
                     Supervisor Assignments
                   </div>
-                  {dashboardData?.assignedScenarios?.length > 0 && (
+                  {(dashboardData?.assignedScenarios?.length ?? 0) > 0 && (
                     <Badge variant="secondary">
-                      {dashboardData.assignedScenarios.length} pending
+                      {dashboardData?.assignedScenarios?.length ?? 0} pending
                     </Badge>
                   )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {dashboardData?.assignedScenarios?.length > 0 ? (
+                {(dashboardData?.assignedScenarios?.length ?? 0) > 0 ? (
                   <div className="space-y-3">
-                    {dashboardData.assignedScenarios.slice(0, 3).map((scenario, index) => (
+                    {(dashboardData?.assignedScenarios ?? []).slice(0, 3).map((scenario, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
                         <div className="flex items-center">
                           <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
@@ -308,9 +308,9 @@ export default function StudentDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {dashboardData?.recentFeedback?.length > 0 ? (
+                {(dashboardData?.recentFeedback?.length ?? 0) > 0 ? (
                   <div className="space-y-3">
-                    {dashboardData.recentFeedback.map((feedback, index) => (
+                    {(dashboardData?.recentFeedback ?? []).map((feedback, index) => (
                       <div key={index} className="p-3 bg-blue-50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium">Supervisor Feedback</span>

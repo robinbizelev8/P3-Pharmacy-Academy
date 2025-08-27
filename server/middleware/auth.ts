@@ -1,27 +1,17 @@
 import type { Request, Response, NextFunction } from "express";
 import type { User, UserRole } from "@shared/schema";
 
-// Define authenticated user type with non-null required fields
-export interface AuthenticatedUser {
-  id: string;
-  email: string;
-  firstName: string | null;
-  lastName: string | null;
-  role: UserRole;
-  emailVerified: boolean;
-  institution: string | null;
-  profileImageUrl: string | null;
-  provider: string;
-  lastLoginAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
+// Use the User type from schema directly  
+export type AuthenticatedUser = User & {
+  role: NonNullable<User['role']>;
+  email: NonNullable<User['email']>;
 }
 
 // Extend Request type to include user
 declare global {
   namespace Express {
     interface Request {
-      user?: AuthenticatedUser;
+      user?: User;
     }
   }
 }

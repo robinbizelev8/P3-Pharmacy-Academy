@@ -234,12 +234,7 @@ export type PharmacyScenarioWithStats = PharmacyScenario & {
   averageScore: number;
 };
 
-// Legacy aliases for compatibility
-export type InterviewSession = PharmacySession;
-export type InterviewSessionWithScenario = PharmacySessionWithScenario;
-export type InterviewMessage = PharmacyMessage;
-export type InterviewScenarioWithStats = PharmacyScenarioWithStats;
-export const interviewScenarios = pharmacyScenarios;
+// Legacy interview types removed - using pharmacy training system
 
 // Pre-registration Training specific constants
 export const THERAPEUTIC_AREAS = {

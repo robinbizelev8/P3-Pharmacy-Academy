@@ -185,27 +185,7 @@ export function setupAuthRoutes(app: Express) {
     }
   );
 
-  // Google OAuth Login
-  app.get('/api/auth/google',
-    logAuthEvent('GOOGLE_LOGIN_ATTEMPT'),
-    passport.authenticate('google', {
-      scope: ['profile', 'email']
-    })
-  );
-
-  // Google OAuth Callback
-  app.get('/api/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
-    (req: Request, res: Response) => {
-      // Successful authentication
-      const user = req.user as any;
-      console.log(`Google user logged in: ${user.id} (${user.email})`);
-      
-      // Redirect based on user role
-      const redirectUrl = getRoleBasedRedirect(user.role);
-      res.redirect(redirectUrl);
-    }
-  );
+  // Google OAuth disabled - using email/password authentication only
 
   // Logout
   app.post('/api/auth/logout',
@@ -282,7 +262,7 @@ export function setupAuthRoutes(app: Express) {
         });
 
         if (!user || user.provider !== 'email') {
-          return; // User doesn't exist or uses OAuth
+          return; // User doesn't exist
         }
 
         // Generate reset token
@@ -402,7 +382,7 @@ export function setupAuthRoutes(app: Express) {
         if (!user.hashedPassword) {
           return res.status(400).json({
             error: 'Password change not allowed',
-            message: 'This account uses OAuth authentication and cannot change password.'
+            message: 'This account cannot change password.'
           });
         }
 

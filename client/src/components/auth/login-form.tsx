@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
-import { GoogleAuthButton } from "./google-auth-button";
+// Google OAuth disabled
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -65,9 +65,7 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
     }
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = '/api/auth/google';
-  };
+  // Google OAuth removed
 
   const handleForgotPassword = () => {
     // Navigate to forgot password page
@@ -88,20 +86,7 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
         </Alert>
       )}
 
-      <GoogleAuthButton 
-        onClick={handleGoogleLogin}
-        disabled={isLoading || isSubmitting}
-        variant="login"
-      />
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-gray-500">Or continue with email</span>
-        </div>
-      </div>
+      {/* Google OAuth removed - Email/password authentication only */}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">

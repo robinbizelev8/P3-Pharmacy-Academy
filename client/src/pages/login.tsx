@@ -13,7 +13,7 @@ export default function LoginPage() {
 
   // Redirect if already logged in
   if (user) {
-    const redirectUrl = getRoleBasedRedirect(user.role);
+    const redirectUrl = getRoleBasedRedirect(user.role || 'student');
     window.location.href = redirectUrl;
     return null;
   }
