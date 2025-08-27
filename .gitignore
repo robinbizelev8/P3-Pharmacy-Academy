@@ -1,0 +1,54 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+
+# Large binary files - exclude from git
+attached_assets/*.pdf
+attached_assets/*.docx
+attached_assets/*.doc
+attached_assets/image_*.png
+attached_assets/image_*.jpg
+attached_assets/image_*.jpeg
+
+# Temporary files and uploads
+temp/
+uploads/
+*.tmp
+*.temp
+
+# Large files by size (>1MB)
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+*.bz2
+
+# Media files that aren't essential UI components
+*.mov
+*.mp4
+*.avi
+*.mkv
+*.mp3
+*.wav
+*.flac
+
+# Keep essential generated UI images only
+!attached_assets/generated_images/
+attached_assets/generated_images/*.png
+!attached_assets/*.md
+
+# Database dumps and backups
+*.sql
+*.db
+*.sqlite
+backup/
+dumps/
+
+# Environment and config files with secrets
+.env.local
+.env.production
+config/secrets.*
