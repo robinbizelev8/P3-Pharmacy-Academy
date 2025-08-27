@@ -5,6 +5,7 @@ import { LoginForm } from "@/components/auth/login-form";
 import { SignupForm } from "@/components/auth/signup-form";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { getRoleBasedRedirect } from "@/lib/auth-utils";
 import logoImage from "@assets/generated_images/P3_Pharmacy_Academy_Logo_e0d57123.png";
 
 export default function LoginPage() {
@@ -34,10 +35,10 @@ export default function LoginPage() {
       {/* Header */}
       <div className="absolute top-6 left-6">
         <Link href="/">
-          <a className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+          <div className="flex items-center text-gray-600 hover:text-gray-900 transition-colors cursor-pointer">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to home
-          </a>
+          </div>
         </Link>
       </div>
 
@@ -85,11 +86,11 @@ export default function LoginPage() {
             <p>
               By signing in, you agree to our{" "}
               <Link href="/terms">
-                <a className="text-blue-600 hover:text-blue-500">Terms of Service</a>
+                <span className="text-blue-600 hover:text-blue-500 cursor-pointer">Terms of Service</span>
               </Link>{" "}
               and{" "}
               <Link href="/privacy">
-                <a className="text-blue-600 hover:text-blue-500">Privacy Policy</a>
+                <span className="text-blue-600 hover:text-blue-500 cursor-pointer">Privacy Policy</span>
               </Link>
             </p>
           </div>
@@ -121,15 +122,3 @@ export default function LoginPage() {
   );
 }
 
-// Helper function to determine redirect URL based on user role
-function getRoleBasedRedirect(role: string): string {
-  switch (role) {
-    case 'admin':
-      return '/admin/dashboard';
-    case 'supervisor':
-      return '/supervisor/dashboard';
-    case 'student':
-    default:
-      return '/dashboard';
-  }
-}
