@@ -13,6 +13,7 @@ import Perform from "@/pages/perform";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import SupervisorDashboard from "@/pages/supervisor/dashboard";
+import Profile from "@/pages/profile";
 
 import { useAuth } from "@/hooks/use-auth";
 import { PharmacyNavigation } from "@/components/navigation/pharmacy-navigation";
@@ -30,6 +31,7 @@ function Router() {
           <Route path="/signup" component={Login} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/supervisor/dashboard" component={SupervisorDashboard} />
+          <Route path="/profile" component={Profile} />
           <Route path="/prepare" component={Prepare} />
           <Route path="/practice" component={Practice} />
           <Route path="/practice/*" component={Practice} />

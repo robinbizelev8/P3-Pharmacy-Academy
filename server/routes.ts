@@ -54,6 +54,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuthRoutes(app);
 
+  // Profile update route
+  app.put('/api/auth/profile', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { firstName, lastName, institution, licenseNumber, yearsExperience, specializations } = req.body;
+
+      // Update user profile
+      const updatedUser = await storage.updateUser(userId, {
+        firstName,
+        lastName,
+        institution,
+        licenseNumber,
+        yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
+        specializations: specializations || []
+      });
+
+      res.json({
+        success: true,
+        message: 'Profile updated successfully',
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          role: updatedUser.role,
+          institution: updatedUser.institution,
+          licenseNumber: updatedUser.licenseNumber,
+          yearsExperience: updatedUser.yearsExperience,
+          specializations: updatedUser.specializations
+        }
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      res.status(500).json({ 
+        error: 'Failed to update profile',
+        message: error instanceof Error ? error.message : 'An error occurred'
+      });
+    }
+  });
+
   // Development auth route - will be replaced by new auth system
   app.get('/api/auth/user-dev', async (req: any, res) => {
     try {

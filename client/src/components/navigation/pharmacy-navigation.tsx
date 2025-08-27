@@ -60,6 +60,26 @@ export function PharmacyNavigation() {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useAuth();
+  
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        // Redirect to login page
+        window.location.href = '/login';
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect anyway
+      window.location.href = '/login';
+    }
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-gray-50 to-blue-50/50 backdrop-blur-md border-b border-gray-200 shadow-md">
@@ -116,7 +136,26 @@ export function PharmacyNavigation() {
                 <div className="text-sm font-semibold text-gray-900">
                   {user?.firstName} {user?.lastName}
                 </div>
+                <div className="text-xs text-gray-500 capitalize">
+                  {user?.role}
+                </div>
               </div>
+              
+              <Link href="/profile">
+                <Button variant="ghost" size="sm" className="p-2 hover:bg-white/70 rounded-xl">
+                  <User className="w-4 h-4" />
+                </Button>
+              </Link>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-2 hover:bg-red-50 hover:text-red-600 rounded-xl"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+              
               <div className="relative">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
                   <span className="text-white text-sm font-bold">
@@ -176,19 +215,41 @@ export function PharmacyNavigation() {
             </div>
             
             <div className="mx-4 pt-4 border-t border-gray-200">
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-2xl">
-                <div className="relative">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">
-                      {user?.firstName?.[0]}{user?.lastName?.[0]}
-                    </span>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl">
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">
+                        {user?.firstName?.[0]}{user?.lastName?.[0]}
+                      </span>
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {user?.firstName} {user?.lastName}
+                    </div>
+                    <div className="text-xs text-gray-500 capitalize">
+                      {user?.role}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-sm font-semibold text-gray-900">
-                    {user?.firstName} {user?.lastName}
-                  </div>
+                
+                <div className="flex space-x-2">
+                  <Link href="/profile">
+                    <Button variant="ghost" size="sm" className="p-2 hover:bg-white rounded-xl">
+                      <User className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="p-2 hover:bg-red-50 hover:text-red-600 rounded-xl"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             </div>
