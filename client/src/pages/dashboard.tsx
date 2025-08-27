@@ -227,11 +227,11 @@ export default function StudentDashboard() {
                         </Button>
                       </div>
                     ))}
-                    <Link href="/assignments">
-                      <Button variant="outline" className="w-full mt-3">
+                    <Button variant="outline" className="w-full mt-3" asChild>
+                      <Link href="/assignments">
                         View All Assignments
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   </div>
                 ) : (
                   <div className="text-center py-6">
@@ -352,24 +352,24 @@ export default function StudentDashboard() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Link href="/prepare">
-                  <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/prepare">
                     <BookOpen className="w-4 h-4 mr-2" />
                     Continue Learning
-                  </Button>
-                </Link>
-                <Link href="/practice">
-                  <Button variant="outline" className="w-full justify-start">
+                  </Link>
+                </Button>
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/practice">
                     <Play className="w-4 h-4 mr-2" />
                     Practice Scenarios
-                  </Button>
-                </Link>
-                <Link href="/perform">
-                  <Button variant="outline" className="w-full justify-start">
+                  </Link>
+                </Button>
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/perform">
                     <Trophy className="w-4 h-4 mr-2" />
                     Take Assessment
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -399,22 +399,24 @@ function ModuleProgressCard({ title, icon: Icon, progress, color, description, h
   };
 
   return (
-    <Link href={href}>
-      <Card className={`cursor-pointer hover:shadow-md transition-shadow ${colorClasses[color as keyof typeof colorClasses]} border-2`}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <Icon className="w-6 h-6" />
-            <span className="text-sm font-medium">{percentage}%</span>
-          </div>
-          <h3 className="font-semibold mb-1">{title}</h3>
-          <p className="text-xs mb-3">{description}</p>
-          <div className="space-y-2">
-            <Progress value={percentage} className="h-2" />
-            <p className="text-xs">{progress.completed} of {progress.total} completed</p>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
+    <Card 
+      className={`cursor-pointer hover:shadow-md transition-shadow ${colorClasses[color as keyof typeof colorClasses]} border-2`}
+      onClick={() => window.location.href = href}
+      data-testid={`card-module-${title.toLowerCase()}`}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <Icon className="w-6 h-6" />
+          <span className="text-sm font-medium">{percentage}%</span>
+        </div>
+        <h3 className="font-semibold mb-1">{title}</h3>
+        <p className="text-xs mb-3">{description}</p>
+        <div className="space-y-2">
+          <Progress value={percentage} className="h-2" />
+          <p className="text-xs">{progress.completed} of {progress.total} completed</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

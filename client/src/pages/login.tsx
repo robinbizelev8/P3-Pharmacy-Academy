@@ -34,11 +34,9 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Header */}
       <div className="absolute top-6 left-6">
-        <Link href="/">
-          <div className="flex items-center text-gray-600 hover:text-gray-900 transition-colors cursor-pointer">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to home
-          </div>
+        <Link href="/" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to home
         </Link>
       </div>
 
