@@ -10,6 +10,9 @@ import NotFound from "@/pages/not-found";
 import Practice from "@/pages/practice";
 import Prepare from "@/pages/prepare";
 import Perform from "@/pages/perform";
+import Login from "@/pages/login";
+import Dashboard from "@/pages/dashboard";
+import SupervisorDashboard from "@/pages/supervisor/dashboard";
 
 import { useAuth } from "@/hooks/use-auth";
 import { PharmacyNavigation } from "@/components/navigation/pharmacy-navigation";
@@ -23,6 +26,10 @@ function Router() {
       <main className={user ? "pt-20" : ""}>
         <Switch>
           <Route path="/" component={Landing} />
+          <Route path="/login" component={Login} />
+          <Route path="/signup" component={Login} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/supervisor/dashboard" component={SupervisorDashboard} />
           <Route path="/prepare" component={Prepare} />
           <Route path="/practice" component={Practice} />
           <Route path="/practice/*" component={Practice} />

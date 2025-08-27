@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { interviewScenarios, users } from "@shared/schema";
+import { pharmacyScenarios as interviewScenarios, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 const seedScenarios = [

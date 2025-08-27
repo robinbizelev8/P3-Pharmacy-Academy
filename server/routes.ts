@@ -1,9 +1,13 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
+import passport from "passport";
 import { storage } from "./storage";
 import { sealionService } from "./services/sealion";
 import { openaiService } from "./services/openai";
 import { setupAuth, isAuthenticated } from "./replit-auth";
+import { initializeAuthStrategies } from "./auth-strategies";
+import { setupAuthRoutes } from "./auth-routes";
+import { requireAuth, requireRole, requireStudent, requireSupervisor, requireAdmin } from "./middleware/auth";
 import { 
   insertPharmacyScenarioSchema, 
   insertPharmacySessionSchema, 
@@ -19,7 +23,8 @@ import {
   PROFESSIONAL_ACTIVITIES,
   P3_ASSESSMENT_TYPES,
   P3_COMPLEXITY_LEVELS,
-  SINGAPORE_DECISION_STAGES
+  SINGAPORE_DECISION_STAGES,
+  USER_ROLES
 } from "@shared/schema";
 import { z } from "zod";
 import { webSearchService } from "./services/web-search.js";
@@ -40,11 +45,17 @@ declare global {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
+  // Initialize authentication strategies
+  initializeAuthStrategies();
+  
+  // Setup session-based auth (for Replit compatibility and additional providers)
   await setupAuth(app);
+  
+  // Setup authentication routes
+  setupAuthRoutes(app);
 
-  // Auth routes (development mode - will add proper auth later)
-  app.get('/api/auth/user', async (req: any, res) => {
+  // Development auth route - will be replaced by new auth system
+  app.get('/api/auth/user-dev', async (req: any, res) => {
     try {
       // For development, create/return a mock user
       const user = await storage.upsertUser({
@@ -73,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Pharmacy Scenarios API - Get scenarios by module and therapeutic area
-  app.get("/api/pharmacy/scenarios", async (req, res) => {
+  app.get("/api/pharmacy/scenarios", requireAuth, async (req, res) => {
     try {
       const module = req.query.module as string | undefined;
       const therapeuticArea = req.query.therapeuticArea as string | undefined;
@@ -101,7 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create pharmacy scenario (Admin only)
-  app.post("/api/pharmacy/scenarios", addMockUser, async (req: any, res) => {
+  app.post("/api/pharmacy/scenarios", requireRole(['supervisor', 'admin']), async (req: any, res) => {
     try {
       const validatedData = insertPharmacyScenarioSchema.parse({
         ...req.body,
@@ -122,7 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // P³ Pharmacy Academy Sessions API
   
   // Create new pharmacy training session
-  app.post("/api/pharmacy/sessions", addMockUser, async (req: any, res) => {
+  app.post("/api/pharmacy/sessions", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertPharmacySessionSchema.parse({
         ...req.body,
@@ -787,10 +798,10 @@ This format helps students learn from expert examples before progressing. Focus 
       // Update scenario with user responses and evaluation
       const updatedScenario = await storage.updatePerformScenario(req.params.id, {
         userResponses,
-        responseQuality: evaluation.responseQuality,
-        clinicalAccuracy: evaluation.clinicalAccuracy,
-        communicationEffectiveness: evaluation.communicationEffectiveness,
-        professionalismScore: evaluation.professionalismScore,
+        responseQuality: evaluation.responseQuality.toString(),
+        clinicalAccuracy: evaluation.clinicalAccuracy.toString(),
+        communicationEffectiveness: evaluation.communicationEffectiveness.toString(),
+        professionalismScore: evaluation.professionalismScore.toString(),
         soapNotes: evaluation.soapNotes,
         carePlan: evaluation.carePlan,
         counselingRecord: evaluation.counselingRecord,
@@ -937,6 +948,235 @@ This format helps students learn from expert examples before progressing. Focus 
       practiceAreas: Object.keys(PRACTICE_AREAS),
       professionalActivities: Object.keys(PROFESSIONAL_ACTIVITIES)
     });
+  });
+
+  // ============================================================================
+  // SUPERVISOR ROUTES - Multi-Role Authentication System
+  // ============================================================================
+
+  // Get supervisor dashboard overview
+  app.get("/api/supervisor/dashboard", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.user.id;
+      
+      // This would be implemented with proper storage methods
+      const dashboardData = {
+        assignedTrainees: [], // TODO: Implement trainee assignment queries
+        pendingReviews: [],   // TODO: Implement pending review queries  
+        recentActivity: [],   // TODO: Implement activity feed
+        performanceMetrics: {
+          totalTrainees: 0,
+          averageProgress: 0,
+          completedSessions: 0,
+          pendingFeedback: 0
+        }
+      };
+
+      res.json(dashboardData);
+    } catch (error) {
+      console.error("Error fetching supervisor dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard data" });
+    }
+  });
+
+  // Get supervisor's assigned trainees
+  app.get("/api/supervisor/trainees", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.user.id;
+      
+      // TODO: Implement actual trainee assignment queries
+      const trainees: any[] = [];
+
+      res.json(trainees);
+    } catch (error) {
+      console.error("Error fetching trainees:", error);
+      res.status(500).json({ message: "Failed to fetch trainees" });
+    }
+  });
+
+  // Get specific trainee progress
+  app.get("/api/supervisor/trainee/:traineeId/progress", requireSupervisor, async (req: any, res) => {
+    try {
+      const { traineeId } = req.params;
+      const supervisorId = req.user.id;
+
+      // TODO: Verify supervisor has access to this trainee
+      // TODO: Implement comprehensive progress query
+
+      const progressData = {
+        trainee: null, // User data
+        modules: {
+          prepare: { completed: 0, total: 0, score: 0 },
+          practice: { completed: 0, total: 0, score: 0 },
+          perform: { completed: 0, total: 0, score: 0 }
+        },
+        recentSessions: [],
+        competencyProgression: [],
+        strengthsWeaknesses: {
+          strengths: [],
+          improvements: []
+        }
+      };
+
+      res.json(progressData);
+    } catch (error) {
+      console.error("Error fetching trainee progress:", error);
+      res.status(500).json({ message: "Failed to fetch trainee progress" });
+    }
+  });
+
+  // Submit supervisor feedback
+  app.post("/api/supervisor/feedback", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.user.id;
+      
+      // TODO: Validate feedback data
+      // TODO: Implement supervisor feedback storage
+      
+      res.json({
+        success: true,
+        message: "Feedback submitted successfully"
+      });
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      res.status(500).json({ message: "Failed to submit feedback" });
+    }
+  });
+
+  // Get supervisor's scenario library
+  app.get("/api/supervisor/scenarios", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.user.id;
+      
+      // TODO: Implement supervisor scenario queries
+      const scenarios: any[] = [];
+
+      res.json(scenarios);
+    } catch (error) {
+      console.error("Error fetching supervisor scenarios:", error);
+      res.status(500).json({ message: "Failed to fetch scenarios" });
+    }
+  });
+
+  // Create supervisor scenario
+  app.post("/api/supervisor/scenarios", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.user.id;
+      
+      // TODO: Validate scenario data  
+      // TODO: Create scenario and supervisor assignment
+      
+      res.json({
+        success: true,
+        message: "Scenario created successfully"
+      });
+    } catch (error) {
+      console.error("Error creating supervisor scenario:", error);
+      res.status(500).json({ message: "Failed to create scenario" });
+    }
+  });
+
+  // ============================================================================
+  // STUDENT/TRAINEE ROUTES - Enhanced with Supervisor Integration
+  // ============================================================================
+
+  // Get student dashboard with supervisor assignments
+  app.get("/api/student/dashboard", requireStudent, async (req: any, res) => {
+    try {
+      const studentId = req.user.id;
+      
+      const dashboardData = {
+        progress: {
+          prepare: { completed: 0, total: 0 },
+          practice: { completed: 0, total: 0 },
+          perform: { completed: 0, total: 0 }
+        },
+        supervisor: null, // Current supervisor info
+        assignedScenarios: [], // Supervisor-assigned scenarios
+        recentFeedback: [], // Latest supervisor feedback
+        nextMilestones: []
+      };
+
+      res.json(dashboardData);
+    } catch (error) {
+      console.error("Error fetching student dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard data" });
+    }
+  });
+
+  // Get assigned scenarios from supervisor
+  app.get("/api/student/assigned-scenarios", requireStudent, async (req: any, res) => {
+    try {
+      const studentId = req.user.id;
+      
+      // TODO: Implement assigned scenario queries
+      const assignedScenarios: any[] = [];
+
+      res.json(assignedScenarios);
+    } catch (error) {
+      console.error("Error fetching assigned scenarios:", error);
+      res.status(500).json({ message: "Failed to fetch assigned scenarios" });
+    }
+  });
+
+  // Get supervisor feedback history
+  app.get("/api/student/feedback", requireStudent, async (req: any, res) => {
+    try {
+      const studentId = req.user.id;
+      
+      // TODO: Implement feedback history queries
+      const feedbackHistory: any[] = [];
+
+      res.json(feedbackHistory);
+    } catch (error) {
+      console.error("Error fetching feedback history:", error);
+      res.status(500).json({ message: "Failed to fetch feedback history" });
+    }
+  });
+
+  // ============================================================================
+  // ADMIN ROUTES - Enhanced User and Institution Management  
+  // ============================================================================
+
+  // Get all users (admin only)
+  app.get("/api/admin/users", requireAdmin, async (req: any, res) => {
+    try {
+      // TODO: Implement user listing with filtering
+      const users: any[] = [];
+
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Update user role (admin only)
+  app.patch("/api/admin/users/:userId/role", requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { role } = req.body;
+
+      if (!USER_ROLES[role as keyof typeof USER_ROLES]) {
+        return res.status(400).json({ message: "Invalid role specified" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, { role });
+
+      res.json({
+        success: true,
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          role: updatedUser.role
+        }
+      });
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
   });
 
   const server = createServer(app);

@@ -42,14 +42,23 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table for Replit Auth
+// Enhanced user storage table for multi-role authentication
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role").default("user"), // user, admin
+  role: varchar("role").default("student"), // student, supervisor, admin
+  provider: varchar("provider").default("email"), // google, email, replit
+  hashedPassword: varchar("hashed_password"), // for email authentication
+  emailVerified: boolean("email_verified").default(false),
+  institution: varchar("institution"), // hospital/pharmacy name
+  licenseNumber: varchar("license_number"), // for supervisors
+  specializations: text("specializations").array().default([]), // therapeutic areas
+  yearsExperience: integer("years_experience"), // for supervisors
+  supervisorCertified: boolean("supervisor_certified").default(false),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -224,6 +233,13 @@ export type PharmacyScenarioWithStats = PharmacyScenario & {
   sessionCount: number;
   averageScore: number;
 };
+
+// Legacy aliases for compatibility
+export type InterviewSession = PharmacySession;
+export type InterviewSessionWithScenario = PharmacySessionWithScenario;
+export type InterviewMessage = PharmacyMessage;
+export type InterviewScenarioWithStats = PharmacyScenarioWithStats;
+export const interviewScenarios = pharmacyScenarios;
 
 // Pre-registration Training specific constants
 export const THERAPEUTIC_AREAS = {
@@ -597,3 +613,154 @@ export const SINGAPORE_DECISION_STAGES = {
   'clinical_judgment': 'Clinical Judgment',
   'implementation_planning': 'Implementation & Monitoring'
 } as const;
+
+// Supervisor-Trainee Assignment System
+export const traineeAssignments = pgTable('trainee_assignments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  supervisorId: varchar('supervisor_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  traineeId: varchar('trainee_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  institution: varchar('institution'),
+  assignedAt: timestamp('assigned_at').defaultNow().notNull(),
+  status: varchar('status').notNull().default('active'), // active, completed, inactive
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Supervisor Feedback System
+export const supervisorFeedback = pgTable('supervisor_feedback', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  supervisorId: varchar('supervisor_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  traineeId: varchar('trainee_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  sessionId: uuid('session_id').references(() => pharmacySessions.id, { onDelete: 'cascade' }),
+  feedbackType: varchar('feedback_type').notNull(), // session_review, portfolio_validation, competency_assessment
+  overallRating: numeric('overall_rating', { precision: 3, scale: 2 }),
+  clinicalKnowledgeRating: numeric('clinical_knowledge_rating', { precision: 3, scale: 2 }),
+  communicationRating: numeric('communication_rating', { precision: 3, scale: 2 }),
+  professionalismRating: numeric('professionalism_rating', { precision: 3, scale: 2 }),
+  writtenFeedback: text('written_feedback'),
+  improvementAreas: text('improvement_areas').array().default([]),
+  strengths: text('strengths').array().default([]),
+  recommendations: text('recommendations'),
+  actionItems: text('action_items').array().default([]),
+  nextReviewDate: timestamp('next_review_date'),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// Supervisor-Created Scenarios
+export const supervisorScenarios = pgTable('supervisor_scenarios', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  supervisorId: varchar('supervisor_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  scenarioId: uuid('scenario_id').notNull().references(() => pharmacyScenarios.id, { onDelete: 'cascade' }),
+  targetTraineeId: varchar('target_trainee_id').references(() => users.id, { onDelete: 'cascade' }),
+  assignmentInstructions: text('assignment_instructions'),
+  dueDate: timestamp('due_date'),
+  priorityLevel: varchar('priority_level').notNull().default('medium'), // low, medium, high
+  learningObjectives: text('learning_objectives').array().default([]),
+  assessmentCriteria: jsonb('assessment_criteria'),
+  completionRequired: boolean('completion_required').default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// Relations for supervisor system
+export const traineeAssignmentsRelations = relations(traineeAssignments, ({ one }) => ({
+  supervisor: one(users, {
+    fields: [traineeAssignments.supervisorId],
+    references: [users.id],
+  }),
+  trainee: one(users, {
+    fields: [traineeAssignments.traineeId],
+    references: [users.id],
+  }),
+}));
+
+export const supervisorFeedbackRelations = relations(supervisorFeedback, ({ one }) => ({
+  supervisor: one(users, {
+    fields: [supervisorFeedback.supervisorId],
+    references: [users.id],
+  }),
+  trainee: one(users, {
+    fields: [supervisorFeedback.traineeId],
+    references: [users.id],
+  }),
+  session: one(pharmacySessions, {
+    fields: [supervisorFeedback.sessionId],
+    references: [pharmacySessions.id],
+  }),
+}));
+
+export const supervisorScenariosRelations = relations(supervisorScenarios, ({ one }) => ({
+  supervisor: one(users, {
+    fields: [supervisorScenarios.supervisorId],
+    references: [users.id],
+  }),
+  scenario: one(pharmacyScenarios, {
+    fields: [supervisorScenarios.scenarioId],
+    references: [pharmacyScenarios.id],
+  }),
+  targetTrainee: one(users, {
+    fields: [supervisorScenarios.targetTraineeId],
+    references: [users.id],
+  }),
+}));
+
+// Insert schemas for new tables
+export const insertTraineeAssignmentSchema = createInsertSchema(traineeAssignments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSupervisorFeedbackSchema = createInsertSchema(supervisorFeedback).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSupervisorScenarioSchema = createInsertSchema(supervisorScenarios).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for new tables
+export type InsertTraineeAssignment = z.infer<typeof insertTraineeAssignmentSchema>;
+export type TraineeAssignment = typeof traineeAssignments.$inferSelect;
+export type InsertSupervisorFeedback = z.infer<typeof insertSupervisorFeedbackSchema>;
+export type SupervisorFeedback = typeof supervisorFeedback.$inferSelect;
+export type InsertSupervisorScenario = z.infer<typeof insertSupervisorScenarioSchema>;
+export type SupervisorScenario = typeof supervisorScenarios.$inferSelect;
+
+// Enhanced types for API responses
+export type TraineeAssignmentWithDetails = TraineeAssignment & {
+  supervisor: User;
+  trainee: User;
+};
+
+export type SupervisorFeedbackWithDetails = SupervisorFeedback & {
+  supervisor: User;
+  trainee: User;
+  session?: PharmacySession;
+};
+
+export type SupervisorScenarioWithDetails = SupervisorScenario & {
+  supervisor: User;
+  scenario: PharmacyScenario;
+  targetTrainee?: User;
+};
+
+// User roles constants
+export const USER_ROLES = {
+  'student': 'Student/Trainee',
+  'supervisor': 'Supervisor/Preceptor',
+  'admin': 'Administrator'
+} as const;
+
+export type UserRole = keyof typeof USER_ROLES;
+
+// Authentication provider constants
+export const AUTH_PROVIDERS = {
+  'google': 'Google',
+  'email': 'Email/Password',
+  'replit': 'Replit'
+} as const;
+
+export type AuthProvider = keyof typeof AUTH_PROVIDERS;

@@ -1,0 +1,155 @@
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as LocalStrategy } from "passport-local";
+import bcrypt from "bcryptjs";
+import { storage } from "./storage";
+import type { User } from "@shared/schema";
+
+// Google OAuth Strategy
+export function setupGoogleStrategy() {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    console.warn("Google OAuth credentials not provided - Google login will be disabled");
+    return;
+  }
+
+  passport.use('google', new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "/api/auth/google/callback"
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      // Check if user exists with Google ID
+      let user = await storage.getUserByEmail(profile.emails?.[0]?.value || '');
+      
+      if (user) {
+        // Update existing user with Google info if needed
+        if (user.provider !== 'google') {
+          user = await storage.updateUser(user.id, {
+            provider: 'google',
+            profileImageUrl: profile.photos?.[0]?.value,
+            emailVerified: true
+          });
+        }
+      } else {
+        // Create new user from Google profile
+        user = await storage.upsertUser({
+          email: profile.emails?.[0]?.value || '',
+          firstName: profile.name?.givenName || '',
+          lastName: profile.name?.familyName || '',
+          profileImageUrl: profile.photos?.[0]?.value,
+          provider: 'google',
+          emailVerified: true,
+          role: 'student' // Default role, can be changed by admin
+        });
+      }
+
+      return done(null, user);
+    } catch (error) {
+      console.error('Google OAuth error:', error);
+      return done(error, undefined);
+    }
+  }));
+}
+
+// Email/Password Strategy
+export function setupLocalStrategy() {
+  passport.use('local', new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password'
+  },
+  async (email, password, done) => {
+    try {
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        return done(null, false, { message: 'Invalid email or password' });
+      }
+
+      if (!user.hashedPassword) {
+        return done(null, false, { message: 'Please use Google login or reset your password' });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.hashedPassword);
+      
+      if (!isValidPassword) {
+        return done(null, false, { message: 'Invalid email or password' });
+      }
+
+      // Update last login
+      await storage.updateUser(user.id, {
+        lastLoginAt: new Date()
+      });
+
+      return done(null, user);
+    } catch (error) {
+      console.error('Local strategy error:', error);
+      return done(error, undefined);
+    }
+  }));
+}
+
+// Serialize/Deserialize user for sessions
+export function setupPassportSerialization() {
+  passport.serializeUser((user: any, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(async (id: string, done) => {
+    try {
+      const user = await storage.getUserById(id);
+      done(null, user);
+    } catch (error) {
+      console.error('Deserialization error:', error);
+      done(error, null);
+    }
+  });
+}
+
+// Hash password utility
+export async function hashPassword(password: string): Promise<string> {
+  const saltRounds = 12;
+  return await bcrypt.hash(password, saltRounds);
+}
+
+// Verify password utility
+export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+  return await bcrypt.compare(password, hashedPassword);
+}
+
+// Password validation
+export function validatePassword(password: string): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  if (password.length < 8) {
+    errors.push('Password must be at least 8 characters long');
+  }
+  
+  if (!/[A-Z]/.test(password)) {
+    errors.push('Password must contain at least one uppercase letter');
+  }
+  
+  if (!/[a-z]/.test(password)) {
+    errors.push('Password must contain at least one lowercase letter');
+  }
+  
+  if (!/\d/.test(password)) {
+    errors.push('Password must contain at least one number');
+  }
+  
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    errors.push('Password must contain at least one special character');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+// Initialize all authentication strategies
+export function initializeAuthStrategies() {
+  setupGoogleStrategy();
+  setupLocalStrategy();
+  setupPassportSerialization();
+}

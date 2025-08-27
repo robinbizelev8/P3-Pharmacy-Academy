@@ -17,6 +17,7 @@ import {
   Clock, 
   Activity, 
   MessageSquare, 
+  MessageCircle,
   FileText, 
   CheckCircle, 
   ArrowRight,
@@ -32,9 +33,16 @@ import {
   Zap,
   CalendarDays,
   GraduationCap,
-  TrendingUp
+  TrendingUp,
+  Target,
+  X,
+  HelpCircle
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
+
+// Helper functions
+const getCurrentStageNumber = () => 1; // Placeholder function
+const getCurrentStageTitle = () => "Patient History"; // Placeholder function
 
 // Module 2: Practice - Clinical Scenario Simulation
 export default function PracticePage() {
@@ -703,8 +711,6 @@ export default function PracticePage() {
                   <X className="w-4 h-4 mr-2" />
                   End Session
                 </Button>
-              </CardContent>
-            </Card>
               </CardContent>
             </Card>
 

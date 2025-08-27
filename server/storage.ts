@@ -10,6 +10,9 @@ import {
   performScenarios,
   performPortfolios,
   performAnalytics,
+  traineeAssignments,
+  supervisorFeedback,
+  supervisorScenarios,
   type User,
   type UpsertUser,
   type InsertPharmacyScenario,
@@ -38,6 +41,15 @@ import {
   type PerformAnalytics,
   type PerformAssessmentWithDetails,
   type PerformPortfolioWithEvidence,
+  type InsertTraineeAssignment,
+  type TraineeAssignment,
+  type InsertSupervisorFeedback,
+  type SupervisorFeedback,
+  type InsertSupervisorScenario,
+  type SupervisorScenario,
+  type TraineeAssignmentWithDetails,
+  type SupervisorFeedbackWithDetails,
+  type SupervisorScenarioWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, count, avg, sql } from "drizzle-orm";
@@ -45,7 +57,11 @@ import { eq, desc, and, count, avg, sql } from "drizzle-orm";
 export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUser(id: string, userData: Partial<UpsertUser>): Promise<User>;
+  createUser(userData: UpsertUser): Promise<User>;
 
   // Pharmacy scenario operations
   getPharmacyScenarios(module?: string, therapeuticArea?: string): Promise<PharmacyScenarioWithStats[]>;
@@ -110,6 +126,40 @@ export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...userData,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
     return user;
   }
 
@@ -727,7 +777,7 @@ export class DatabaseStorage implements IStorage {
 
     // Calculate portfolio metrics
     const counselingRecordsCount = completedSessions.filter(s => s.prescriptionCounselingRecord).length;
-    const therapeuticAreasCovered = Array.from(new Set(completedSessions.map(s => s.therapeuticArea).filter(Boolean)));
+    const therapeuticAreasCovered = Array.from(new Set(completedSessions.map(s => s.therapeuticArea).filter(Boolean))) as string[];
     const completionPercentage = Math.min(100, (counselingRecordsCount / 14) * 100); // 14 required records
 
     // Create or update portfolio
