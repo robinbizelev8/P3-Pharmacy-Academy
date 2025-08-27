@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
+import { getRoleBasedRedirect } from "@/lib/auth-utils";
 // Google OAuth disabled
 
 const loginSchema = z.object({
@@ -169,15 +170,3 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
   );
 }
 
-// Helper function to determine redirect URL based on user role
-function getRoleBasedRedirect(role: string): string {
-  switch (role) {
-    case 'admin':
-      return '/admin/dashboard';
-    case 'supervisor':
-      return '/supervisor/dashboard';
-    case 'student':
-    default:
-      return '/dashboard';
-  }
-}

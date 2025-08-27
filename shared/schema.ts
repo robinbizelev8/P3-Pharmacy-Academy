@@ -194,6 +194,10 @@ export const insertUserSchema = createInsertSchema(users).pick({
   lastName: true,
   profileImageUrl: true,
   role: true,
+  institution: true,
+  licenseNumber: true,
+  yearsExperience: true,
+  specializations: true,
 });
 
 export const insertPharmacyScenarioSchema = createInsertSchema(pharmacyScenarios).omit({
