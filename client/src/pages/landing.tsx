@@ -193,7 +193,7 @@ export default function LandingPage() {
 
             {user ? (
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href={getRoleBasedRedirect(user.role)}>
+                <Link href={getRoleBasedRedirect(user.role || 'student')}>
                   <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
                     Go to Dashboard
                     <ArrowRight className="w-5 h-5 ml-2" />
@@ -217,7 +217,7 @@ export default function LandingPage() {
                 <Link href="/login">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-gray-300 hover:border-purple-600 text-gray-700 hover:text-purple-600 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300">
                     Create Account
-                    <User className="w-5 h-5 ml-2" />
+                    <Users className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
               </div>
