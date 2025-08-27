@@ -24,6 +24,7 @@ import {
   Trophy
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { getRoleBasedRedirect } from "@/lib/auth-utils";
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { useCallback, useEffect, useState } from 'react';
@@ -33,19 +34,6 @@ import processImage from "@assets/generated_images/Three_Stage_Learning_Process_
 import consultationImage from "@assets/generated_images/Pharmacy_Consultation_Scene_5e33f98e.png";
 import dashboardImage from "@assets/generated_images/Clinical_Assessment_Dashboard_cb98d808.png";
 import achievementImage from "@assets/generated_images/Pharmacy_Achievement_Success_e8bfd117.png";
-
-// Helper function to determine redirect URL based on user role
-function getRoleBasedRedirect(role: string): string {
-  switch (role) {
-    case 'admin':
-      return '/admin/dashboard';
-    case 'supervisor':
-      return '/supervisor/dashboard';
-    case 'student':
-    default:
-      return '/dashboard';
-  }
-}
 
 export default function LandingPage() {
   const { user } = useAuth();
