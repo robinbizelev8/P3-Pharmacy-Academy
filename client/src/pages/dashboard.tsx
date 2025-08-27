@@ -41,7 +41,19 @@ interface DashboardData {
 }
 
 export default function StudentDashboard() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Redirect if not authenticated
   if (!isAuthenticated) {
@@ -57,12 +69,12 @@ export default function StudentDashboard() {
     return null;
   }
 
-  const { data: dashboardData, isLoading } = useQuery<DashboardData>({
+  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery<DashboardData>({
     queryKey: ["/api/student/dashboard"],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  if (isLoading) {
+  if (isDashboardLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
