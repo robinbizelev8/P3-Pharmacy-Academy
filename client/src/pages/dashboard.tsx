@@ -43,6 +43,13 @@ interface DashboardData {
 export default function StudentDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
+  // Always call useQuery hook to maintain consistent hook order
+  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery<DashboardData>({
+    queryKey: ["/api/student/dashboard"],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: isAuthenticated && user?.role === 'student', // Only run query when conditions are met
+  });
+
   // Show loading while checking authentication
   if (isLoading) {
     return (
@@ -68,11 +75,6 @@ export default function StudentDashboard() {
     window.location.href = redirectUrl;
     return null;
   }
-
-  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery<DashboardData>({
-    queryKey: ["/api/student/dashboard"],
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
 
   if (isDashboardLoading) {
     return (

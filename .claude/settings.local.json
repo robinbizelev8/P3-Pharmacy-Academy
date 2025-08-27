@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(pkill:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

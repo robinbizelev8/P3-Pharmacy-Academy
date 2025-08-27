@@ -181,33 +181,33 @@ export default function LandingPage() {
 
             {user ? (
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href={getRoleBasedRedirect(user.role || 'student')}>
-                  <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <Button asChild size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                  <Link href={getRoleBasedRedirect(user.role || 'student')}>
                     Go to Dashboard
                     <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
-                <Link href="/prepare">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-gray-300 hover:border-purple-600 text-gray-700 hover:text-purple-600 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300">
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="w-full sm:w-auto border-2 border-gray-300 hover:border-purple-600 text-gray-700 hover:text-purple-600 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300">
+                  <Link href="/prepare">
                     Start Learning
                     <BookOpen className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             ) : (
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/login">
-                  <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <Button asChild size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                  <Link href="/login">
                     Sign In
                     <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
-                <Link href="/login">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-gray-300 hover:border-purple-600 text-gray-700 hover:text-purple-600 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300">
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="w-full sm:w-auto border-2 border-gray-300 hover:border-purple-600 text-gray-700 hover:text-purple-600 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300">
+                  <Link href="/login">
                     Create Account
                     <Users className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             )}
           </div>
@@ -321,12 +321,12 @@ export default function LandingPage() {
                   </ul>
 
                   {user && (
-                    <Link href={module.href}>
-                      <Button className="w-full mt-4" variant="outline">
+                    <Button asChild className="w-full mt-4" variant="outline">
+                      <Link href={module.href}>
                         Start {module.name}
                         <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   )}
                 </CardContent>
               </Card>
@@ -418,12 +418,12 @@ export default function LandingPage() {
             Join Singapore's premier pre-registration training platform and accelerate your journey to independent practice.
           </p>
           {user ? (
-            <Link href="/prepare">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl">
+            <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl">
+              <Link href="/prepare">
                 Begin Your Journey
                 <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           ) : (
             <div className="flex items-center justify-center space-x-3 bg-white/10 rounded-xl p-4 max-w-md mx-auto">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
