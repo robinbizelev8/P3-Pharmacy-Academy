@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { singaporeHealthcareService } from './singapore-healthcare.js';
 
 /**
  * OpenAI Service for P³ Pharmacy Academy
@@ -21,12 +22,15 @@ class OpenAIService {
     }
   }
 
-  async generatePharmacyResponse(prompt: string, language: string = 'en'): Promise<string> {
+  async generatePharmacyResponse(prompt: string, language: string = 'en', therapeuticArea?: string, practiceArea?: string): Promise<string> {
     if (!this.client) {
       return this.getIntelligentFallback(prompt);
     }
 
     const languageInstructions = this.getPharmacyLanguageInstructions(language);
+    
+    // Get current Singapore healthcare knowledge for context injection
+    const currentKnowledge = await this.getCurrentSingaporeKnowledge(therapeuticArea, practiceArea);
     
     const systemPrompt = `You are a senior pharmacy preceptor and clinical pharmacist specializing in Singapore's Pre-registration Training program. You provide expert clinical coaching, competency assessment, and therapeutic guidance aligned with Singapore's pharmacy competency framework.
 
@@ -37,7 +41,12 @@ Professional Context:
 - 7 core therapeutic areas: Cardiovascular, GI, Renal, Endocrine, Respiratory, Dermatological, Neurological
 - Singapore's multicultural healthcare environment
 
+CURRENT SINGAPORE HEALTHCARE UPDATES:
+${currentKnowledge}
+
 ${languageInstructions}
+
+IMPORTANT: Always consider current Singapore healthcare updates in your responses. If there are active HSA safety alerts, recent MOH guideline changes, or NDF formulary updates relevant to the scenario, incorporate them into your clinical guidance.
 
 Maintain professional, evidence-based responses that support competency development and clinical reasoning skills appropriate for Singapore's healthcare context.
 
@@ -86,6 +95,12 @@ Then naturally continue the conversation by asking the next relevant clinical qu
       };
     }
 
+    // Get current Singapore healthcare knowledge for context
+    const currentKnowledge = await this.getCurrentSingaporeKnowledge(
+      scenarioContext.therapeuticArea, 
+      scenarioContext.practiceArea
+    );
+
     const stageNames = [
       "Patient History Taking",
       "Clinical Assessment", 
@@ -124,6 +139,11 @@ Examples of how patients speak:
 Current Stage: ${currentStage} (${stage}/4)
 Patient Context: ${scenarioContext.patientBackground}
 Clinical Issue: ${scenarioContext.clinicalPresentation}
+
+CURRENT SINGAPORE HEALTHCARE UPDATES:
+${currentKnowledge}
+
+IMPORTANT: Consider current Singapore healthcare updates when providing coaching. If there are relevant HSA safety alerts, MOH guideline changes, or NDF formulary updates, incorporate them into your coaching feedback.
 
 ${languageInstructions}
 
@@ -281,6 +301,60 @@ Respond in JSON format.`;
     return languageMap[language] || languageMap['en'];
   }
 
+  /**
+   * Get current Singapore healthcare knowledge for AI context injection
+   */
+  private async getCurrentSingaporeKnowledge(therapeuticArea?: string, practiceArea?: string): Promise<string> {
+    try {
+      const knowledgeSections: string[] = [];
+
+      // Get active drug safety alerts
+      const safetyAlerts = await singaporeHealthcareService.getActiveDrugSafetyAlerts(therapeuticArea);
+      if (safetyAlerts.length > 0) {
+        knowledgeSections.push("=== CURRENT HSA SAFETY ALERTS ===");
+        knowledgeSections.push(...safetyAlerts);
+        knowledgeSections.push("");
+      }
+
+      // Get therapeutic area-specific knowledge
+      if (therapeuticArea) {
+        const therapeuticKnowledge = await singaporeHealthcareService.getAIKnowledgeForContext('therapeutic_area', therapeuticArea);
+        if (therapeuticKnowledge.length > 0) {
+          knowledgeSections.push(`=== CURRENT ${therapeuticArea.toUpperCase()} GUIDELINES ===`);
+          knowledgeSections.push(...therapeuticKnowledge);
+          knowledgeSections.push("");
+        }
+
+        // Get drug formulary knowledge for therapeutic area
+        const formularyKnowledge = await singaporeHealthcareService.getAIKnowledgeForContext('drug_formulary', therapeuticArea);
+        if (formularyKnowledge.length > 0) {
+          knowledgeSections.push(`=== SINGAPORE FORMULARY - ${therapeuticArea.toUpperCase()} ===`);
+          knowledgeSections.push(...formularyKnowledge);
+          knowledgeSections.push("");
+        }
+      }
+
+      // Get practice area-specific knowledge
+      if (practiceArea) {
+        const practiceKnowledge = await singaporeHealthcareService.getAIKnowledgeForContext('practice_area', practiceArea);
+        if (practiceKnowledge.length > 0) {
+          knowledgeSections.push(`=== ${practiceArea.toUpperCase()} PRACTICE PROTOCOLS ===`);
+          knowledgeSections.push(...practiceKnowledge);
+          knowledgeSections.push("");
+        }
+      }
+
+      if (knowledgeSections.length === 0) {
+        return "No current Singapore healthcare updates available for this context.";
+      }
+
+      return knowledgeSections.join("\n");
+    } catch (error) {
+      console.error("Error retrieving Singapore healthcare knowledge:", error);
+      return "Unable to retrieve current Singapore healthcare updates. Proceeding with standard clinical guidance.";
+    }
+  }
+
   private getIntelligentFallback(prompt: string): string {
     // Context-aware fallback responses for pharmacy education
     let fallbackContent = "I understand you're working on your pharmacy competency development. ";
@@ -339,9 +413,15 @@ Respond in JSON format.`;
       return this.getFallbackPerformScenario(therapeuticArea, practiceArea, complexityLevel);
     }
 
+    // Get current Singapore healthcare knowledge for realistic scenario generation
+    const currentKnowledge = await this.getCurrentSingaporeKnowledge(therapeuticArea, practiceArea);
+
     const systemPrompt = `You are a senior pharmacy educator creating realistic clinical assessment scenarios for Singapore's Pre-registration Training program.
 
 Generate a ${complexityLevel} level clinical scenario for ${therapeuticArea} therapy in ${practiceArea} practice setting.
+
+CURRENT SINGAPORE HEALTHCARE CONTEXT:
+${currentKnowledge}
 
 Requirements:
 - Realistic patient case with authentic Singapore healthcare context
@@ -349,6 +429,7 @@ Requirements:
 - Clear assessment objectives aligned with PA1-PA4 competencies
 - Cultural diversity reflecting Singapore's population
 - Authentic medical terminology and drug names used in Singapore
+- Incorporate relevant current HSA safety alerts, MOH guidelines, or NDF formulary considerations
 
 Return JSON with exactly these fields:
 {

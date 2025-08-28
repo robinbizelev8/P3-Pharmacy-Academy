@@ -292,7 +292,7 @@ export const learningResources = pgTable('learning_resources', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),
   description: text('description').notNull(),
-  resourceType: text('resource_type').notNull(), // guideline, monograph, protocol, video, pdf
+  resourceType: text('resource_type').notNull(), // guideline, monograph, protocol, video, pdf, hsa_alert, drug_recall, formulary_update, competency_standard, singapore_protocol, multicultural_guidance, regulatory_update
   therapeuticArea: text('therapeutic_area').notNull(),
   practiceArea: text('practice_area').notNull(),
   professionalActivity: text('professional_activity').notNull(),
@@ -320,6 +320,141 @@ export const learningProgress = pgTable('learning_progress', {
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
+// Enhanced Knowledge Base Tables for Singapore Healthcare Integration
+
+// Official Singapore Healthcare Sources
+export const knowledgeSources = pgTable('knowledge_sources', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sourceType: text('source_type').notNull(), // 'hsa', 'moh', 'spc', 'ndf', 'psa', 'healthhub', 'smj'
+  sourceName: text('source_name').notNull(),
+  baseUrl: text('base_url').notNull(),
+  apiEndpoint: text('api_endpoint'),
+  lastSyncAt: timestamp('last_sync_at'),
+  syncFrequency: text('sync_frequency').notNull(), // 'daily', 'weekly', 'monthly'
+  isActive: boolean('is_active').notNull().default(true),
+  metadata: jsonb('metadata'), // Additional sync configuration
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Clinical Practice Guidelines Version Tracking
+export const guidelineUpdates = pgTable('guideline_updates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sourceId: uuid('source_id').notNull().references(() => knowledgeSources.id, { onDelete: 'cascade' }),
+  guidelineType: text('guideline_type').notNull(), // 'clinical', 'therapeutic', 'safety', 'competency'
+  title: text('title').notNull(),
+  currentVersion: text('current_version').notNull(),
+  previousVersion: text('previous_version'),
+  effectiveDate: timestamp('effective_date').notNull(),
+  expiryDate: timestamp('expiry_date'), // Guidelines expire after 5 years
+  changesSummary: text('changes_summary'),
+  impactLevel: text('impact_level').notNull(), // 'low', 'medium', 'high', 'critical'
+  therapeuticAreas: text('therapeutic_areas').array().default([]),
+  practiceAreas: text('practice_areas').array().default([]),
+  contentUrl: text('content_url'),
+  documentHash: text('document_hash'), // For change detection
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// HSA Drug Safety Alerts and Recalls
+export const drugSafetyAlerts = pgTable('drug_safety_alerts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  alertType: text('alert_type').notNull(), // 'safety_alert', 'product_recall', 'adr_bulletin', 'regulatory_update'
+  alertId: text('alert_id').notNull().unique(), // HSA reference ID
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  severity: text('severity').notNull(), // 'low', 'medium', 'high', 'urgent'
+  affectedProducts: jsonb('affected_products'), // Array of drug names/products
+  therapeuticAreas: text('therapeutic_areas').array().default([]),
+  actionRequired: text('action_required'),
+  targetAudience: text('target_audience').array().default([]), // 'pharmacist', 'doctor', 'consumer', 'all'
+  publishedDate: timestamp('published_date').notNull(),
+  expiryDate: timestamp('expiry_date'),
+  sourceUrl: text('source_url'),
+  attachments: jsonb('attachments'), // Links to PDFs, documents
+  relatedAlerts: text('related_alerts').array().default([]), // Related alert IDs
+  impactAssessment: jsonb('impact_assessment'), // Clinical impact analysis
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Singapore National Drug Formulary Integration
+export const singaporeFormulary = pgTable('singapore_formulary', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  drugName: text('drug_name').notNull(),
+  genericName: text('generic_name'),
+  brandNames: text('brand_names').array().default([]),
+  activeIngredients: text('active_ingredients').array().notNull(),
+  therapeuticClass: text('therapeutic_class').notNull(),
+  therapeuticAreas: text('therapeutic_areas').array().default([]),
+  dosageForm: text('dosage_form'),
+  strength: text('strength'),
+  routeOfAdministration: text('route_of_administration'),
+  indications: text('indications').array().default([]),
+  contraindications: text('contraindications').array().default([]),
+  drugInteractions: jsonb('drug_interactions'), // Complex interaction data
+  adverseEffects: text('adverse_effects').array().default([]),
+  dosageRecommendations: jsonb('dosage_recommendations'), // Age/condition-specific dosing
+  monitoringParameters: text('monitoring_parameters').array().default([]),
+  pregnancyCategory: text('pregnancy_category'),
+  lactationSafety: text('lactation_safety'),
+  pediatricUse: text('pediatric_use'),
+  geriatricConsiderations: text('geriatric_considerations'),
+  renalAdjustment: text('renal_adjustment'),
+  hepaticAdjustment: text('hepatic_adjustment'),
+  subsidyStatus: text('subsidy_status'), // MOH subsidy information
+  restrictionNotes: text('restriction_notes'),
+  lastReviewDate: timestamp('last_review_date').notNull(),
+  nextReviewDate: timestamp('next_review_date'),
+  ndfVersion: text('ndf_version').notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Singapore-Specific Clinical Protocols and Pathways
+export const clinicalProtocols = pgTable('clinical_protocols', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  protocolType: text('protocol_type').notNull(), // 'clinical_pathway', 'medication_protocol', 'counseling_guide', 'emergency_protocol'
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  therapeuticArea: text('therapeutic_area').notNull(),
+  practiceArea: text('practice_area').notNull(),
+  targetAudience: text('target_audience').array().default([]), // 'pre_reg', 'registered', 'advanced_practice'
+  protocolSteps: jsonb('protocol_steps'), // Structured step-by-step protocol
+  decisionTrees: jsonb('decision_trees'), // Clinical decision pathways
+  references: jsonb('references'), // Evidence base and guidelines
+  localAdaptations: jsonb('local_adaptations'), // Singapore-specific modifications
+  culturalConsiderations: text('cultural_considerations').array().default([]),
+  languageSupport: text('language_support').array().default([]),
+  version: text('version').notNull(),
+  approvalStatus: text('approval_status').notNull(), // 'draft', 'approved', 'under_review'
+  approvedBy: text('approved_by'),
+  approvalDate: timestamp('approval_date'),
+  effectiveDate: timestamp('effective_date').notNull(),
+  reviewDate: timestamp('review_date').notNull(),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// AI Knowledge Context Cache for Dynamic Prompts
+export const aiKnowledgeCache = pgTable('ai_knowledge_cache', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  contextType: text('context_type').notNull(), // 'therapeutic_area', 'practice_area', 'drug_class', 'scenario_type'
+  contextKey: text('context_key').notNull(), // Specific identifier (e.g., 'cardiovascular', 'hospital')
+  knowledgeContent: text('knowledge_content').notNull(), // Formatted knowledge for AI injection
+  sourceReferences: jsonb('source_references'), // References to source tables
+  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+  expiresAt: timestamp('expires_at'), // Auto-expire for regular refresh
+  usage_count: integer('usage_count').default(0),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
 // Insert schemas
 export const insertCompetencyAssessmentSchema = createInsertSchema(competencyAssessments).omit({
   id: true,
@@ -338,6 +473,42 @@ export const insertLearningProgressSchema = createInsertSchema(learningProgress)
   createdAt: true,
 });
 
+// Enhanced Knowledge Base Insert Schemas
+export const insertKnowledgeSourceSchema = createInsertSchema(knowledgeSources).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertGuidelineUpdateSchema = createInsertSchema(guidelineUpdates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDrugSafetyAlertSchema = createInsertSchema(drugSafetyAlerts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSingaporeFormularySchema = createInsertSchema(singaporeFormulary).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertClinicalProtocolSchema = createInsertSchema(clinicalProtocols).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiKnowledgeCacheSchema = createInsertSchema(aiKnowledgeCache).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertCompetencyAssessment = z.infer<typeof insertCompetencyAssessmentSchema>;
 export type CompetencyAssessment = typeof competencyAssessments.$inferSelect;
@@ -345,6 +516,20 @@ export type InsertLearningResource = z.infer<typeof insertLearningResourceSchema
 export type LearningResource = typeof learningResources.$inferSelect;
 export type InsertLearningProgress = z.infer<typeof insertLearningProgressSchema>;
 export type LearningProgress = typeof learningProgress.$inferSelect;
+
+// Enhanced Knowledge Base Types
+export type InsertKnowledgeSource = z.infer<typeof insertKnowledgeSourceSchema>;
+export type KnowledgeSource = typeof knowledgeSources.$inferSelect;
+export type InsertGuidelineUpdate = z.infer<typeof insertGuidelineUpdateSchema>;
+export type GuidelineUpdate = typeof guidelineUpdates.$inferSelect;
+export type InsertDrugSafetyAlert = z.infer<typeof insertDrugSafetyAlertSchema>;
+export type DrugSafetyAlert = typeof drugSafetyAlerts.$inferSelect;
+export type InsertSingaporeFormulary = z.infer<typeof insertSingaporeFormularySchema>;
+export type SingaporeFormulary = typeof singaporeFormulary.$inferSelect;
+export type InsertClinicalProtocol = z.infer<typeof insertClinicalProtocolSchema>;
+export type ClinicalProtocol = typeof clinicalProtocols.$inferSelect;
+export type InsertAiKnowledgeCache = z.infer<typeof insertAiKnowledgeCacheSchema>;
+export type AiKnowledgeCache = typeof aiKnowledgeCache.$inferSelect;
 
 // Extended types for Module 1
 export type CompetencyAssessmentWithProgress = CompetencyAssessment & {
@@ -763,3 +948,57 @@ export const AUTH_PROVIDERS = {
 } as const;
 
 export type AuthProvider = keyof typeof AUTH_PROVIDERS;
+
+// Enhanced Knowledge Base Constants
+export const SINGAPORE_HEALTHCARE_SOURCES = {
+  'hsa': 'Health Sciences Authority',
+  'moh': 'Ministry of Health',
+  'spc': 'Singapore Pharmacy Council',
+  'ndf': 'National Drug Formulary',
+  'psa': 'Pharmaceutical Society of Singapore',
+  'healthhub': 'HealthHub Singapore',
+  'smj': 'Singapore Medical Journal'
+} as const;
+
+export const ENHANCED_RESOURCE_TYPES = {
+  // Existing types
+  'guideline': 'Clinical Practice Guidelines',
+  'monograph': 'Drug Monographs',
+  'protocol': 'Clinical Protocols',
+  'video': 'Educational Videos',
+  'pdf': 'Reference Documents',
+  // New Singapore-specific types
+  'hsa_alert': 'HSA Safety Alerts',
+  'drug_recall': 'Product Recalls',
+  'formulary_update': 'NDF Updates',
+  'competency_standard': 'SPC Standards',
+  'singapore_protocol': 'Local Clinical Pathways',
+  'multicultural_guidance': 'Cultural Competency Guides',
+  'regulatory_update': 'Regulatory Changes'
+} as const;
+
+export const ALERT_SEVERITIES = {
+  'low': 'Low Priority',
+  'medium': 'Medium Priority', 
+  'high': 'High Priority',
+  'urgent': 'Urgent Action Required'
+} as const;
+
+export const ALERT_TYPES = {
+  'safety_alert': 'Drug Safety Alert',
+  'product_recall': 'Product Recall',
+  'adr_bulletin': 'Adverse Drug Reaction Bulletin',
+  'regulatory_update': 'Regulatory Update'
+} as const;
+
+export const SYNC_FREQUENCIES = {
+  'daily': 'Daily Updates',
+  'weekly': 'Weekly Sync',
+  'monthly': 'Monthly Review'
+} as const;
+
+export type SingaporeHealthcareSource = keyof typeof SINGAPORE_HEALTHCARE_SOURCES;
+export type EnhancedResourceType = keyof typeof ENHANCED_RESOURCE_TYPES;
+export type AlertSeverity = keyof typeof ALERT_SEVERITIES;
+export type AlertType = keyof typeof ALERT_TYPES;
+export type SyncFrequency = keyof typeof SYNC_FREQUENCIES;

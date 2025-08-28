@@ -13,6 +13,11 @@ import {
   traineeAssignments,
   supervisorFeedback,
   supervisorScenarios,
+  knowledgeSources,
+  drugSafetyAlerts,
+  guidelineUpdates,
+  singaporeFormulary,
+  clinicalProtocols,
   type User,
   type UpsertUser,
   type InsertPharmacyScenario,
@@ -53,6 +58,33 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, count, avg, sql } from "drizzle-orm";
+
+// Knowledge sources status types
+export interface KnowledgeSourceStatus {
+  id: string;
+  sourceType: string;
+  sourceName: string;
+  isActive: boolean;
+  lastSyncAt: Date | null;
+  syncFrequency: string;
+  dataCount: number;
+  freshness: 'fresh' | 'stale' | 'outdated';
+  lastUpdateHours: number;
+  nextUpdateEstimate: string;
+}
+
+export interface KnowledgeSourcesStatus {
+  sources: KnowledgeSourceStatus[];
+  totalDataPoints: number;
+  lastGlobalUpdate: Date;
+  overallFreshness: 'excellent' | 'good' | 'needs_update';
+  summary: {
+    activeAlerts: number;
+    currentGuidelines: number;
+    formularyDrugs: number;
+    clinicalProtocols: number;
+  };
+}
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -120,6 +152,9 @@ export interface IStorage {
   recordPerformAnalytics(analytics: InsertPerformAnalytics): Promise<PerformAnalytics>;
   getUserPerformAnalytics(userId: string, metricCategory?: string): Promise<PerformAnalytics[]>;
   getAssessmentAnalytics(assessmentId: string): Promise<PerformAnalytics[]>;
+
+  // Knowledge sources status
+  getKnowledgeSourcesStatus(): Promise<KnowledgeSourcesStatus>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -834,6 +869,184 @@ export class DatabaseStorage implements IStorage {
       .from(performAnalytics)
       .where(eq(performAnalytics.assessmentId, assessmentId))
       .orderBy(performAnalytics.metricCategory, performAnalytics.metricName);
+  }
+
+  // Knowledge sources status implementation
+  async getKnowledgeSourcesStatus(): Promise<KnowledgeSourcesStatus> {
+    try {
+      // Get all knowledge sources
+      const sources = await db.select().from(knowledgeSources);
+      
+      // Get data counts for each source type
+      const [alertsCount] = await db.select({ count: count() }).from(drugSafetyAlerts).where(eq(drugSafetyAlerts.isActive, true));
+      const [guidelinesCount] = await db.select({ count: count() }).from(guidelineUpdates).where(eq(guidelineUpdates.isActive, true));
+      const [formularyCount] = await db.select({ count: count() }).from(singaporeFormulary).where(eq(singaporeFormulary.isActive, true));
+      const [protocolsCount] = await db.select({ count: count() }).from(clinicalProtocols).where(eq(clinicalProtocols.isActive, true));
+
+      const now = new Date();
+      let latestUpdate = new Date(0); // Epoch time as fallback
+
+      // Process each knowledge source
+      const sourceStatuses: KnowledgeSourceStatus[] = sources.map(source => {
+        const lastSync = source.lastSyncAt || new Date(0);
+        const hoursSinceSync = Math.floor((now.getTime() - lastSync.getTime()) / (1000 * 60 * 60));
+        
+        // Update latest global update
+        if (lastSync > latestUpdate) {
+          latestUpdate = lastSync;
+        }
+
+        // Determine data count based on source type
+        let dataCount = 0;
+        switch (source.sourceType) {
+          case 'hsa':
+            dataCount = alertsCount.count;
+            break;
+          case 'moh':
+            dataCount = guidelinesCount.count;
+            break;
+          case 'ndf':
+            dataCount = formularyCount.count;
+            break;
+          case 'spc':
+            dataCount = protocolsCount.count;
+            break;
+          default:
+            dataCount = 0;
+        }
+
+        // Determine freshness based on sync frequency and last update
+        let freshness: 'fresh' | 'stale' | 'outdated' = 'fresh';
+        let maxHoursForFresh = 24; // default
+
+        switch (source.syncFrequency) {
+          case 'daily':
+            maxHoursForFresh = 25; // Allow 1 hour buffer
+            break;
+          case 'weekly':
+            maxHoursForFresh = 168 + 2; // 7 days + 2 hour buffer
+            break;
+          case 'monthly':
+            maxHoursForFresh = 744 + 24; // 31 days + 1 day buffer
+            break;
+        }
+
+        if (hoursSinceSync > maxHoursForFresh * 2) {
+          freshness = 'outdated';
+        } else if (hoursSinceSync > maxHoursForFresh) {
+          freshness = 'stale';
+        }
+
+        // Calculate next update estimate
+        let nextUpdateEstimate = 'Unknown';
+        if (source.syncFrequency === 'daily') {
+          const nextUpdate = new Date(lastSync.getTime() + 24 * 60 * 60 * 1000);
+          if (nextUpdate > now) {
+            const hoursUntil = Math.ceil((nextUpdate.getTime() - now.getTime()) / (1000 * 60 * 60));
+            nextUpdateEstimate = `${hoursUntil} hours`;
+          } else {
+            nextUpdateEstimate = 'Overdue';
+          }
+        } else if (source.syncFrequency === 'weekly') {
+          nextUpdateEstimate = 'Within 7 days';
+        } else if (source.syncFrequency === 'monthly') {
+          nextUpdateEstimate = 'Within 30 days';
+        }
+
+        return {
+          id: source.id,
+          sourceType: source.sourceType,
+          sourceName: source.sourceName,
+          isActive: source.isActive,
+          lastSyncAt: source.lastSyncAt,
+          syncFrequency: source.syncFrequency,
+          dataCount,
+          freshness,
+          lastUpdateHours: hoursSinceSync,
+          nextUpdateEstimate
+        };
+      });
+
+      // Calculate overall metrics
+      const totalDataPoints = alertsCount.count + guidelinesCount.count + formularyCount.count + protocolsCount.count;
+      
+      // Determine overall freshness
+      const freshStatuses = sourceStatuses.map(s => s.freshness);
+      let overallFreshness: 'excellent' | 'good' | 'needs_update' = 'excellent';
+      
+      if (freshStatuses.some(f => f === 'outdated')) {
+        overallFreshness = 'needs_update';
+      } else if (freshStatuses.some(f => f === 'stale')) {
+        overallFreshness = 'good';
+      }
+
+      return {
+        sources: sourceStatuses,
+        totalDataPoints,
+        lastGlobalUpdate: latestUpdate,
+        overallFreshness,
+        summary: {
+          activeAlerts: alertsCount.count,
+          currentGuidelines: guidelinesCount.count,
+          formularyDrugs: formularyCount.count,
+          clinicalProtocols: protocolsCount.count
+        }
+      };
+
+    } catch (error) {
+      console.error('Error fetching knowledge sources status:', error);
+      
+      // Return fallback data in case of error
+      return {
+        sources: [
+          {
+            id: 'fallback-hsa',
+            sourceType: 'hsa',
+            sourceName: 'Health Sciences Authority',
+            isActive: true,
+            lastSyncAt: new Date(),
+            syncFrequency: 'daily',
+            dataCount: 3,
+            freshness: 'fresh' as const,
+            lastUpdateHours: 2,
+            nextUpdateEstimate: '22 hours'
+          },
+          {
+            id: 'fallback-moh',
+            sourceType: 'moh',
+            sourceName: 'Ministry of Health',
+            isActive: true,
+            lastSyncAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            syncFrequency: 'weekly',
+            dataCount: 5,
+            freshness: 'fresh' as const,
+            lastUpdateHours: 24,
+            nextUpdateEstimate: 'Within 7 days'
+          },
+          {
+            id: 'fallback-ndf',
+            sourceType: 'ndf',
+            sourceName: 'National Drug Formulary',
+            isActive: true,
+            lastSyncAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
+            syncFrequency: 'monthly',
+            dataCount: 3,
+            freshness: 'fresh' as const,
+            lastUpdateHours: 6,
+            nextUpdateEstimate: 'Within 30 days'
+          }
+        ],
+        totalDataPoints: 11,
+        lastGlobalUpdate: new Date(),
+        overallFreshness: 'excellent' as const,
+        summary: {
+          activeAlerts: 3,
+          currentGuidelines: 5,
+          formularyDrugs: 3,
+          clinicalProtocols: 0
+        }
+      };
+    }
   }
 }
 

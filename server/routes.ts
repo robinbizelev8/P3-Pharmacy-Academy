@@ -111,6 +111,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Knowledge Sources Status API - Public endpoint for landing page
+  app.get("/api/knowledge/sources-status", async (req, res) => {
+    try {
+      const knowledgeStatus = await storage.getKnowledgeSourcesStatus();
+      res.json(knowledgeStatus);
+    } catch (error) {
+      console.error("Error fetching knowledge sources status:", error);
+      res.status(500).json({ message: "Failed to fetch knowledge sources status" });
+    }
+  });
+
   // Temporary middleware to add mock user for development
   const addMockUser = async (req: any, res: any, next: any) => {
     const user = await storage.upsertUser({
