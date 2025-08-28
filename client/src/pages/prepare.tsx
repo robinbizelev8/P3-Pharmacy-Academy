@@ -403,23 +403,75 @@ export default function PreparePage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border">
-                    <h4 className="font-medium text-sm mb-2">What you'll experience:</h4>
+                    <h4 className="font-medium text-sm mb-2">Expected Learning Outcomes for {selectedProfessionalActivity}:</h4>
                     <ul className="text-sm space-y-1 text-gray-700">
+                      {selectedProfessionalActivity === 'PA1' && (
+                        <>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Develop care plans for patients with acute and chronic conditions</span>
+                          </li>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Apply clinical assessment skills in {selectedPracticeArea} pharmacy settings</span>
+                          </li>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Master {selectedTherapeuticArea} therapeutic protocols and guidelines</span>
+                          </li>
+                        </>
+                      )}
+                      {selectedProfessionalActivity === 'PA2' && (
+                        <>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Ensure accurate supply of health products with safety considerations</span>
+                          </li>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Implement medication safety protocols in {selectedPracticeArea} practice</span>
+                          </li>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Develop expertise in {selectedTherapeuticArea} medication management</span>
+                          </li>
+                        </>
+                      )}
+                      {selectedProfessionalActivity === 'PA3' && (
+                        <>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Educate patients on appropriate use of health products</span>
+                          </li>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Build patient counseling skills for {selectedTherapeuticArea} conditions</span>
+                          </li>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Apply communication techniques in {selectedPracticeArea} pharmacy settings</span>
+                          </li>
+                        </>
+                      )}
+                      {selectedProfessionalActivity === 'PA4' && (
+                        <>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Respond effectively to drug information and health product enquiries</span>
+                          </li>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Research and evaluate {selectedTherapeuticArea} therapeutic options</span>
+                          </li>
+                          <li className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span>Provide evidence-based recommendations in {selectedPracticeArea} practice</span>
+                          </li>
+                        </>
+                      )}
                       <li className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                        <span>AI evaluates your current supervision level (typically Level 2-3)</span>
-                      </li>
-                      <li className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                        <span>Interactive dialogue to identify knowledge gaps and learning priorities</span>
-                      </li>
-                      <li className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                        <span>Generates personalized learning objectives for Singapore pharmacy practice</span>
-                      </li>
-                      <li className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                        <span>Creates baseline for progress tracking throughout your pre-registration training</span>
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                        <span>Build foundation for independent practice level achievement</span>
                       </li>
                     </ul>
                   </div>
@@ -431,7 +483,7 @@ export default function PreparePage() {
                       </span>
                     </div>
                     <Button onClick={() => setShowAssessmentSimulation(true)} className="bg-blue-600 hover:bg-blue-700">
-                      Start Assessment Simulation
+                      Begin Guided Learning
                     </Button>
                   </div>
                 </CardContent>
