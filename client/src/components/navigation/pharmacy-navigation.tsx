@@ -141,7 +141,7 @@ export function PharmacyNavigation() {
                 </div>
               </div>
               
-              <Link href="/dashboard">
+              <Link href="/student/dashboard">
                 <Button variant="ghost" size="sm" className="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-xl" title="Student Dashboard">
                   <Activity className="w-4 h-4" />
                 </Button>
