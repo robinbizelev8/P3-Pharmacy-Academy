@@ -21,6 +21,7 @@ import ResetPassword from "@/pages/reset-password";
 import AssessmentReportPage from "@/pages/assessment-report";
 import AssessmentCreatorPage from "@/pages/assessment-creator";
 import AdaptiveAssessmentPage from "@/pages/adaptive-assessment";
+import AssessmentsPage from "@/pages/assessments";
 
 import { useAuth } from "@/hooks/use-auth";
 import { PharmacyNavigation } from "@/components/navigation/pharmacy-navigation";
@@ -46,6 +47,7 @@ function Router() {
           <Route path="/practice" component={Practice} />
           <Route path="/practice/*" component={Practice} />
           <Route path="/perform" component={Perform} />
+          <Route path="/assessments" component={AssessmentsPage} />
           <Route path="/perform/assessment-report/:assessmentId" component={AssessmentReportPage} />
           <Route path="/perform/create-assessment" component={AssessmentCreatorPage} />
           <Route path="/perform/adaptive-assessment/:sessionId" component={AdaptiveAssessmentPage} />
