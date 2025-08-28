@@ -44,7 +44,7 @@ const navigationItems = [
     icon: MessageCircle,
     color: "bg-emerald-600",
     gradient: "from-emerald-500 to-teal-600",
-    description: "Clinical Scenarios"
+    description: "Scenarios & Assessment"
   },
   {
     name: "Perform",
@@ -52,7 +52,7 @@ const navigationItems = [
     icon: Trophy,
     color: "bg-purple-600",
     gradient: "from-purple-500 to-violet-600",
-    description: "Competency Assessment"
+    description: "Competency Dashboard"
   }
 ];
 
