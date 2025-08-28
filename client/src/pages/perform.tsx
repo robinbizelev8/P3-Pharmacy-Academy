@@ -498,186 +498,649 @@ export default function PerformPage() {
           </CardContent>
         </Card>
 
+        {/* Portfolio Building Section - No Assessment Forms */}
         <Card>
           <CardHeader>
-            <CardTitle>Singapore 4-Stage Clinical Decision-Making Framework</CardTitle>
+            <CardTitle>Clinical Portfolio Development</CardTitle>
             <CardDescription>
-              Complete each stage of the clinical assessment process
+              Build your professional portfolio with documented clinical experiences
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Form {...scenarioForm}>
-              <form onSubmit={scenarioForm.handleSubmit(handleSubmitScenario)} className="space-y-6">
-                <div className="space-y-4">
-                  <FormField
-                    control={scenarioForm.control}
-                    name="informationGathering"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Search className="h-4 w-4" />
-                          Stage 1: Information Gathering
-                        </FormLabel>
-                        <FormDescription>
-                          Collect and analyze relevant patient information, medical history, and presenting complaints
-                        </FormDescription>
-                        <FormControl>
-                          <textarea 
-                            className="w-full min-h-[100px] p-3 border rounded-md resize-none"
-                            placeholder="Document your information gathering process, key questions, and relevant findings..."
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={scenarioForm.control}
-                    name="clinicalReasoning"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Brain className="h-4 w-4" />
-                          Stage 2: Clinical Reasoning
-                        </FormLabel>
-                        <FormDescription>
-                          Analyze information to identify drug-related problems and potential interventions
-                        </FormDescription>
-                        <FormControl>
-                          <textarea 
-                            className="w-full min-h-[100px] p-3 border rounded-md resize-none"
-                            placeholder="Describe your clinical reasoning process, differential diagnosis considerations, and therapeutic rationale..."
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={scenarioForm.control}
-                    name="clinicalJudgment"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4" />
-                          Stage 3: Clinical Judgment
-                        </FormLabel>
-                        <FormDescription>
-                          Make evidence-based decisions on optimal therapeutic interventions
-                        </FormDescription>
-                        <FormControl>
-                          <textarea 
-                            className="w-full min-h-[100px] p-3 border rounded-md resize-none"
-                            placeholder="Provide your clinical judgment, therapeutic recommendations, and evidence-based rationale..."
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={scenarioForm.control}
-                    name="implementationPlanning"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Target className="h-4 w-4" />
-                          Stage 4: Implementation & Monitoring
-                        </FormLabel>
-                        <FormDescription>
-                          Develop monitoring plan and patient counseling strategy
-                        </FormDescription>
-                        <FormControl>
-                          <textarea 
-                            className="w-full min-h-[100px] p-3 border rounded-md resize-none"
-                            placeholder="Outline your implementation plan, monitoring parameters, and patient education approach..."
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <FormField
-                    control={scenarioForm.control}
-                    name="soapNotes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <FileText className="h-4 w-4" />
-                          SOAP Documentation
-                        </FormLabel>
-                        <FormDescription>
-                          Document your assessment using the SOAP format
-                        </FormDescription>
-                        <FormControl>
-                          <textarea 
-                            className="w-full min-h-[120px] p-3 border rounded-md resize-none"
-                            placeholder="Subjective: Patient reports...&#10;Objective: Clinical findings...&#10;Assessment: Drug-related problems...&#10;Plan: Therapeutic interventions..."
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={scenarioForm.control}
-                    name="carePlan"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Heart className="h-4 w-4" />
-                          Patient Care Plan
-                        </FormLabel>
-                        <FormDescription>
-                          Comprehensive care plan including lifestyle recommendations
-                        </FormDescription>
-                        <FormControl>
-                          <textarea 
-                            className="w-full min-h-[100px] p-3 border rounded-md resize-none"
-                            placeholder="Develop a comprehensive care plan including medication management, lifestyle modifications, and follow-up requirements..."
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="flex justify-between pt-4">
-                  <Button type="button" variant="outline" onClick={() => setCurrentScenario(null)}>
-                    Save & Exit
-                  </Button>
-                  <Button type="submit" disabled={submitScenarioMutation.isPending}>
-                    {submitScenarioMutation.isPending ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Submit Response
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
+            <div className="space-y-6">
+              <div className="text-center p-8 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-dashed border-green-200">
+                <FileText className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-green-900 mb-2">Portfolio Documentation</h3>
+                <p className="text-green-700 mb-4">
+                  This scenario is available for portfolio documentation and competency development tracking.
+                </p>
+                <p className="text-sm text-green-600">
+                  Use the Portfolio tab to document your learning outcomes and competency progression.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  return (
+    <div className="max-w-7xl mx-auto space-y-8">
+      {/* Hero Section with Visual Elements */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 rounded-3xl">
+        <div className="grid lg:grid-cols-2 gap-8 items-center p-8 lg:p-12">
+          <div className="space-y-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Trophy className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl lg:text-5xl font-bold text-gray-900">Perform</h1>
+                <p className="text-lg text-purple-700 font-medium">Competency Assessment & Portfolio</p>
+              </div>
+            </div>
+            <p className="text-gray-600 leading-relaxed">
+              Build your professional competency portfolio with comprehensive documentation of clinical learning experiences, competency development, and evidence-based practice progression across all 7 therapeutic areas.
+            </p>
+          </div>
+          
+          <div className="lg:text-right">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-white rounded-2xl shadow-lg mb-6">
+              <FileText className="w-12 h-12 text-purple-600" />
+            </div>
+            <div className="space-y-2">
+              <div className="text-4xl font-bold text-gray-900">{displayDashboardData?.totalSessions || 0}</div>
+              <div className="text-sm text-gray-600">Portfolio Entries</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Progress Journey */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 border-t border-purple-100">
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-2xl border hover:shadow-md transition-shadow">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center text-white font-bold">
+                1
+              </div>
+              <h3 className="font-semibold text-gray-900 text-sm">Clinical Documentation</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-3">Document clinical scenarios and learning outcomes</p>
+          </div>
+          
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border hover:shadow-md transition-shadow">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center text-white font-bold">
+                2
+              </div>
+              <h3 className="font-semibold text-gray-900 text-sm">Competency Tracking</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-3">Track progress across PA1-PA4 professional activities</p>
+          </div>
+          
+          <div className="bg-gradient-to-br from-purple-50 to-violet-50 p-6 rounded-2xl border hover:shadow-md transition-shadow">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold">
+                3
+              </div>
+              <h3 className="font-semibold text-gray-900 text-sm">Portfolio Review</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-3">Compile evidence of competency development</p>
+          </div>
+          
+          <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-2xl border hover:shadow-md transition-shadow">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-600 to-amber-600 rounded-xl flex items-center justify-center text-white font-bold">
+                4
+              </div>
+              <h3 className="font-semibold text-gray-900 text-sm">Competency Validation</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-3">Receive detailed feedback and progression recommendations</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-6">{/* Content wrapper */}
+
+      {/* Main Content Tabs with Enhanced Design */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <div className="bg-white rounded-2xl p-4 shadow-sm border">
+          <TabsList className="grid w-full grid-cols-3 h-12 bg-gray-50">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white font-medium">
+              <BarChart3 className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="portfolio" className="flex items-center gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white font-medium">
+              <FileText className="h-4 w-4" />
+              Portfolio
+            </TabsTrigger>
+            <TabsTrigger value="resources" className="flex items-center gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white font-medium">
+              <BookOpen className="h-4 w-4" />
+              Resources
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="dashboard" className="space-y-6">
+          {/* Training Progress Overview */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Overall Readiness */}
+            <Card className="lg:col-span-2 border-l-4 border-l-purple-500">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-6 w-6 text-purple-600" />
+                    <CardTitle>Your Training Progress</CardTitle>
+                  </div>
+                  <Badge 
+                    className={`${
+                      displaySPCCompliance?.readyForPreRegistration 
+                        ? 'bg-green-100 text-green-800' 
+                        : displaySPCCompliance?.overallReadinessPercentage >= 60
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-orange-100 text-orange-800'
+                    }`}
+                  >
+                    {displaySPCCompliance?.overallReadinessPercentage}% Ready
+                  </Badge>
+                </div>
+                <CardDescription>
+                  Track your progress towards Singapore Pharmacy Council pre-registration requirements
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="w-full">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-medium">Overall Readiness</span>
+                      <span className="text-purple-600 font-bold">{displaySPCCompliance?.overallReadinessPercentage}%</span>
+                    </div>
+                    <Progress value={displaySPCCompliance?.overallReadinessPercentage} className="h-3" />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>Current Level</span>
+                      <span>Pre-registration Ready</span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {displaySPCCompliance?.requirementStatus && Object.entries(displaySPCCompliance.requirementStatus).map(([pa, status]: [string, any]) => (
+                      <div key={pa} className="text-center">
+                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-2 ${
+                          status.completed ? 'bg-green-100 text-green-600' : 
+                          status.progressPercentage >= 70 ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'
+                        }`}>
+                          {status.completed ? <CheckCircle className="h-8 w-8" /> : 
+                           status.progressPercentage >= 70 ? <ClockIcon className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
+                        </div>
+                        <div className="text-sm font-medium">{pa}</div>
+                        <div className="text-xs text-gray-500">{status.currentScore}% / {status.minScore}%</div>
+                        <Progress value={status.progressPercentage} className="h-1 mt-2" />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="bg-purple-50 rounded-lg p-4">
+                    <h4 className="font-medium text-purple-900 mb-2">Next Focus Areas</h4>
+                    <div className="space-y-2">
+                      {displaySPCCompliance?.nextFocusAreas?.slice(0, 3).map((area: string, index: number) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                          <span className="text-purple-800">{area}</span>
+                        </div>
+                      )) || (
+                        <p className="text-sm text-purple-700">Complete more scenarios to see focus areas!</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Session Summary */}
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600">{displayDashboardData?.totalSessions || 0}</div>
+                  <div className="text-sm text-gray-600">Total Sessions</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600">{displayDashboardData?.recentActivity?.sessionsThisWeek || 0}</div>
+                  <div className="text-sm text-gray-600">This Week</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-orange-600">{Math.round(displayDashboardData?.recentActivity?.averageScoreThisWeek || 0)}%</div>
+                  <div className="text-sm text-gray-600">Avg Score</div>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Current Focus Areas</h4>
+                  {displayRecommendations?.nextSessionObjectives?.slice(0, 2).map((objective: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 text-xs">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span className="text-gray-600">{objective}</span>
+                    </div>
+                  )) || (
+                    <p className="text-xs text-gray-500">Start practicing to see focus areas!</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Competency Visualization */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* PA1-PA4 Radar Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5 text-blue-600" />
+                  Professional Activities (PA1-PA4)
+                </CardTitle>
+                <CardDescription>
+                  Your competency across Singapore's core pharmacy activities
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart 
+                      data={displayCompetencyProgress?.competencyScores ? Object.entries(displayCompetencyProgress.competencyScores).map(([pa, data]: [string, any]) => ({
+                        pa,
+                        score: data.averageScore,
+                        target: pa === 'PA2' ? 75 : pa === 'PA1' || pa === 'PA3' ? 70 : 65
+                      })) : []}
+                    >
+                      <PolarGrid />
+                      <PolarAngleAxis dataKey="pa" tick={{ fontSize: 12, fontWeight: 'bold' }} />
+                      <PolarRadiusAxis 
+                        angle={0} 
+                        domain={[0, 100]} 
+                        tick={{ fontSize: 10 }}
+                        tickCount={6}
+                      />
+                      <Radar
+                        name="Your Score"
+                        dataKey="score"
+                        stroke="#8B5CF6"
+                        fill="#8B5CF6"
+                        fillOpacity={0.3}
+                        strokeWidth={3}
+                      />
+                      <Radar
+                        name="Target"
+                        dataKey="target"
+                        stroke="#E5E7EB"
+                        fill="transparent"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Progress Trends */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  Learning Progress Trends
+                </CardTitle>
+                <CardDescription>
+                  Track your improvement over time across all therapeutic areas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart 
+                      data={displayGapAnalysis?.progressTrends ? displayGapAnalysis.progressTrends.slice(-12) : []}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #ccc', 
+                          borderRadius: '8px' 
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="score" 
+                        stroke="#10B981" 
+                        fill="#10B981" 
+                        fillOpacity={0.2}
+                        strokeWidth={3}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Gap Analysis */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-orange-600" />
+                Competency Gap Analysis
+              </CardTitle>
+              <CardDescription>
+                Personalized recommendations to improve your weakest areas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {displayGapAnalysis?.priorityAreas && displayGapAnalysis.priorityAreas.length > 0 ? (
+                  displayGapAnalysis.priorityAreas.map((area: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
+                            area.priority === 'high' ? 'bg-red-500' :
+                            area.priority === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{area.competency}</h4>
+                            <p className="text-sm text-gray-600">{area.therapeuticArea}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-gray-900">{area.currentScore}%</div>
+                          <div className="text-xs text-gray-500">Target: {area.targetScore}%</div>
+                        </div>
+                      </div>
+                      <div className="mb-3">
+                        <Progress value={area.currentScore} className="h-2" />
+                      </div>
+                      <div className="text-sm text-gray-700 mb-3">{area.recommendation}</div>
+                      <div className="flex flex-wrap gap-2">
+                        {area.suggestedActions?.map((action: string, actionIndex: number) => (
+                          <span key={actionIndex} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">
+                            {action}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center p-8 text-gray-500">
+                    <Target className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>Complete more scenarios to see personalized gap analysis!</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="portfolio" className="space-y-6">
+          {/* Portfolio Building Dashboard */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Portfolio Overview */}
+            <Card className="lg:col-span-2 border-l-4 border-l-green-500">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-6 w-6 text-green-600" />
+                    <CardTitle>Portfolio Development</CardTitle>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">
+                    {Math.round((displayPortfolioProgress?.completionPercentage || 0))}% Complete
+                  </Badge>
+                </div>
+                <CardDescription>
+                  Track your learning evidence collection across all PA competencies
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="w-full">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-medium">Portfolio Completion</span>
+                      <span className="text-green-600 font-bold">{Math.round((displayPortfolioProgress?.completionPercentage || 0))}%</span>
+                    </div>
+                    <Progress value={displayPortfolioProgress?.completionPercentage || 0} className="h-3" />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>Getting Started</span>
+                      <span>Ready for Assessment</span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {displayPortfolioProgress?.competencyStatus && Object.entries(displayPortfolioProgress.competencyStatus).map(([pa, status]: [string, any]) => (
+                      <div key={pa} className="text-center">
+                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-2 ${
+                          status.evidenceCount >= status.requiredEvidence ? 'bg-green-100 text-green-600' : 
+                          status.evidenceCount >= Math.ceil(status.requiredEvidence * 0.7) ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'
+                        }`}>
+                          {status.evidenceCount >= status.requiredEvidence ? <CheckCircle className="h-8 w-8" /> : 
+                           status.evidenceCount >= Math.ceil(status.requiredEvidence * 0.7) ? <Clock className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
+                        </div>
+                        <div className="text-sm font-medium">{pa}</div>
+                        <div className="text-xs text-gray-500">{status.evidenceCount} / {status.requiredEvidence}</div>
+                        <Progress value={Math.min((status.evidenceCount / status.requiredEvidence) * 100, 100)} className="h-1 mt-2" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Portfolio Actions */}
+            <Card className="border-l-4 border-l-purple-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Plus className="h-5 w-5 text-purple-600" />
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button className="w-full justify-start" variant="outline">
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add Portfolio Entry
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Portfolio
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Evidence
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Review Portfolio
+                </Button>
+                <Separator />
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Priority Tasks</h4>
+                  {displayPortfolioProgress?.priorityTasks?.slice(0, 3).map((task: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 text-xs">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span className="text-gray-600">{task}</span>
+                    </div>
+                  )) || (
+                    <p className="text-xs text-gray-500">Complete scenarios to see priority tasks!</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Portfolio Evidence Timeline */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-600" />
+                Portfolio Evidence Timeline
+              </CardTitle>
+              <CardDescription>
+                Chronological view of your learning evidence and competency development
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {displayPortfolioEntries && displayPortfolioEntries.length > 0 ? (
+                  displayPortfolioEntries.slice(0, 5).map((entry: any, index: number) => (
+                    <div key={index} className="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-50">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{entry.title}</h4>
+                          <span className="text-xs text-gray-500">{entry.date}</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{entry.description}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {entry.competencies?.map((comp: string, compIndex: number) => (
+                            <span key={compIndex} className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">
+                              {comp}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center p-8 text-gray-500">
+                    <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>Start completing scenarios to build your portfolio evidence!</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="resources" className="space-y-6">
+          {/* Clinical Resources */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Singapore Guidelines */}
+            <Card className="border-l-4 border-l-red-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-red-600" />
+                  Singapore Clinical Guidelines
+                </CardTitle>
+                <CardDescription>
+                  Official MOH and SPC clinical practice guidelines
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    MOH Clinical Practice Guidelines
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    National Drug Formulary (NDF)
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    SPC Professional Guidelines
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Therapeutic Guidelines
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Learning Resources */}
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5 text-green-600" />
+                  Learning Resources
+                </CardTitle>
+                <CardDescription>
+                  Educational materials and reference resources
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start">
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    PA Competency Framework
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Users className="h-4 w-4 mr-2" />
+                    Case Study Library
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Target className="h-4 w-4 mr-2" />
+                    Assessment Criteria
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Portfolio Templates
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Knowledge Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-purple-600" />
+                Knowledge Base Status
+              </CardTitle>
+              <CardDescription>
+                Current status of Singapore healthcare knowledge integration
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{knowledgeStatus?.mohGuidelines || 0}</div>
+                  <div className="text-sm text-gray-600">MOH Guidelines</div>
+                  <div className="text-xs text-green-600 mt-1">Active</div>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{knowledgeStatus?.ndfEntries || 0}</div>
+                  <div className="text-sm text-gray-600">NDF Entries</div>
+                  <div className="text-xs text-blue-600 mt-1">Updated</div>
+                </div>
+                <div className="text-center p-4 border rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600">{knowledgeStatus?.spcResources || 0}</div>
+                  <div className="text-sm text-gray-600">SPC Resources</div>
+                  <div className="text-xs text-purple-600 mt-1">Current</div>
+                </div>
+              </div>
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  Knowledge base last updated: {knowledgeStatus?.lastUpdated || 'Recently'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      </div>{/* End content wrapper */}
+    </div>
+  );
+}
+
+function PerformAssessment() {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Hero Section with Visual Elements */}
@@ -786,245 +1249,211 @@ export default function PerformPage() {
 
       <div className="px-6">{/* Content wrapper */}
 
-      {/* Current Assessment Progress */}
-      {selectedAssessment && (
-        <Card className="border-blue-200 dark:border-blue-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-500" />
-              Active Assessment: {selectedAssessment.assessmentType.replace('_', ' ').toUpperCase()}
-            </CardTitle>
-            <CardDescription>
-              Duration: {formatDuration(selectedAssessment.actualDurationMinutes)} / {formatDuration(selectedAssessment.timeLimitMinutes)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Progress value={selectedAssessment.scenarios ? 
-                (selectedAssessment.scenarios.filter(s => s.completedAt).length / selectedAssessment.scenarios.length) * 100 : 0} 
-              />
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => completeAssessmentMutation.mutate(selectedAssessment.id)}
-                  disabled={!selectedAssessment.scenarios?.every(s => s.completedAt)}
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Complete Assessment
-                </Button>
-                <Button variant="outline" onClick={() => {
-                  setSelectedAssessment(null);
-                  setCurrentScenario(null);
-                  scenarioForm.reset();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}>
-                  <Pause className="h-4 w-4 mr-2" />
-                  Pause Assessment
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Main Content Tabs with Enhanced Design */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <div className="bg-white rounded-2xl p-4 shadow-sm border">
+          <TabsList className="grid w-full grid-cols-3 h-12 bg-gray-50">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white font-medium">
+              <BarChart3 className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="portfolio" className="flex items-center gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white font-medium">
+              <FileText className="h-4 w-4" />
+              Portfolio
+            </TabsTrigger>
+            <TabsTrigger value="resources" className="flex items-center gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white font-medium">
+              <BookOpen className="h-4 w-4" />
+              Resources
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-      {/* Scenario Interface */}
-      {currentScenario && (
-        <Card className="border-green-200 dark:border-green-800">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Stethoscope className="h-5 w-5 text-green-500" />
-                  Clinical Scenario {currentScenario.scenarioOrder}
-                </CardTitle>
+        <TabsContent value="dashboard" className="space-y-6">
+          {/* Training Progress Overview */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Overall Readiness */}
+            <Card className="lg:col-span-2 border-l-4 border-l-purple-500">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-6 w-6 text-purple-600" />
+                    <CardTitle>Your Training Progress</CardTitle>
+                  </div>
+                  <Badge 
+                    className={`${
+                      displaySPCCompliance?.readyForPreRegistration 
+                        ? 'bg-green-100 text-green-800' 
+                        : displaySPCCompliance?.overallReadinessPercentage >= 60
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-orange-100 text-orange-800'
+                    }`}
+                  >
+                    {displaySPCCompliance?.overallReadinessPercentage}% Ready
+                  </Badge>
+                </div>
                 <CardDescription>
-                  {currentScenario.therapeuticArea} • {currentScenario.practiceArea} • {currentScenario.complexityLevel}
+                  Track your progress towards Singapore Pharmacy Council pre-registration requirements
                 </CardDescription>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  setCurrentScenario(null);
-                  scenarioForm.reset();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Exit Simulation
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Scenario Details */}
-              <div className="grid gap-4">
-                <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Patient Background</h4>
-                  <p className="text-gray-700 dark:text-gray-300">{currentScenario.patientBackground}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Clinical Presentation</h4>
-                  <p className="text-gray-700 dark:text-gray-300">{currentScenario.clinicalPresentation}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Medication History</h4>
-                  <p className="text-gray-700 dark:text-gray-300">{currentScenario.medicationHistory}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Assessment Objectives</h4>
-                  <p className="text-gray-700 dark:text-gray-300">{currentScenario.assessmentObjectives}</p>
-                </div>
-              </div>
-
-              {/* Response Form */}
-              <Form {...scenarioForm}>
-                <form onSubmit={scenarioForm.handleSubmit(handleSubmitScenario)} className="space-y-6">
-                  <div className="grid gap-4">
-                    <FormField
-                      control={scenarioForm.control}
-                      name="informationGathering"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>1. Information Gathering</FormLabel>
-                          <FormDescription>
-                            Describe your approach to gathering additional patient information
-                          </FormDescription>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="What additional information would you gather? What questions would you ask the patient?"
-                              className="min-h-[100px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={scenarioForm.control}
-                      name="clinicalReasoning"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>2. Clinical Reasoning</FormLabel>
-                          <FormDescription>
-                            Explain your clinical reasoning process and differential considerations
-                          </FormDescription>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="What is your clinical reasoning? What factors are you considering?"
-                              className="min-h-[100px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={scenarioForm.control}
-                      name="clinicalJudgment"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>3. Clinical Judgment</FormLabel>
-                          <FormDescription>
-                            Describe your clinical judgment and therapeutic recommendations
-                          </FormDescription>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="What is your clinical judgment? What are your therapeutic recommendations?"
-                              className="min-h-[100px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={scenarioForm.control}
-                      name="implementationPlanning"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>4. Implementation & Monitoring</FormLabel>
-                          <FormDescription>
-                            Detail your implementation plan and monitoring strategy
-                          </FormDescription>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="How would you implement your recommendations? What monitoring would you establish?"
-                              className="min-h-[100px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={scenarioForm.control}
-                      name="soapNotes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>SOAP Notes (Optional)</FormLabel>
-                          <FormDescription>
-                            Provide professional SOAP documentation
-                          </FormDescription>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Subjective, Objective, Assessment, Plan..."
-                              className="min-h-[120px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={scenarioForm.control}
-                      name="carePlan"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Comprehensive Care Plan (Optional)</FormLabel>
-                          <FormDescription>
-                            Develop a comprehensive pharmaceutical care plan
-                          </FormDescription>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Detailed care plan including goals, interventions, and outcomes..."
-                              className="min-h-[120px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="w-full">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-medium">Overall Readiness</span>
+                      <span className="text-purple-600 font-bold">{displaySPCCompliance?.overallReadinessPercentage}%</span>
+                    </div>
+                    <Progress value={displaySPCCompliance?.overallReadinessPercentage} className="h-3" />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>Current Level</span>
+                      <span>Pre-registration Ready</span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {displaySPCCompliance?.requirementStatus && Object.entries(displaySPCCompliance.requirementStatus).map(([pa, status]: [string, any]) => (
+                      <div key={pa} className="text-center">
+                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-2 ${
+                          status.completed ? 'bg-green-100 text-green-600' : 
+                          status.progressPercentage >= 70 ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'
+                        }`}>
+                          {status.completed ? <CheckCircle className="h-8 w-8" /> : 
+                           status.progressPercentage >= 70 ? <ClockIcon className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
+                        </div>
+                        <div className="text-sm font-medium">{pa}</div>
+                        <div className="text-xs text-gray-500">{status.currentScore}% / {status.minScore}%</div>
+                        <Progress value={status.progressPercentage} className="h-1 mt-2" />
+                      </div>
+                    ))}
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    disabled={submitScenarioMutation.isPending}
-                    className="w-full"
-                  >
-                    {submitScenarioMutation.isPending ? (
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                    )}
-                    Submit Scenario Response
-                  </Button>
-                </form>
-              </Form>
+                  <div className="bg-purple-50 rounded-lg p-4">
+                    <h4 className="font-medium text-purple-900 mb-2">Next Focus Areas</h4>
+                    <div className="space-y-2">
+                      {displaySPCCompliance?.nextFocusAreas?.slice(0, 3).map((area: string, index: number) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                          <span className="text-purple-800">{area}</span>
+                        </div>
+                      )) || (
+                        <p className="text-sm text-purple-700">Complete more scenarios to see focus areas!</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* Assessment Evaluation Results */}
-              {currentScenario.completedAt && currentScenario.feedback && (
+            {/* Session Summary */}
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600">{displayDashboardData?.totalSessions || 0}</div>
+                  <div className="text-sm text-gray-600">Total Sessions</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600">{displayDashboardData?.recentActivity?.sessionsThisWeek || 0}</div>
+                  <div className="text-sm text-gray-600">This Week</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-orange-600">{Math.round(displayDashboardData?.recentActivity?.averageScoreThisWeek || 0)}%</div>
+                  <div className="text-sm text-gray-600">Avg Score</div>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Current Focus Areas</h4>
+                  {displayRecommendations?.nextSessionObjectives?.slice(0, 2).map((objective: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 text-xs">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span className="text-gray-600">{objective}</span>
+                    </div>
+                  )) || (
+                    <p className="text-xs text-gray-500">Start practicing to see focus areas!</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Competency Visualization */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* PA1-PA4 Radar Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5 text-blue-600" />
+                  Professional Activities (PA1-PA4)
+                </CardTitle>
+                <CardDescription>
+                  Your competency across Singapore's core pharmacy activities
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart 
+                      data={displayCompetencyProgress?.competencyScores ? Object.entries(displayCompetencyProgress.competencyScores).map(([pa, data]: [string, any]) => ({
+                        pa,
+                        score: data.averageScore,
+                        target: pa === 'PA2' ? 75 : pa === 'PA1' || pa === 'PA3' ? 70 : 65
+                      })) : []}
+                    >
+                      <PolarGrid />
+                      <PolarAngleAxis dataKey="pa" tick={{ fontSize: 12, fontWeight: 'bold' }} />
+                      <PolarRadiusAxis 
+                        angle={0} 
+                        domain={[0, 100]} 
+                        tick={{ fontSize: 10 }}
+                        tickCount={6}
+                      />
+                      <Radar
+                        name="Your Score"
+                        dataKey="score"
+                        stroke="#8B5CF6"
+                        fill="#8B5CF6"
+                        fillOpacity={0.3}
+                        strokeWidth={3}
+                      />
+                      <Radar
+                        name="Target"
+                        dataKey="target"
+                        stroke="#E5E7EB"
+                        fill="transparent"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="portfolio" className="space-y-6">
+          <div className="text-center py-12 text-gray-500">
+            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Portfolio features coming soon...</p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="resources" className="space-y-6">
+          <div className="text-center py-12 text-gray-500">
+            <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Assessment resources coming soon...</p>
+          </div>
+        </TabsContent>
+      </Tabs>
+      
+      </div>{/* End content wrapper */}
+    </div>
+  );
+}
                 <div className="mt-8 space-y-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Award className="h-5 w-5 text-green-500" />
