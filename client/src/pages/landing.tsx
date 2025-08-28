@@ -183,7 +183,7 @@ export default function LandingPage() {
             </h2>
 
             <p className="text-xl text-gray-600 leading-relaxed mb-6">
-              Singapore's premier pre-registration training platform combining clinical excellence with cutting-edge technology.
+              Comprehensive pre-registration training platform combining clinical excellence with cutting-edge technology.
             </p>
             
             <div className="flex flex-wrap gap-4 mb-8">
