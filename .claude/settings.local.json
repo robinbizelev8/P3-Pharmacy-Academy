@@ -4,7 +4,8 @@
       "Bash(pkill:*)",
       "Bash(npm run dev:*)",
       "Bash(npx drizzle-kit:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
