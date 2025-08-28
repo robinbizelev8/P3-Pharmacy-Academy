@@ -25,6 +25,7 @@ import {
   USER_ROLES
 } from "@shared/schema";
 import { z } from "zod";
+import { sql } from "drizzle-orm";
 import { webSearchService } from "./services/web-search.js";
 
 // Authentic clinical resource management for medical accuracy
@@ -106,35 +107,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Knowledge Sources Status API - Public endpoint for landing page (using fallback data)
   app.get("/api/knowledge/sources-status", async (req, res) => {
     try {
-      const knowledgeStatus = await storage.getKnowledgeSourcesStatus();
-      res.json(knowledgeStatus);
+      // Get actual knowledge base data counts
+      const knowledgeCacheQuery = `
+        SELECT context_type, COUNT(*) as cache_count
+        FROM ai_knowledge_cache
+        WHERE is_active = true
+        GROUP BY context_type
+      `;
+      
+      const alertsQuery = `
+        SELECT COUNT(*) as alert_count
+        FROM drug_safety_alerts
+      `;
+      
+      const resourcesQuery = `
+        SELECT COUNT(*) as resource_count
+        FROM learning_resources
+      `;
+      
+      const [cacheResult, alertsResult, resourcesResult] = await Promise.all([
+        storage.db.execute(sql.raw(knowledgeCacheQuery)),
+        storage.db.execute(sql.raw(alertsQuery)),
+        storage.db.execute(sql.raw(resourcesQuery))
+      ]);
+      
+      const spcDataPoints = cacheResult.rows.reduce((sum: number, row: any) => sum + parseInt(row.cache_count), 0);
+      const hsaDataPoints = parseInt(alertsResult.rows[0]?.alert_count || 0);
+      const resourceDataPoints = parseInt(resourcesResult.rows[0]?.resource_count || 0);
+      
+      const sources = [
+        {
+          id: "spc-standards",
+          sourceType: "official",
+          sourceName: "Singapore Pharmacy Council",
+          description: "Day-One Pharmacist Blueprint, competency standards, assessment frameworks",
+          isActive: true,
+          dataPoints: spcDataPoints,
+          lastSyncAt: new Date(),
+          syncFrequency: "manual",
+          freshness: "excellent"
+        },
+        {
+          id: "hsa-alerts",
+          sourceType: "safety",
+          sourceName: "Health Sciences Authority",
+          description: "Drug safety alerts, adverse reactions, regulatory updates",
+          isActive: true,
+          dataPoints: hsaDataPoints,
+          lastSyncAt: new Date(),
+          syncFrequency: "daily",
+          freshness: "fresh"
+        },
+        {
+          id: "clinical-resources",
+          sourceType: "educational",
+          sourceName: "Clinical Resources",
+          description: "Therapeutic guidelines, practice protocols, educational materials",
+          isActive: true,
+          dataPoints: resourceDataPoints,
+          lastSyncAt: new Date(),
+          syncFrequency: "weekly",
+          freshness: "good"
+        }
+      ];
+      
+      const totalDataPoints = sources.reduce((sum, source) => sum + source.dataPoints, 0);
+      
+      res.json({
+        sources,
+        totalDataPoints,
+        lastGlobalUpdate: new Date(),
+        overallFreshness: "excellent",
+        summary: {
+          activeAlerts: hsaDataPoints,
+          competencyStandards: spcDataPoints,
+          clinicalProtocols: resourceDataPoints,
+          knowledgeCategories: cacheResult.rows.length
+        }
+      });
     } catch (error) {
       console.error("Error fetching knowledge sources status:", error);
       
       // Return fallback data instead of error
       res.json({
-        sources: [
-          {
-            id: "fallback-hsa",
-            sourceType: "hsa",
-            sourceName: "Health Sciences Authority",
-            isActive: true,
-            lastSyncAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            syncFrequency: "daily",
-            dataCount: 3,
-            freshness: "fresh",
-            lastUpdateHours: 2,
-            nextUpdateEstimate: "22 hours"
-          }
-        ],
-        totalDataPoints: 3,
-        lastGlobalUpdate: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        overallFreshness: "excellent",
+        sources: [],
+        totalDataPoints: 0,
+        lastGlobalUpdate: new Date(),
+        overallFreshness: "unknown",
         summary: {
-          activeAlerts: 3,
-          currentGuidelines: 5,
-          formularyDrugs: 1247,
-          clinicalProtocols: 12
+          activeAlerts: 0,
+          competencyStandards: 0,
+          clinicalProtocols: 0,
+          knowledgeCategories: 0
         }
       });
     }

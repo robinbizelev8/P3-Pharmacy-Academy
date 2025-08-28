@@ -63,7 +63,7 @@ export function StakeholderOutcomesSection() {
           </div>
           <div className="flex items-center space-x-2 text-gray-600 text-sm">
             <Users className="w-4 h-4" />
-            <span>{data ? formatNumber(data.totalDataPoints) : '500+'} pharmacists impacted</span>
+            <span>{data?.totalDataPoints ? formatNumber(data.totalDataPoints) : '500+'} pharmacists impacted</span>
           </div>
           <div className="flex items-center space-x-2 text-gray-600 text-sm">
             <Building2 className="w-4 h-4" />

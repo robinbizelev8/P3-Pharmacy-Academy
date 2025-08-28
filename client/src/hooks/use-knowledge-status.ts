@@ -248,7 +248,10 @@ export function getStatusDotColor(freshness: 'fresh' | 'stale' | 'outdated'): st
 /**
  * Helper function to format large numbers
  */
-export function formatNumber(num: number): string {
+export function formatNumber(num: number | undefined | null): string {
+  if (!num || typeof num !== 'number') {
+    return '0';
+  }
   if (num >= 1000) {
     return (num / 1000).toFixed(1) + 'K';
   }
