@@ -88,7 +88,7 @@ export function PharmacyNavigation() {
           {/* Logo and Brand */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <img src={logoImage} alt="P³ Pharmacy Academy" className="w-16 h-16 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105" />
+              <img src={logoImage} alt="P³ Pharmacy Academy" className="w-20 h-20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105" />
             </Link>
           </div>
 

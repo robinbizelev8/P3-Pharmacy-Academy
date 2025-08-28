@@ -57,12 +57,9 @@ export default function LoginPage() {
               className="mx-auto h-32 w-32 rounded-2xl shadow-lg"
             />
             <div className="mt-6">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 P³ Pharmacy Academy
               </h1>
-              <div className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800">
-                🇸🇬 Singapore Pre-registration Training Program
-              </div>
             </div>
           </div>
 
