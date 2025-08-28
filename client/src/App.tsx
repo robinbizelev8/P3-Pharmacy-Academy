@@ -12,6 +12,7 @@ import Prepare from "@/pages/prepare";
 import Perform from "@/pages/perform";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import StudentDashboard from "@/pages/student-dashboard";
 import SupervisorDashboard from "@/pages/supervisor/dashboard";
 import Profile from "@/pages/profile";
 import ForgotPassword from "@/pages/forgot-password";
@@ -34,6 +35,7 @@ function Router() {
           <Route path="/forgot-password" component={ForgotPassword} />
           <Route path="/reset-password" component={ResetPassword} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/student/dashboard" component={StudentDashboard} />
           <Route path="/supervisor/dashboard" component={SupervisorDashboard} />
           <Route path="/profile" component={Profile} />
           <Route path="/prepare" component={Prepare} />

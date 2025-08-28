@@ -1020,6 +1020,187 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // ============================================================================
+  // STUDENT DASHBOARD PROGRESS TRACKING API - Singapore Pharmacy Pre-Registration Training
+  // ============================================================================
+
+  // Enhanced student dashboard with comprehensive progress tracking
+  app.get("/api/student/dashboard", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get all user sessions with progress by module
+      const allSessions = await storage.getUserPharmacySessions(userId);
+      
+      // Calculate module progress based on Singapore pharmacy competency framework
+      const moduleProgress = {
+        prepare: await calculateModuleProgress(userId, 'prepare', storage),
+        practice: await calculateModuleProgress(userId, 'practice', storage),
+        perform: await calculateModuleProgress(userId, 'perform', storage)
+      };
+      
+      // Get uncompleted sessions for resume functionality
+      const uncompletedSessions = allSessions
+        .filter(session => session.status === 'in_progress')
+        .slice(0, 5) // Limit to 5 most recent
+        .map(session => ({
+          id: session.id,
+          title: session.scenario.title,
+          module: session.module,
+          therapeuticArea: session.therapeuticArea,
+          practiceArea: session.practiceArea,
+          progress: Math.round((session.currentStage / session.totalStages) * 100),
+          lastAccessed: session.startedAt,
+          professionalActivity: session.scenario.professionalActivity
+        }));
+      
+      // Get competency progression by PA1-PA4
+      const competencyProgression = await getCompetencyProgression(userId, storage);
+      
+      // Get recent activity timeline
+      const recentActivity = await getRecentActivityTimeline(userId, storage);
+      
+      // Calculate Singapore pharmacy competency metrics
+      const competencyMetrics = await calculateCompetencyMetrics(userId, storage);
+      
+      const dashboardData = {
+        user: {
+          id: req.user.id,
+          firstName: req.user.firstName,
+          lastName: req.user.lastName,
+          email: req.user.email,
+          institution: req.user.institution
+        },
+        moduleProgress,
+        uncompletedSessions,
+        competencyProgression,
+        recentActivity,
+        competencyMetrics,
+        summary: {
+          totalSessionsCompleted: allSessions.filter(s => s.status === 'completed').length,
+          totalSessionsInProgress: allSessions.filter(s => s.status === 'in_progress').length,
+          averageScore: calculateAverageScore(allSessions),
+          portfolioEvidence: await getPortfolioEvidenceCount(userId, storage)
+        }
+      };
+
+      res.json(dashboardData);
+    } catch (error) {
+      console.error("Error fetching student dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard data" });
+    }
+  });
+
+  // Get user's progress by specific module
+  app.get("/api/student/progress/:module", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const module = req.params.module;
+      
+      if (!['prepare', 'practice', 'perform'].includes(module)) {
+        return res.status(400).json({ message: "Invalid module. Must be 'prepare', 'practice', or 'perform'" });
+      }
+      
+      const moduleProgress = await getDetailedModuleProgress(userId, module, storage);
+      res.json(moduleProgress);
+    } catch (error) {
+      console.error("Error fetching module progress:", error);
+      res.status(500).json({ message: "Failed to fetch module progress" });
+    }
+  });
+
+  // Get all uncompleted sessions for resume functionality
+  app.get("/api/student/progress/uncompleted", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const uncompletedSessions = await storage.getUserPharmacySessions(userId);
+      
+      const resumableSessions = uncompletedSessions
+        .filter(session => session.status === 'in_progress')
+        .map(session => ({
+          id: session.id,
+          title: session.scenario.title,
+          module: session.module,
+          therapeuticArea: session.therapeuticArea,
+          practiceArea: session.practiceArea,
+          professionalActivity: session.scenario.professionalActivity,
+          progress: Math.round((session.currentStage / session.totalStages) * 100),
+          lastAccessed: session.startedAt,
+          estimatedTimeRemaining: Math.max(0, (session.totalStages - session.currentStage) * 3), // 3 min per stage
+          supervisionLevel: session.scenario.supervisionLevel
+        }))
+        .sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime());
+      
+      res.json(resumableSessions);
+    } catch (error) {
+      console.error("Error fetching uncompleted sessions:", error);
+      res.status(500).json({ message: "Failed to fetch uncompleted sessions" });
+    }
+  });
+
+  // Get competency progression across PA1-PA4 professional activities
+  app.get("/api/student/progress/competencies", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const competencyProgression = await getDetailedCompetencyProgression(userId, storage);
+      res.json(competencyProgression);
+    } catch (error) {
+      console.error("Error fetching competency progression:", error);
+      res.status(500).json({ message: "Failed to fetch competency progression" });
+    }
+  });
+
+  // Get chronological activity timeline
+  app.get("/api/student/progress/timeline", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { limit = 20 } = req.query;
+      
+      const timeline = await getDetailedActivityTimeline(userId, storage, parseInt(limit as string));
+      res.json(timeline);
+    } catch (error) {
+      console.error("Error fetching activity timeline:", error);
+      res.status(500).json({ message: "Failed to fetch activity timeline" });
+    }
+  });
+
+  // Mark session completion and update progress
+  app.post("/api/student/progress/complete-session/:sessionId", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const sessionId = req.params.sessionId;
+      const { finalScores, soapDocumentation, prescriptionCounselingRecord, pharmaceuticalCarePlan } = req.body;
+      
+      // Verify session ownership
+      const session = await storage.getPharmacySession(sessionId);
+      if (!session || session.userId !== userId) {
+        return res.status(404).json({ message: "Session not found" });
+      }
+      
+      // Update session with completion data
+      const completedSession = await storage.updatePharmacySession(sessionId, {
+        status: 'completed',
+        completedAt: new Date(),
+        ...finalScores,
+        soapDocumentation,
+        prescriptionCounselingRecord,
+        pharmaceuticalCarePlan
+      });
+      
+      // Update overall progress metrics
+      const updatedProgress = await calculateModuleProgress(userId, session.module, storage);
+      
+      res.json({
+        session: completedSession,
+        moduleProgress: updatedProgress,
+        message: "Session completed successfully"
+      });
+    } catch (error) {
+      console.error("Error completing session:", error);
+      res.status(500).json({ message: "Failed to complete session" });
+    }
+  });
+
+  // ============================================================================
   // SUPERVISOR ROUTES - Multi-Role Authentication System
   // ============================================================================
 
@@ -1149,30 +1330,6 @@ This format helps students learn from expert examples before progressing. Focus 
   // STUDENT/TRAINEE ROUTES - Enhanced with Supervisor Integration
   // ============================================================================
 
-  // Get student dashboard with supervisor assignments
-  app.get("/api/student/dashboard", requireStudent, async (req: any, res) => {
-    try {
-      const studentId = req.user.id;
-      
-      const dashboardData = {
-        progress: {
-          prepare: { completed: 0, total: 0 },
-          practice: { completed: 0, total: 0 },
-          perform: { completed: 0, total: 0 }
-        },
-        supervisor: null, // Current supervisor info
-        assignedScenarios: [], // Supervisor-assigned scenarios
-        recentFeedback: [], // Latest supervisor feedback
-        nextMilestones: []
-      };
-
-      res.json(dashboardData);
-    } catch (error) {
-      console.error("Error fetching student dashboard:", error);
-      res.status(500).json({ message: "Failed to fetch dashboard data" });
-    }
-  });
-
   // Get assigned scenarios from supervisor
   app.get("/api/student/assigned-scenarios", requireStudent, async (req: any, res) => {
     try {
@@ -1250,4 +1407,322 @@ This format helps students learn from expert examples before progressing. Focus 
 
   const server = createServer(app);
   return server;
+}
+
+// ============================================================================
+// HELPER FUNCTIONS FOR SINGAPORE PHARMACY COMPETENCY PROGRESS TRACKING
+// ============================================================================
+
+// Calculate module progress based on Singapore pharmacy competency framework
+async function calculateModuleProgress(userId: string, module: string, storage: any) {
+  const sessions = await storage.getUserPharmacySessions(userId);
+  const moduleSessions = sessions.filter((s: any) => s.module === module);
+  
+  if (moduleSessions.length === 0) {
+    return {
+      completedSessions: 0,
+      totalSessions: 0,
+      averageScore: 0,
+      competencyLevel: 1,
+      progressPercentage: 0,
+      strengths: [],
+      improvementAreas: []
+    };
+  }
+  
+  const completedSessions = moduleSessions.filter((s: any) => s.status === 'completed');
+  const totalSessions = moduleSessions.length;
+  
+  // Calculate weighted average score based on Singapore pharmacy standards
+  let totalWeightedScore = 0;
+  let totalWeight = 0;
+  
+  completedSessions.forEach((session: any) => {
+    const supervisionWeight = parseFloat(session.scenario.supervisionLevel) || 1;
+    const sessionScore = parseFloat(session.overallScore) || 0;
+    totalWeightedScore += sessionScore * supervisionWeight;
+    totalWeight += supervisionWeight;
+  });
+  
+  const averageScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+  const progressPercentage = Math.round((completedSessions.length / totalSessions) * 100);
+  
+  // Determine competency level based on PA1-PA4 framework
+  const competencyLevel = calculateCompetencyLevel(averageScore, completedSessions.length);
+  
+  return {
+    completedSessions: completedSessions.length,
+    totalSessions,
+    averageScore: Math.round(averageScore),
+    competencyLevel,
+    progressPercentage,
+    strengths: extractStrengths(completedSessions),
+    improvementAreas: extractImprovementAreas(completedSessions)
+  };
+}
+
+// Get detailed module progress with PA competency breakdown
+async function getDetailedModuleProgress(userId: string, module: string, storage: any) {
+  const moduleProgress = await calculateModuleProgress(userId, module, storage);
+  const sessions = await storage.getUserPharmacySessions(userId);
+  const moduleSessions = sessions.filter((s: any) => s.module === module);
+  
+  // Group by therapeutic area for detailed analysis
+  const therapeuticAreaProgress = {};
+  const practiceAreaProgress = {};
+  
+  moduleSessions.forEach((session: any) => {
+    const ta = session.therapeuticArea;
+    const pa = session.practiceArea;
+    
+    if (!therapeuticAreaProgress[ta]) {
+      therapeuticAreaProgress[ta] = { completed: 0, total: 0, averageScore: 0 };
+    }
+    if (!practiceAreaProgress[pa]) {
+      practiceAreaProgress[pa] = { completed: 0, total: 0, averageScore: 0 };
+    }
+    
+    therapeuticAreaProgress[ta].total++;
+    practiceAreaProgress[pa].total++;
+    
+    if (session.status === 'completed') {
+      therapeuticAreaProgress[ta].completed++;
+      practiceAreaProgress[pa].completed++;
+      therapeuticAreaProgress[ta].averageScore += parseFloat(session.overallScore) || 0;
+      practiceAreaProgress[pa].averageScore += parseFloat(session.overallScore) || 0;
+    }
+  });
+  
+  // Calculate averages
+  Object.keys(therapeuticAreaProgress).forEach(key => {
+    const ta = therapeuticAreaProgress[key];
+    ta.averageScore = ta.completed > 0 ? Math.round(ta.averageScore / ta.completed) : 0;
+  });
+  
+  Object.keys(practiceAreaProgress).forEach(key => {
+    const pa = practiceAreaProgress[key];
+    pa.averageScore = pa.completed > 0 ? Math.round(pa.averageScore / pa.completed) : 0;
+  });
+  
+  return {
+    ...moduleProgress,
+    therapeuticAreaProgress,
+    practiceAreaProgress,
+    recentSessions: moduleSessions
+      .filter((s: any) => s.status === 'completed')
+      .sort((a: any, b: any) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
+      .slice(0, 5)
+  };
+}
+
+// Get competency progression across PA1-PA4 professional activities
+async function getCompetencyProgression(userId: string, storage: any) {
+  const sessions = await storage.getUserPharmacySessions(userId);
+  const completedSessions = sessions.filter((s: any) => s.status === 'completed');
+  
+  const progressionData = {
+    PA1: { sessions: 0, averageScore: 0, competencyLevel: 1 },
+    PA2: { sessions: 0, averageScore: 0, competencyLevel: 1 },
+    PA3: { sessions: 0, averageScore: 0, competencyLevel: 1 },
+    PA4: { sessions: 0, averageScore: 0, competencyLevel: 1 }
+  };
+  
+  completedSessions.forEach((session: any) => {
+    const pa = session.scenario.professionalActivity;
+    if (progressionData[pa]) {
+      progressionData[pa].sessions++;
+      progressionData[pa].averageScore += parseFloat(session.overallScore) || 0;
+    }
+  });
+  
+  // Calculate averages and competency levels
+  Object.keys(progressionData).forEach(key => {
+    const pa = progressionData[key];
+    if (pa.sessions > 0) {
+      pa.averageScore = Math.round(pa.averageScore / pa.sessions);
+      pa.competencyLevel = calculateCompetencyLevel(pa.averageScore, pa.sessions);
+    }
+  });
+  
+  return progressionData;
+}
+
+// Get detailed competency progression with time-based analysis
+async function getDetailedCompetencyProgression(userId: string, storage: any) {
+  const progression = await getCompetencyProgression(userId, storage);
+  const sessions = await storage.getUserPharmacySessions(userId);
+  
+  // Add timeline data for progression tracking
+  const timelineData = sessions
+    .filter((s: any) => s.status === 'completed')
+    .sort((a: any, b: any) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime())
+    .map((session: any) => ({
+      date: session.completedAt,
+      professionalActivity: session.scenario.professionalActivity,
+      score: parseFloat(session.overallScore) || 0,
+      therapeuticArea: session.therapeuticArea,
+      supervisionLevel: session.scenario.supervisionLevel
+    }));
+  
+  return {
+    ...progression,
+    timeline: timelineData,
+    overallTrend: calculateProgressionTrend(timelineData)
+  };
+}
+
+// Get recent activity timeline
+async function getRecentActivityTimeline(userId: string, storage: any) {
+  const sessions = await storage.getUserPharmacySessions(userId);
+  const assessments = await storage.getUserCompetencyAssessments(userId);
+  
+  const activities = [
+    ...sessions.map((s: any) => ({
+      id: s.id,
+      type: 'session',
+      title: s.scenario.title,
+      module: s.module,
+      status: s.status,
+      date: s.status === 'completed' ? s.completedAt : s.startedAt,
+      score: s.overallScore,
+      therapeuticArea: s.therapeuticArea
+    })),
+    ...assessments.map((a: any) => ({
+      id: a.id,
+      type: 'assessment',
+      title: `${a.professionalActivity} Assessment`,
+      module: 'prepare',
+      status: a.competencyScore ? 'completed' : 'in_progress',
+      date: a.createdAt,
+      score: a.competencyScore,
+      therapeuticArea: a.therapeuticArea
+    }))
+  ];
+  
+  return activities
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 10);
+}
+
+// Get detailed activity timeline with filters
+async function getDetailedActivityTimeline(userId: string, storage: any, limit = 20) {
+  const timeline = await getRecentActivityTimeline(userId, storage);
+  return timeline.slice(0, limit);
+}
+
+// Calculate Singapore pharmacy competency metrics
+async function calculateCompetencyMetrics(userId: string, storage: any) {
+  const sessions = await storage.getUserPharmacySessions(userId);
+  const completedSessions = sessions.filter((s: any) => s.status === 'completed');
+  
+  if (completedSessions.length === 0) {
+    return {
+      overallCompetency: 0,
+      clinicalKnowledge: 0,
+      therapeuticReasoning: 0,
+      patientCommunication: 0,
+      professionalDevelopment: 0,
+      supervisionReadiness: 1
+    };
+  }
+  
+  let totalClinical = 0, totalTherapeutic = 0, totalCommunication = 0, totalProfessional = 0;
+  
+  completedSessions.forEach((session: any) => {
+    totalClinical += parseFloat(session.clinicalKnowledgeScore) || 0;
+    totalTherapeutic += parseFloat(session.therapeuticReasoningScore) || 0;
+    totalCommunication += parseFloat(session.communicationScore) || 0;
+    totalProfessional += parseFloat(session.professionalDevelopmentScore) || 0;
+  });
+  
+  const count = completedSessions.length;
+  const avgClinical = totalClinical / count;
+  const avgTherapeutic = totalTherapeutic / count;
+  const avgCommunication = totalCommunication / count;
+  const avgProfessional = totalProfessional / count;
+  const overallCompetency = (avgClinical + avgTherapeutic + avgCommunication + avgProfessional) / 4;
+  
+  return {
+    overallCompetency: Math.round(overallCompetency),
+    clinicalKnowledge: Math.round(avgClinical),
+    therapeuticReasoning: Math.round(avgTherapeutic),
+    patientCommunication: Math.round(avgCommunication),
+    professionalDevelopment: Math.round(avgProfessional),
+    supervisionReadiness: calculateSupervisionReadiness(overallCompetency, count)
+  };
+}
+
+// Calculate average score from sessions
+function calculateAverageScore(sessions: any[]) {
+  const completedSessions = sessions.filter(s => s.status === 'completed' && s.overallScore);
+  if (completedSessions.length === 0) return 0;
+  
+  const total = completedSessions.reduce((sum, session) => sum + parseFloat(session.overallScore), 0);
+  return Math.round(total / completedSessions.length);
+}
+
+// Get portfolio evidence count
+async function getPortfolioEvidenceCount(userId: string, storage: any) {
+  try {
+    const portfolio = await storage.getUserPerformPortfolio(userId);
+    return portfolio ? (portfolio.evidenceItems?.length || 0) : 0;
+  } catch (error) {
+    return 0;
+  }
+}
+
+// Helper functions for competency calculations
+function calculateCompetencyLevel(averageScore: number, sessionCount: number): number {
+  if (sessionCount < 3) return 1;
+  if (averageScore >= 85 && sessionCount >= 10) return 5;
+  if (averageScore >= 75 && sessionCount >= 8) return 4;
+  if (averageScore >= 65 && sessionCount >= 5) return 3;
+  if (averageScore >= 55) return 2;
+  return 1;
+}
+
+function calculateSupervisionReadiness(overallScore: number, sessionCount: number): number {
+  const baseLevel = Math.min(5, Math.max(1, Math.ceil(overallScore / 20)));
+  const experienceBonus = sessionCount >= 10 ? 1 : sessionCount >= 5 ? 0.5 : 0;
+  return Math.min(5, baseLevel + experienceBonus);
+}
+
+function extractStrengths(sessions: any[]): string[] {
+  const strengths = [];
+  const avgClinical = sessions.reduce((sum, s) => sum + (parseFloat(s.clinicalKnowledgeScore) || 0), 0) / sessions.length;
+  const avgTherapeutic = sessions.reduce((sum, s) => sum + (parseFloat(s.therapeuticReasoningScore) || 0), 0) / sessions.length;
+  const avgCommunication = sessions.reduce((sum, s) => sum + (parseFloat(s.communicationScore) || 0), 0) / sessions.length;
+  
+  if (avgClinical >= 80) strengths.push("Strong clinical knowledge foundation");
+  if (avgTherapeutic >= 80) strengths.push("Excellent therapeutic reasoning skills");
+  if (avgCommunication >= 80) strengths.push("Effective patient communication");
+  
+  return strengths;
+}
+
+function extractImprovementAreas(sessions: any[]): string[] {
+  const improvements = [];
+  const avgClinical = sessions.reduce((sum, s) => sum + (parseFloat(s.clinicalKnowledgeScore) || 0), 0) / sessions.length;
+  const avgTherapeutic = sessions.reduce((sum, s) => sum + (parseFloat(s.therapeuticReasoningScore) || 0), 0) / sessions.length;
+  const avgCommunication = sessions.reduce((sum, s) => sum + (parseFloat(s.communicationScore) || 0), 0) / sessions.length;
+  
+  if (avgClinical < 70) improvements.push("Clinical knowledge requires strengthening");
+  if (avgTherapeutic < 70) improvements.push("Therapeutic reasoning needs improvement");
+  if (avgCommunication < 70) improvements.push("Patient communication skills development needed");
+  
+  return improvements;
+}
+
+function calculateProgressionTrend(timelineData: any[]): string {
+  if (timelineData.length < 3) return "insufficient_data";
+  
+  const recentScores = timelineData.slice(-5).map(d => d.score);
+  const earlierScores = timelineData.slice(0, -5).map(d => d.score);
+  
+  const recentAvg = recentScores.reduce((a, b) => a + b, 0) / recentScores.length;
+  const earlierAvg = earlierScores.length > 0 ? earlierScores.reduce((a, b) => a + b, 0) / earlierScores.length : recentAvg;
+  
+  if (recentAvg > earlierAvg + 5) return "improving";
+  if (recentAvg < earlierAvg - 5) return "declining";
+  return "stable";
 }

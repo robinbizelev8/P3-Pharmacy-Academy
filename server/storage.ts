@@ -155,6 +155,11 @@ export interface IStorage {
 
   // Knowledge sources status
   getKnowledgeSourcesStatus(): Promise<KnowledgeSourcesStatus>;
+
+  // Student dashboard progress tracking methods
+  getUserSessionsByModule(userId: string, module: string): Promise<PharmacySessionWithScenario[]>;
+  getStudentProgressSummary(userId: string): Promise<any>;
+  getDetailedStudentProgress(userId: string, module?: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1047,6 +1052,104 @@ export class DatabaseStorage implements IStorage {
         }
       };
     }
+  }
+
+  // Student dashboard progress tracking implementation
+  async getUserSessionsByModule(userId: string, module: string): Promise<PharmacySessionWithScenario[]> {
+    const sessions = await db
+      .select({
+        session: pharmacySessions,
+        scenario: pharmacyScenarios
+      })
+      .from(pharmacySessions)
+      .leftJoin(pharmacyScenarios, eq(pharmacySessions.scenarioId, pharmacyScenarios.id))
+      .where(and(
+        eq(pharmacySessions.userId, userId),
+        eq(pharmacySessions.module, module)
+      ))
+      .orderBy(desc(pharmacySessions.startedAt));
+
+    return sessions.map(row => ({
+      ...row.session,
+      scenario: row.scenario!
+    }));
+  }
+
+  async getStudentProgressSummary(userId: string): Promise<any> {
+    const allSessions = await this.getUserPharmacySessions(userId);
+    const completedSessions = allSessions.filter(s => s.status === 'completed');
+    
+    // Group by module
+    const moduleStats = {
+      prepare: { total: 0, completed: 0, avgScore: 0 },
+      practice: { total: 0, completed: 0, avgScore: 0 },
+      perform: { total: 0, completed: 0, avgScore: 0 }
+    };
+
+    allSessions.forEach(session => {
+      if (moduleStats[session.module]) {
+        moduleStats[session.module].total++;
+        if (session.status === 'completed') {
+          moduleStats[session.module].completed++;
+          moduleStats[session.module].avgScore += parseFloat(session.overallScore || '0');
+        }
+      }
+    });
+
+    // Calculate averages
+    Object.keys(moduleStats).forEach(module => {
+      const stats = moduleStats[module];
+      stats.avgScore = stats.completed > 0 ? Math.round(stats.avgScore / stats.completed) : 0;
+    });
+
+    return {
+      totalSessions: allSessions.length,
+      completedSessions: completedSessions.length,
+      moduleStats,
+      lastActivity: allSessions.length > 0 ? allSessions[0].startedAt : null
+    };
+  }
+
+  async getDetailedStudentProgress(userId: string, module?: string): Promise<any> {
+    const sessions = module 
+      ? await this.getUserSessionsByModule(userId, module)
+      : await this.getUserPharmacySessions(userId);
+
+    const competencyAssessments = await this.getUserCompetencyAssessments(userId);
+    const performAssessments = await this.getUserPerformAssessments(userId);
+
+    // Group sessions by professional activity
+    const activityProgress = {};
+    sessions.forEach(session => {
+      const pa = session.scenario.professionalActivity;
+      if (!activityProgress[pa]) {
+        activityProgress[pa] = { total: 0, completed: 0, avgScore: 0, sessions: [] };
+      }
+      activityProgress[pa].total++;
+      activityProgress[pa].sessions.push(session);
+      if (session.status === 'completed') {
+        activityProgress[pa].completed++;
+        activityProgress[pa].avgScore += parseFloat(session.overallScore || '0');
+      }
+    });
+
+    // Calculate activity averages
+    Object.keys(activityProgress).forEach(pa => {
+      const progress = activityProgress[pa];
+      progress.avgScore = progress.completed > 0 ? Math.round(progress.avgScore / progress.completed) : 0;
+    });
+
+    return {
+      sessions,
+      competencyAssessments,
+      performAssessments,
+      activityProgress,
+      summary: {
+        totalSessions: sessions.length,
+        completedSessions: sessions.filter(s => s.status === 'completed').length,
+        inProgressSessions: sessions.filter(s => s.status === 'in_progress').length
+      }
+    };
   }
 }
 
