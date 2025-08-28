@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -73,8 +74,11 @@ import {
   MessageSquare,
   Lightbulb,
   Star,
-  AlertTriangle,
+  Plus,
+  ChevronRight,
+  FileCheck,
   Shield,
+  AlertTriangle,
   Zap,
   Eye,
   Info,
@@ -83,7 +87,6 @@ import {
   Calendar,
   Clock,
   Users,
-  Plus,
   Download
 } from "lucide-react";
 
