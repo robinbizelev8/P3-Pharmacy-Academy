@@ -1,0 +1,86 @@
+     │ Dashboard Progress Tracking Rebuild Plan                                                                                            │
+     │                                                                                                                                     │
+     │ Current State Analysis                                                                                                              │
+     │                                                                                                                                     │
+     │ - Dashboard currently displays static/mock data with hardcoded progress values                                                      │
+     │ - Database schema includes comprehensive progress tracking tables but they're not integrated                                        │
+     │ - API endpoint /api/student/dashboard returns empty/static data                                                                     │
+     │ - Rich database schema available: pharmacySessions, competencyAssessments, learningProgress, performAssessments                     │
+     │                                                                                                                                     │
+     │ Implementation Plan                                                                                                                 │
+     │                                                                                                                                     │
+     │ 1. Enhanced API Endpoints (server/routes.ts)                                                                                        │
+     │                                                                                                                                     │
+     │ Update /api/student/dashboard endpoint to:                                                                                          │
+     │ - Fetch real progress data from pharmacySessions table by module (prepare, practice, perform)                                       │
+     │ - Calculate completion percentages based on completed vs total sessions                                                             │
+     │ - Get uncompleted sessions for "Resume Session" functionality                                                                       │
+     │ - Fetch competency improvement tracking from competencyAssessments                                                                  │
+     │ - Include supervisor feedback from existing supervisorFeedback table                                                                │
+     │ - Add recent activity timeline from session and assessment data                                                                     │
+     │                                                                                                                                     │
+     │ 2. New Progress Tracking API Endpoints                                                                                              │
+     │                                                                                                                                     │
+     │ Create endpoints for:                                                                                                               │
+     │ - /api/student/progress/sessions - Get all user sessions with completion status                                                     │
+     │ - /api/student/progress/uncompleted - Get incomplete sessions for quick access                                                      │
+     │ - /api/student/progress/competencies - Get competency progression over time                                                         │
+     │ - /api/student/progress/timeline - Get chronological activity feed                                                                  │
+     │                                                                                                                                     │
+     │ 3. Dashboard Component Enhancements                                                                                                 │
+     │                                                                                                                                     │
+     │ Transform existing dashboard from static to dynamic:                                                                                │
+     │ - Replace hardcoded progress values with real database queries                                                                      │
+     │ - Add "Uncompleted Sessions" section showing in-progress scenarios                                                                  │
+     │ - Enhance ModuleProgressCard with real completion percentages                                                                       │
+     │ - Add competency improvement visualization charts                                                                                   │
+     │ - Include session resume functionality with "Continue" buttons                                                                      │
+     │                                                                                                                                     │
+     │ 4. New Dashboard Components                                                                                                         │
+     │                                                                                                                                     │
+     │ Create specialized components:                                                                                                      │
+     │ - SessionResumeCard: Display incomplete sessions with progress bars                                                                 │
+     │ - CompetencyProgressChart: Visual progression of PA1-PA4 competencies                                                               │
+     │ - ActivityTimeline: Chronological feed of completed assessments and sessions                                                        │
+     │ - PerformanceMetrics: Score improvements and supervision level progression                                                          │
+     │                                                                                                                                     │
+     │ 5. Data Integration Features                                                                                                        │
+     │                                                                                                                                     │
+     │ Real-time progress tracking:                                                                                                        │
+     │ - Session completion triggers dashboard data refresh                                                                                │
+     │ - Competency assessments update overall progress calculations                                                                       │
+     │ - Performance scores feed into improvement tracking                                                                                 │
+     │ - Portfolio compilation progress visualization                                                                                      │
+     │                                                                                                                                     │
+     │ 6. Enhanced User Experience                                                                                                         │
+     │                                                                                                                                     │
+     │ Interactive features:                                                                                                               │
+     │ - Quick action buttons to resume incomplete sessions                                                                                │
+     │ - Progress celebration animations for completed milestones                                                                          │
+     │ - Detailed drill-down views for each therapeutic area                                                                               │
+     │ - Recommendation engine for next best learning activities                                                                           │
+     │                                                                                                                                     │
+     │ Technical Implementation Details                                                                                                    │
+     │                                                                                                                                     │
+     │ Database Queries Optimization                                                                                                       │
+     │                                                                                                                                     │
+     │ - Efficient joins between users, pharmacySessions, and competencyAssessments                                                        │
+     │ - Cached progress calculations for performance                                                                                      │
+     │ - Real-time progress updates via React Query invalidation                                                                           │
+     │                                                                                                                                     │
+     │ Progress Calculation Logic                                                                                                          │
+     │                                                                                                                                     │
+     │ - Prepare Module: Based on competencyAssessments completion                                                                         │
+     │ - Practice Module: Based on pharmacySessions with status='completed'                                                                │
+     │ - Perform Module: Based on performAssessments completion                                                                            │
+     │ - Overall Progress: Weighted average across all three modules                                                                       │
+     │                                                                                                                                     │
+     │ Data Persistence Strategy                                                                                                           │
+     │                                                                                                                                     │
+     │ - Progress automatically saved as users complete sessions                                                                           │
+     │ - Competency improvements tracked via assessment score progression                                                                  │
+     │ - Session auto-save functionality ensures no progress loss                                                                          │
+     │ - Portfolio evidence compilation tracked in performPortfolios table                                                                 │
+     │                                                                                                                                     │
+     │ This plan transforms the dashboard from a static UI into a comprehensive progress tracking system that leverages the extensive      │
+     │ database schema already in place.       
