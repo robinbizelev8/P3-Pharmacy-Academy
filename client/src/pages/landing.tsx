@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getRoleBasedRedirect } from "@/lib/auth-utils";
-import { KnowledgeSourcesSection } from "@/components/knowledge-sources-section";
+import { StakeholderOutcomesSection } from "@/components/knowledge-sources-section";
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { useCallback, useEffect, useState } from 'react';
@@ -282,7 +282,7 @@ export default function LandingPage() {
         </div>
 
         {/* Knowledge Sources Section */}
-        <KnowledgeSourcesSection />
+        <StakeholderOutcomesSection />
 
         {/* Three Modules Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">

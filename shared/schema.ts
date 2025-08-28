@@ -65,7 +65,7 @@ export const users = pgTable("users", {
 
 // Pharmacy clinical scenarios table for Pre-registration Training
 export const pharmacyScenarios = pgTable("pharmacy_scenarios", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: varchar("title", { length: 255 }).notNull(),
   module: varchar("module", { length: 50 }).notNull(), // prepare, practice, perform
   therapeuticArea: varchar("therapeutic_area", { length: 100 }).notNull(), // cardiovascular, gi, renal, etc.
@@ -89,9 +89,9 @@ export const pharmacyScenarios = pgTable("pharmacy_scenarios", {
 
 // Pharmacy training sessions table for Pre-registration Training
 export const pharmacySessions = pgTable("pharmacy_sessions", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  scenarioId: uuid("scenario_id").notNull().references(() => pharmacyScenarios.id),
+  scenarioId: varchar("scenario_id").notNull().references(() => pharmacyScenarios.id),
   module: varchar("module", { length: 50 }).notNull(), // prepare, practice, perform
   status: varchar("status", { length: 20 }).default("in_progress"), // in_progress, completed, abandoned
   currentStage: integer("current_stage").default(1),
@@ -136,8 +136,8 @@ export const pharmacySessions = pgTable("pharmacy_sessions", {
 
 // Pharmacy session messages table for clinical interactions
 export const pharmacyMessages = pgTable("pharmacy_messages", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  sessionId: uuid("session_id").notNull().references(() => pharmacySessions.id, { onDelete: "cascade" }),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull().references(() => pharmacySessions.id, { onDelete: "cascade" }),
   messageType: varchar("message_type", { length: 20 }).notNull(), // ai, user, system
   content: text("content").notNull(),
   stageNumber: integer("stage_number"),
