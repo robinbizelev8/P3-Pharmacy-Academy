@@ -14,17 +14,23 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     // Extract token from URL parameters
-    const urlParams = new URLSearchParams(location.split('?')[1] || '');
+    console.log('Current URL:', window.location.href);
+    console.log('Search params:', window.location.search);
+    
+    const urlParams = new URLSearchParams(window.location.search);
     const tokenParam = urlParams.get('token');
+    
+    console.log('Extracted token:', tokenParam);
     
     if (tokenParam) {
       setToken(tokenParam);
-      // Validate token (optional - could be done on form submission)
       setIsValidToken(true);
+      console.log('Token set successfully');
     } else {
       setIsValidToken(false);
+      console.log('No token found in URL');
     }
-  }, [location]);
+  }, []);
 
   const handleSuccess = () => {
     // Optional: Additional success handling
