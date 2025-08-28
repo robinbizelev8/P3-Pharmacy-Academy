@@ -45,7 +45,9 @@ import {
   Trophy,
   Trash2,
   X,
-  ArrowRight
+  ArrowRight,
+  MessageSquare,
+  Lightbulb
 } from "lucide-react";
 
 // Import generated images
@@ -961,6 +963,131 @@ export default function PerformPage() {
                   </Button>
                 </form>
               </Form>
+
+              {/* Assessment Evaluation Results */}
+              {currentScenario.completedAt && currentScenario.feedback && (
+                <div className="mt-8 space-y-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Award className="h-5 w-5 text-green-500" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Assessment Results</h3>
+                  </div>
+
+                  {/* Performance Scores */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                          {currentScenario.responseQuality || 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300">Response Quality</div>
+                      </div>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                          {currentScenario.clinicalAccuracy || 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300">Clinical Accuracy</div>
+                      </div>
+                    </div>
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                          {currentScenario.communicationEffectiveness || 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300">Communication</div>
+                      </div>
+                    </div>
+                    <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                          {currentScenario.professionalismScore || 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300">Professionalism</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Feedback */}
+                  <Card className="border-blue-200 dark:border-blue-800">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5 text-blue-500" />
+                        Clinical Feedback
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {currentScenario.feedback}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Model Answer */}
+                  <Card className="border-green-200 dark:border-green-800">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        Expert Model Answer
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {currentScenario.modelAnswer}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Learning Tips */}
+                  <Card className="border-purple-200 dark:border-purple-800">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Lightbulb className="h-5 w-5 text-purple-500" />
+                        Learning Tips
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                        {currentScenario.learningTips}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Professional Documentation */}
+                  {currentScenario.soapNotes && (
+                    <Card className="border-gray-200 dark:border-gray-800">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <FileText className="h-5 w-5 text-gray-500" />
+                          SOAP Notes Documentation
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                          {currentScenario.soapNotes}
+                        </pre>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Care Plan */}
+                  {currentScenario.carePlan && (
+                    <Card className="border-indigo-200 dark:border-indigo-800">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Heart className="h-5 w-5 text-indigo-500" />
+                          Comprehensive Care Plan
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                          {currentScenario.carePlan}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
