@@ -167,19 +167,33 @@ export function setupAuthRoutes(app: Express) {
           }
 
           console.log(`User logged in: ${user.id} (${user.email})`);
+          console.log(`Session ID: ${req.sessionID}`);
+          console.log(`Session data:`, req.session);
           
-          res.json({
-            success: true,
-            message: 'Login successful',
-            user: {
-              id: user.id,
-              email: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              role: user.role,
-              emailVerified: user.emailVerified,
-              institution: user.institution
+          // Force session save before responding
+          req.session.save((saveErr) => {
+            if (saveErr) {
+              console.error('Session save error:', saveErr);
+              return res.status(500).json({
+                error: 'Login failed',
+                message: 'Failed to save session. Please try again.'
+              });
             }
+            
+            console.log('Session saved successfully');
+            res.json({
+              success: true,
+              message: 'Login successful',
+              user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                emailVerified: user.emailVerified,
+                institution: user.institution
+              }
+            });
           });
         });
       })(req, res, next);
@@ -217,6 +231,11 @@ export function setupAuthRoutes(app: Express) {
 
   // Get Current User
   app.get('/api/auth/user', (req: Request, res: Response) => {
+    console.log(`Auth check - Session ID: ${req.sessionID}`);
+    console.log(`Auth check - Session data:`, req.session);
+    console.log(`Auth check - req.user:`, req.user ? 'Present' : 'Not present');
+    console.log(`Auth check - isAuthenticated:`, req.isAuthenticated());
+    
     if (!req.user) {
       return res.status(401).json({
         error: 'Not authenticated',

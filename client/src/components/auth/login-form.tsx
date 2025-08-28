@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -43,6 +45,7 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
 
       const result = await response.json();
@@ -53,6 +56,12 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
 
       // Login successful
       onSuccess?.();
+      
+      // Invalidate auth cache to refetch user data with new session
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
+      // Small delay to ensure session is established before redirect
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       // Redirect based on user role
       const userRole = result.user?.role || 'student';
