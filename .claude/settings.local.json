@@ -5,7 +5,10 @@
       "Bash(npm run dev:*)",
       "Bash(npx drizzle-kit:*)",
       "Bash(node:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npm run check:*)",
+      "Bash(curl:*)",
+      "Bash(PORT=3001 npm run dev)"
     ],
     "deny": [],
     "ask": []

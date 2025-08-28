@@ -152,6 +152,14 @@ export interface IStorage {
   recordPerformAnalytics(analytics: InsertPerformAnalytics): Promise<PerformAnalytics>;
   getUserPerformAnalytics(userId: string, metricCategory?: string): Promise<PerformAnalytics[]>;
   getAssessmentAnalytics(assessmentId: string): Promise<PerformAnalytics[]>;
+  
+  // Enhanced competency analytics
+  getCompetencyProgressAnalytics(userId: string): Promise<any>;
+  getSPCComplianceStatus(userId: string): Promise<any>;
+  getPerformanceAnalyticsDashboard(userId: string): Promise<any>;
+  getCompetencyGapAnalysis(userId: string): Promise<any>;
+  getRecommendedScenarios(userId: string): Promise<any>;
+  getSupervisorAnalytics(supervisorId: string, traineeIds?: string[]): Promise<any>;
 
   // Knowledge sources status
   getKnowledgeSourcesStatus(): Promise<KnowledgeSourcesStatus>;
@@ -888,6 +896,640 @@ export class DatabaseStorage implements IStorage {
       .from(performAnalytics)
       .where(eq(performAnalytics.assessmentId, assessmentId))
       .orderBy(performAnalytics.metricCategory, performAnalytics.metricName);
+  }
+
+  // Enhanced competency analytics implementation
+  async getCompetencyProgressAnalytics(userId: string): Promise<any> {
+    try {
+      // Get all practice sessions with detailed scoring
+      const practiceSessions = await db
+        .select({
+          id: pharmacySessions.id,
+          module: pharmacySessions.module,
+          therapeuticArea: pharmacySessions.therapeuticArea,
+          practiceArea: pharmacySessions.practiceArea,
+          professionalActivity: pharmacySessions.professionalActivity,
+          clinicalKnowledgeScore: pharmacySessions.clinicalKnowledgeScore,
+          therapeuticReasoningScore: pharmacySessions.therapeuticReasoningScore,
+          patientCommunicationScore: pharmacySessions.patientCommunicationScore,
+          professionalPracticeScore: pharmacySessions.professionalPracticeScore,
+          overallScore: pharmacySessions.overallScore,
+          completedAt: pharmacySessions.completedAt,
+          strengths: pharmacySessions.strengths,
+          improvements: pharmacySessions.improvements
+        })
+        .from(pharmacySessions)
+        .where(and(
+          eq(pharmacySessions.userId, userId),
+          eq(pharmacySessions.module, "practice"),
+          isNotNull(pharmacySessions.completedAt)
+        ))
+        .orderBy(desc(pharmacySessions.completedAt));
+
+      // Get all perform assessment scenarios
+      const performScenarios = await db
+        .select({
+          id: performScenarios.id,
+          therapeuticArea: performScenarios.therapeuticArea,
+          practiceArea: performScenarios.practiceArea,
+          professionalActivity: performScenarios.professionalActivity,
+          complexityLevel: performScenarios.complexityLevel,
+          responseQuality: performScenarios.responseQuality,
+          clinicalAccuracy: performScenarios.clinicalAccuracy,
+          communicationEffectiveness: performScenarios.communicationEffectiveness,
+          professionalismScore: performScenarios.professionalismScore,
+          completedAt: performScenarios.completedAt
+        })
+        .from(performScenarios)
+        .leftJoin(performAssessments, eq(performScenarios.assessmentId, performAssessments.id))
+        .where(and(
+          eq(performAssessments.userId, userId),
+          isNotNull(performScenarios.completedAt)
+        ))
+        .orderBy(desc(performScenarios.completedAt));
+
+      // Calculate PA1-PA4 competency scores
+      const competencyScores = {
+        PA1: this.calculatePACompetency(practiceSessions, performScenarios, 'PA1'),
+        PA2: this.calculatePACompetency(practiceSessions, performScenarios, 'PA2'), 
+        PA3: this.calculatePACompetency(practiceSessions, performScenarios, 'PA3'),
+        PA4: this.calculatePACompetency(practiceSessions, performScenarios, 'PA4')
+      };
+
+      // Calculate competency progression timeline
+      const timelineData = this.calculateCompetencyTimeline(practiceSessions, performScenarios);
+
+      // Calculate therapeutic area mastery
+      const therapeuticAreaMastery = this.calculateTherapeuticAreaMastery(practiceSessions, performScenarios);
+
+      return {
+        competencyScores,
+        timelineData,
+        therapeuticAreaMastery,
+        totalSessions: practiceSessions.length + performScenarios.length,
+        lastActivityDate: Math.max(
+          ...[...practiceSessions, ...performScenarios]
+            .map(s => new Date(s.completedAt || '').getTime())
+            .filter(t => !isNaN(t))
+        )
+      };
+
+    } catch (error) {
+      console.error("Error getting competency progress analytics:", error);
+      throw error;
+    }
+  }
+
+  async getSPCComplianceStatus(userId: string): Promise<any> {
+    try {
+      const competencyData = await this.getCompetencyProgressAnalytics(userId);
+      
+      // SPC Pre-registration requirements mapping
+      const spcRequirements = {
+        PA1: { minScore: 70, minSupervisionLevel: 3, completed: false },
+        PA2: { minScore: 75, minSupervisionLevel: 4, completed: false },
+        PA3: { minScore: 70, minSupervisionLevel: 3, completed: false },
+        PA4: { minScore: 65, minSupervisionLevel: 3, completed: false }
+      };
+
+      // Calculate compliance for each PA
+      let totalReadiness = 0;
+      const requirementStatus: any = {};
+      
+      for (const [pa, requirement] of Object.entries(spcRequirements)) {
+        const competencyScore = competencyData.competencyScores[pa];
+        const meetsScore = competencyScore.averageScore >= requirement.minScore;
+        const meetsSupervision = competencyScore.supervisionLevel >= requirement.minSupervisionLevel;
+        
+        requirementStatus[pa] = {
+          ...requirement,
+          currentScore: competencyScore.averageScore,
+          currentSupervisionLevel: competencyScore.supervisionLevel,
+          meetsScoreRequirement: meetsScore,
+          meetsSupervisionRequirement: meetsSupervision,
+          completed: meetsScore && meetsSupervision,
+          progressPercentage: Math.min(100, (competencyScore.averageScore / requirement.minScore) * 100)
+        };
+        
+        if (requirementStatus[pa].completed) {
+          totalReadiness += 25; // Each PA is worth 25% of total readiness
+        } else {
+          totalReadiness += requirementStatus[pa].progressPercentage * 0.25;
+        }
+      }
+
+      // Portfolio completion status
+      const portfolio = await this.getUserPerformPortfolio(userId);
+      const portfolioReadiness = portfolio ? parseFloat(portfolio.completionPercentage) : 0;
+      
+      return {
+        overallReadinessPercentage: Math.round((totalReadiness + portfolioReadiness) / 2),
+        requirementStatus,
+        portfolioStatus: {
+          completionPercentage: portfolioReadiness,
+          supervisorValidated: portfolio?.supervisorValidated || false,
+          practiceSessionsIncluded: portfolio?.practiceSessionsIncluded || 0,
+          counselingRecordsCompiled: portfolio?.counselingRecordsCompiled || 0
+        },
+        readyForPreRegistration: totalReadiness >= 80 && portfolioReadiness >= 90,
+        nextMilestones: this.getNextCompetencyMilestones(requirementStatus)
+      };
+
+    } catch (error) {
+      console.error("Error getting SPC compliance status:", error);
+      throw error;
+    }
+  }
+
+  async getPerformanceAnalyticsDashboard(userId: string): Promise<any> {
+    try {
+      const competencyData = await this.getCompetencyProgressAnalytics(userId);
+      const spcStatus = await this.getSPCComplianceStatus(userId);
+      
+      // Calculate performance metrics
+      const performanceMetrics = {
+        strengths: this.identifyTopStrengths(competencyData),
+        improvements: this.identifyTopImprovements(competencyData),
+        trendingUp: this.identifyImprovingAreas(competencyData),
+        trendingDown: this.identifyDecliningAreas(competencyData),
+        consistencyScore: this.calculateConsistencyScore(competencyData)
+      };
+
+      // Recent activity summary
+      const recentActivity = await this.getRecentActivitySummary(userId);
+      
+      return {
+        ...competencyData,
+        spcCompliance: spcStatus,
+        performanceMetrics,
+        recentActivity,
+        dashboardUpdatedAt: new Date()
+      };
+
+    } catch (error) {
+      console.error("Error getting performance analytics dashboard:", error);
+      throw error;
+    }
+  }
+
+  async getCompetencyGapAnalysis(userId: string): Promise<any> {
+    try {
+      const competencyData = await this.getCompetencyProgressAnalytics(userId);
+      const spcStatus = await this.getSPCComplianceStatus(userId);
+      
+      const gaps = [];
+      
+      // Identify gaps in PA requirements
+      for (const [pa, status] of Object.entries(spcStatus.requirementStatus)) {
+        if (!status.completed) {
+          const gap = {
+            type: 'competency',
+            professionalActivity: pa,
+            currentLevel: status.currentScore,
+            targetLevel: status.minScore,
+            gap: status.minScore - status.currentScore,
+            priority: this.calculateGapPriority(status),
+            recommendedActions: this.getRecommendedActions(pa, status)
+          };
+          gaps.push(gap);
+        }
+      }
+
+      // Identify therapeutic area gaps
+      const therapeuticGaps = this.identifyTherapeuticAreaGaps(competencyData.therapeuticAreaMastery);
+      gaps.push(...therapeuticGaps);
+
+      // Sort gaps by priority
+      gaps.sort((a, b) => b.priority - a.priority);
+
+      return {
+        totalGaps: gaps.length,
+        highPriorityGaps: gaps.filter(g => g.priority >= 8).length,
+        gaps: gaps.slice(0, 10), // Top 10 gaps
+        improvementPlan: this.generateImprovementPlan(gaps),
+        estimatedTimeToCompletion: this.estimateTimeToCompletion(gaps)
+      };
+
+    } catch (error) {
+      console.error("Error getting competency gap analysis:", error);
+      throw error;
+    }
+  }
+
+  async getRecommendedScenarios(userId: string): Promise<any> {
+    try {
+      const gapAnalysis = await this.getCompetencyGapAnalysis(userId);
+      const competencyData = await this.getCompetencyProgressAnalytics(userId);
+      
+      const recommendations = [];
+      
+      // Get available scenarios
+      const availableScenarios = await db
+        .select()
+        .from(pharmacyScenarios)
+        .where(eq(pharmacyScenarios.module, "practice"));
+
+      // Recommend scenarios based on gaps
+      for (const gap of gapAnalysis.gaps.slice(0, 5)) {
+        if (gap.type === 'competency') {
+          const matchingScenarios = availableScenarios.filter(s => 
+            s.professionalActivity === gap.professionalActivity
+          );
+          
+          if (matchingScenarios.length > 0) {
+            recommendations.push({
+              reason: `Improve ${gap.professionalActivity} competency`,
+              priority: gap.priority,
+              scenarios: matchingScenarios.slice(0, 3),
+              expectedImprovement: this.calculateExpectedImprovement(gap)
+            });
+          }
+        }
+      }
+
+      // Recommend scenarios for skill maintenance
+      const maintenanceRecommendations = this.getMaintenanceRecommendations(competencyData, availableScenarios);
+      recommendations.push(...maintenanceRecommendations);
+
+      return {
+        totalRecommendations: recommendations.length,
+        recommendations: recommendations.slice(0, 8),
+        nextSessionObjectives: this.generateSessionObjectives(recommendations),
+        estimatedSessionCount: this.estimateSessionCount(gapAnalysis.gaps)
+      };
+
+    } catch (error) {
+      console.error("Error getting recommended scenarios:", error);
+      throw error;
+    }
+  }
+
+  async getSupervisorAnalytics(supervisorId: string, traineeIds?: string[]): Promise<any> {
+    try {
+      // For now, return placeholder data - this would require supervisor-trainee relationships
+      // to be properly implemented in the database schema
+      
+      return {
+        totalTrainees: 0,
+        activeTrainees: 0,
+        averageProgress: 0,
+        traineeComparison: [],
+        recentAssessments: [],
+        alertsAndNotifications: [],
+        supervisorUpdatedAt: new Date()
+      };
+
+    } catch (error) {
+      console.error("Error getting supervisor analytics:", error);
+      throw error;
+    }
+  }
+
+  // Helper methods for competency calculations
+  private calculatePACompetency(practiceSessions: any[], performScenarios: any[], pa: string) {
+    const relevantSessions = practiceSessions.filter(s => s.professionalActivity === pa);
+    const relevantAssessments = performScenarios.filter(s => s.professionalActivity === pa);
+    
+    if (relevantSessions.length === 0 && relevantAssessments.length === 0) {
+      return { averageScore: 0, sessionCount: 0, supervisionLevel: 1, competencyLevel: 'Novice' };
+    }
+
+    // Calculate weighted average (practice sessions 60%, assessments 40%)
+    const practiceAvg = relevantSessions.reduce((sum, s) => sum + parseFloat(s.overallScore || 0), 0) / Math.max(relevantSessions.length, 1);
+    const assessmentAvg = relevantAssessments.reduce((sum, s) => sum + this.calculateAssessmentScore(s), 0) / Math.max(relevantAssessments.length, 1);
+    
+    const weightedAverage = relevantSessions.length > 0 && relevantAssessments.length > 0
+      ? (practiceAvg * 0.6) + (assessmentAvg * 0.4)
+      : practiceAvg > 0 ? practiceAvg : assessmentAvg;
+
+    return {
+      averageScore: Math.round(weightedAverage),
+      sessionCount: relevantSessions.length + relevantAssessments.length,
+      supervisionLevel: this.calculateSupervisionLevel(weightedAverage),
+      competencyLevel: this.calculateCompetencyLevel(weightedAverage)
+    };
+  }
+
+  private calculateAssessmentScore(scenario: any): number {
+    // Convert qualitative scores to numeric (assuming mapping)
+    const qualitativeToNumeric: any = {
+      'excellent': 95, 'very_good': 85, 'good': 75, 'satisfactory': 65, 'needs_improvement': 45, 'unsatisfactory': 25
+    };
+    
+    const scores = [
+      qualitativeToNumeric[scenario.responseQuality] || 50,
+      qualitativeToNumeric[scenario.clinicalAccuracy] || 50,
+      qualitativeToNumeric[scenario.communicationEffectiveness] || 50,
+      qualitativeToNumeric[scenario.professionalismScore] || 50
+    ];
+    
+    return scores.reduce((sum, score) => sum + score, 0) / scores.length;
+  }
+
+  private calculateSupervisionLevel(score: number): number {
+    if (score >= 90) return 5;
+    if (score >= 80) return 4;
+    if (score >= 70) return 3;
+    if (score >= 60) return 2;
+    return 1;
+  }
+
+  private calculateCompetencyLevel(score: number): string {
+    if (score >= 90) return 'Expert';
+    if (score >= 80) return 'Proficient';
+    if (score >= 70) return 'Competent';
+    if (score >= 60) return 'Advanced Beginner';
+    return 'Novice';
+  }
+
+  private calculateCompetencyTimeline(practiceSessions: any[], performScenarios: any[]): any[] {
+    // Combine and sort all activities by date
+    const allActivities = [
+      ...practiceSessions.map(s => ({
+        date: s.completedAt,
+        type: 'practice',
+        score: parseFloat(s.overallScore || 0),
+        pa: s.professionalActivity
+      })),
+      ...performScenarios.map(s => ({
+        date: s.completedAt,
+        type: 'assessment',
+        score: this.calculateAssessmentScore(s),
+        pa: s.professionalActivity
+      }))
+    ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Calculate rolling averages for each PA over time
+    const timeline = [];
+    const rollingScores: any = { PA1: [], PA2: [], PA3: [], PA4: [] };
+    
+    for (const activity of allActivities) {
+      rollingScores[activity.pa].push(activity.score);
+      
+      // Keep only last 5 scores for rolling average
+      if (rollingScores[activity.pa].length > 5) {
+        rollingScores[activity.pa].shift();
+      }
+      
+      const avgScores: any = {};
+      for (const pa of ['PA1', 'PA2', 'PA3', 'PA4']) {
+        avgScores[pa] = rollingScores[pa].length > 0 
+          ? rollingScores[pa].reduce((sum: number, score: number) => sum + score, 0) / rollingScores[pa].length
+          : 0;
+      }
+      
+      timeline.push({
+        date: activity.date,
+        ...avgScores,
+        activityType: activity.type
+      });
+    }
+    
+    return timeline;
+  }
+
+  private calculateTherapeuticAreaMastery(practiceSessions: any[], performScenarios: any[]): any {
+    const therapeuticAreas = ['Cardiovascular', 'Gastrointestinal', 'Renal', 'Endocrine', 'Respiratory', 'Dermatological', 'Neurological'];
+    const mastery: any = {};
+    
+    for (const area of therapeuticAreas) {
+      const practiceScores = practiceSessions
+        .filter(s => s.therapeuticArea === area)
+        .map(s => parseFloat(s.overallScore || 0));
+      
+      const assessmentScores = performScenarios
+        .filter(s => s.therapeuticArea === area)
+        .map(s => this.calculateAssessmentScore(s));
+      
+      const allScores = [...practiceScores, ...assessmentScores];
+      
+      mastery[area] = {
+        averageScore: allScores.length > 0 ? allScores.reduce((sum, score) => sum + score, 0) / allScores.length : 0,
+        sessionCount: allScores.length,
+        masteryLevel: allScores.length >= 3 && allScores.reduce((sum, score) => sum + score, 0) / allScores.length >= 75 ? 'Mastered' : 'Developing'
+      };
+    }
+    
+    return mastery;
+  }
+
+  private identifyTopStrengths(competencyData: any): string[] {
+    const strengths = [];
+    
+    // Identify top performing PAs
+    const paScores = Object.entries(competencyData.competencyScores)
+      .sort(([,a], [,b]) => (b as any).averageScore - (a as any).averageScore);
+    
+    if (paScores.length > 0 && (paScores[0][1] as any).averageScore >= 75) {
+      strengths.push(`Strong performance in ${paScores[0][0]} activities`);
+    }
+    
+    // Identify top therapeutic areas
+    const therapeuticScores = Object.entries(competencyData.therapeuticAreaMastery)
+      .filter(([,data]) => (data as any).sessionCount >= 2)
+      .sort(([,a], [,b]) => (b as any).averageScore - (a as any).averageScore);
+    
+    if (therapeuticScores.length > 0 && (therapeuticScores[0][1] as any).averageScore >= 75) {
+      strengths.push(`Excellent knowledge in ${therapeuticScores[0][0]} therapy`);
+    }
+    
+    return strengths.slice(0, 3);
+  }
+
+  private identifyTopImprovements(competencyData: any): string[] {
+    const improvements = [];
+    
+    // Identify lowest performing PAs
+    const paScores = Object.entries(competencyData.competencyScores)
+      .filter(([,data]) => (data as any).sessionCount > 0)
+      .sort(([,a], [,b]) => (a as any).averageScore - (b as any).averageScore);
+    
+    if (paScores.length > 0 && (paScores[0][1] as any).averageScore < 70) {
+      improvements.push(`Focus on ${paScores[0][0]} competency development`);
+    }
+    
+    return improvements.slice(0, 3);
+  }
+
+  private identifyImprovingAreas(competencyData: any): string[] {
+    // This would require trend analysis over time - placeholder for now
+    return [];
+  }
+
+  private identifyDecliningAreas(competencyData: any): string[] {
+    // This would require trend analysis over time - placeholder for now  
+    return [];
+  }
+
+  private calculateConsistencyScore(competencyData: any): number {
+    // Calculate consistency across different PAs
+    const scores = Object.values(competencyData.competencyScores).map((pa: any) => pa.averageScore);
+    if (scores.length === 0) return 0;
+    
+    const mean = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    const variance = scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length;
+    const standardDeviation = Math.sqrt(variance);
+    
+    // Convert to 0-100 scale where lower deviation = higher consistency
+    return Math.max(0, 100 - (standardDeviation * 2));
+  }
+
+  private async getRecentActivitySummary(userId: string): Promise<any> {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    
+    const recentSessions = await db
+      .select()
+      .from(pharmacySessions)
+      .where(and(
+        eq(pharmacySessions.userId, userId),
+        gte(pharmacySessions.completedAt, oneWeekAgo.toISOString())
+      ));
+    
+    return {
+      sessionsThisWeek: recentSessions.length,
+      averageScoreThisWeek: recentSessions.length > 0 
+        ? recentSessions.reduce((sum, s) => sum + parseFloat(s.overallScore || '0'), 0) / recentSessions.length
+        : 0,
+      lastActivityDate: recentSessions.length > 0 
+        ? Math.max(...recentSessions.map(s => new Date(s.completedAt || '').getTime()))
+        : null
+    };
+  }
+
+  private getNextCompetencyMilestones(requirementStatus: any): any[] {
+    const milestones = [];
+    
+    for (const [pa, status] of Object.entries(requirementStatus)) {
+      if (!status.completed) {
+        milestones.push({
+          professionalActivity: pa,
+          milestone: `Achieve ${status.minScore}% competency in ${pa}`,
+          currentProgress: status.progressPercentage,
+          estimatedSessions: Math.ceil((status.minScore - status.currentScore) / 5) // Assume ~5% improvement per session
+        });
+      }
+    }
+    
+    return milestones.sort((a, b) => b.currentProgress - a.currentProgress).slice(0, 3);
+  }
+
+  private calculateGapPriority(status: any): number {
+    // Higher priority for larger gaps and requirements closer to completion
+    const scoreGap = status.minScore - status.currentScore;
+    const supervisionGap = status.minSupervisionLevel - status.currentSupervisionLevel;
+    const progressWeight = 100 - status.progressPercentage;
+    
+    return Math.min(10, (scoreGap * 0.1) + (supervisionGap * 2) + (progressWeight * 0.05));
+  }
+
+  private getRecommendedActions(pa: string, status: any): string[] {
+    const actions = [];
+    
+    if (status.currentScore < status.minScore) {
+      actions.push(`Complete 3-5 practice scenarios focused on ${pa}`);
+      actions.push(`Review clinical guidelines for ${pa} activities`);
+    }
+    
+    if (status.currentSupervisionLevel < status.minSupervisionLevel) {
+      actions.push(`Demonstrate independent decision-making in ${pa}`);
+      actions.push(`Request supervisor assessment of ${pa} competency`);
+    }
+    
+    return actions;
+  }
+
+  private identifyTherapeuticAreaGaps(therapeuticAreaMastery: any): any[] {
+    const gaps = [];
+    
+    for (const [area, data] of Object.entries(therapeuticAreaMastery)) {
+      const mastery = data as any;
+      if (mastery.sessionCount < 2) {
+        gaps.push({
+          type: 'therapeutic_area',
+          area: area,
+          currentSessions: mastery.sessionCount,
+          targetSessions: 3,
+          gap: 3 - mastery.sessionCount,
+          priority: 6,
+          recommendedActions: [`Complete scenarios in ${area} therapeutic area`]
+        });
+      }
+    }
+    
+    return gaps;
+  }
+
+  private generateImprovementPlan(gaps: any[]): any {
+    const plan = {
+      phase1: gaps.filter(g => g.priority >= 8).slice(0, 2),
+      phase2: gaps.filter(g => g.priority >= 6 && g.priority < 8).slice(0, 3),
+      phase3: gaps.filter(g => g.priority < 6).slice(0, 3)
+    };
+    
+    return {
+      totalPhases: 3,
+      ...plan,
+      estimatedWeeks: (plan.phase1.length * 2) + (plan.phase2.length * 1.5) + (plan.phase3.length * 1)
+    };
+  }
+
+  private estimateTimeToCompletion(gaps: any[]): any {
+    const highPriorityWeeks = gaps.filter(g => g.priority >= 8).length * 2;
+    const mediumPriorityWeeks = gaps.filter(g => g.priority >= 6 && g.priority < 8).length * 1.5;
+    const lowPriorityWeeks = gaps.filter(g => g.priority < 6).length * 1;
+    
+    return {
+      totalWeeks: Math.ceil(highPriorityWeeks + mediumPriorityWeeks + lowPriorityWeeks),
+      highPriorityWeeks: Math.ceil(highPriorityWeeks),
+      mediumPriorityWeeks: Math.ceil(mediumPriorityWeeks),
+      lowPriorityWeeks: Math.ceil(lowPriorityWeeks)
+    };
+  }
+
+  private calculateExpectedImprovement(gap: any): string {
+    if (gap.gap <= 5) return 'Small improvement (2-5%)';
+    if (gap.gap <= 15) return 'Moderate improvement (5-15%)';
+    return 'Significant improvement (15%+)';
+  }
+
+  private getMaintenanceRecommendations(competencyData: any, availableScenarios: any[]): any[] {
+    const recommendations = [];
+    
+    // Recommend scenarios for areas performing well to maintain skills
+    const strongAreas = Object.entries(competencyData.competencyScores)
+      .filter(([,data]) => (data as any).averageScore >= 80)
+      .map(([pa]) => pa);
+    
+    for (const pa of strongAreas) {
+      const matchingScenarios = availableScenarios.filter(s => s.professionalActivity === pa);
+      if (matchingScenarios.length > 0) {
+        recommendations.push({
+          reason: `Maintain excellence in ${pa}`,
+          priority: 4,
+          scenarios: matchingScenarios.slice(0, 2),
+          expectedImprovement: 'Skill maintenance'
+        });
+      }
+    }
+    
+    return recommendations.slice(0, 2);
+  }
+
+  private generateSessionObjectives(recommendations: any[]): string[] {
+    return recommendations.slice(0, 3).map(r => r.reason);
+  }
+
+  private estimateSessionCount(gaps: any[]): any {
+    const totalSessions = gaps.reduce((sum, gap) => {
+      return sum + Math.ceil(gap.gap / 5); // Assume 5% improvement per session
+    }, 0);
+    
+    return {
+      total: totalSessions,
+      weekly: Math.ceil(totalSessions / 4), // Spread over 4 weeks
+      priority: Math.ceil(gaps.filter(g => g.priority >= 8).length * 2)
+    };
   }
 
   // Knowledge sources status implementation

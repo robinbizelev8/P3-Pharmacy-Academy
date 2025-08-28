@@ -8,6 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Play, 
@@ -33,7 +41,19 @@ import {
   X,
   CheckCircle,
   Lightbulb,
-  ArrowRight
+  ArrowRight,
+  Award,
+  AlertCircle,
+  BarChart3,
+  Download,
+  Pause,
+  RefreshCw,
+  ArrowLeft,
+  Brain,
+  Plus,
+  Trophy,
+  Trash2,
+  BookOpen
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 
@@ -42,16 +62,91 @@ import clinicalSimulationImage from "@assets/generated_images/Clinical_Pharmacy_
 import decisionProcessImage from "@assets/generated_images/Clinical_Decision_Making_Process_0d453270.png";
 import caseInterfaceImage from "@assets/generated_images/Interactive_Case_Scenario_Interface_32755a7e.png";
 
-// Patient Chat Simulation Interface
+// Assessment and Chat Simulation Types
+interface PerformAssessment {
+  id: string;
+  assessmentType: string;
+  therapeuticAreas: string[];
+  practiceAreas: string[];
+  status: string;
+  startedAt: string;
+  completedAt?: string;
+  timeLimitMinutes: number;
+  actualDurationMinutes?: number;
+  overallCompetencyScore?: string;
+  supervisionLevelAchieved?: string;
+  readinessForPractice?: boolean;
+  scenarios?: PerformScenario[];
+}
+
+interface PerformScenario {
+  id: string;
+  scenarioOrder: number;
+  therapeuticArea: string;
+  practiceArea: string;
+  complexityLevel: string;
+  professionalActivity: string;
+  patientBackground: string;
+  clinicalPresentation: string;
+  medicationHistory: string;
+  assessmentObjectives: string;
+  userResponses?: any;
+  responseQuality?: string;
+  clinicalAccuracy?: string;
+  communicationEffectiveness?: string;
+  professionalismScore?: string;
+  aiEvaluation?: any;
+  feedback?: string;
+  modelAnswer?: string;
+  learningTips?: string;
+  completedAt?: string;
+}
+
+const createAssessmentSchema = z.object({
+  assessmentType: z.string().min(1, "Assessment type is required"),
+  therapeuticAreas: z.array(z.string()).min(1, "Select at least one therapeutic area"),
+  practiceAreas: z.array(z.string()).min(1, "Select at least one practice area"),
+  timeLimitMinutes: z.number().min(30).max(180, "Time limit must be between 30-180 minutes")
+});
+
+type CreateAssessmentData = z.infer<typeof createAssessmentSchema>;
+
+const scenarioResponseSchema = z.object({
+  informationGathering: z.string().min(50, "Provide detailed information gathering approach"),
+  clinicalReasoning: z.string().min(50, "Explain your clinical reasoning process"),
+  clinicalJudgment: z.string().min(50, "Describe your clinical judgment and decisions"),
+  implementationPlanning: z.string().min(50, "Detail your implementation and monitoring plan"),
+  soapNotes: z.string().optional(),
+  carePlan: z.string().optional()
+});
+
+type ScenarioResponseData = z.infer<typeof scenarioResponseSchema>;
+
+// Practice Page with Chat and Assessment Simulations
 export default function PracticePage() {
+  // Module tab state
+  const [activeTab, setActiveTab] = useState("chat-simulations");
+  
+  // Chat simulation state
   const [selectedScenario, setSelectedScenario] = useState<any>(null);
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
+  
+  // Assessment simulation state  
+  const [selectedAssessment, setSelectedAssessment] = useState<PerformAssessment | null>(null);
+  const [currentAssessmentScenario, setCurrentAssessmentScenario] = useState<PerformScenario | null>(null);
+  const [assessmentScenarios, setAssessmentScenarios] = useState<PerformScenario[]>([]);
+  const [currentScenarioIndex, setCurrentScenarioIndex] = useState<number>(0);
+  const [assessmentCompleted, setAssessmentCompleted] = useState<boolean>(false);
+  
+  // Stage-by-stage scoring tracking for chat simulations
+  const [stageScores, setStageScores] = useState<any[]>([]);
   const [currentStage, setCurrentStage] = useState(1);
   const [showSessionNotes, setShowSessionNotes] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const queryClientInstance = useQueryClient();
 
   // Filtering and sorting state
   const [searchTerm, setSearchTerm] = useState("");
@@ -61,15 +156,50 @@ export default function PracticePage() {
   const [difficultyFilter, setDifficultyFilter] = useState("all");
   const [sortBy, setSortBy] = useState("title");
 
-  // Fetch practice scenarios
+  // Assessment simulation forms
+  const assessmentForm = useForm<CreateAssessmentData>({
+    resolver: zodResolver(createAssessmentSchema),
+    defaultValues: {
+      assessmentType: "competency_evaluation",
+      therapeuticAreas: [],
+      practiceAreas: [],
+      timeLimitMinutes: 120
+    }
+  });
+
+  const scenarioForm = useForm<ScenarioResponseData>({
+    resolver: zodResolver(scenarioResponseSchema),
+    defaultValues: {
+      informationGathering: "",
+      clinicalReasoning: "",
+      clinicalJudgment: "",
+      implementationPlanning: "",
+      soapNotes: "",
+      carePlan: ""
+    }
+  });
+
+  // Fetch practice scenarios for chat simulations
   const { data: allScenarios, isLoading: scenariosLoading } = useQuery({
     queryKey: ["/api/pharmacy/scenarios", { module: "practice" }]
+  });
+
+  // Fetch assessment scenarios for assessment simulations
+  const { data: assessments = [], isLoading: assessmentsLoading } = useQuery({
+    queryKey: ["/api/perform/assessments"],
+    staleTime: 5 * 60 * 1000
   });
 
   // Fetch pharmacy constants for filtering
   const { data: constants } = useQuery({
     queryKey: ["/api/pharmacy/constants"]
   }) as { data: any };
+
+  // Fetch perform constants for assessment simulations
+  const { data: assessmentConstants } = useQuery({
+    queryKey: ["/api/perform/constants"],
+    staleTime: 30 * 60 * 1000
+  });
 
   // Session stages for chat simulation
   const sessionStages = [
@@ -384,6 +514,133 @@ export default function PracticePage() {
     getCoachingTipMutation.mutate();
   };
 
+  // Assessment simulation mutations
+  const createAssessmentMutation = useMutation({
+    mutationFn: async (data: CreateAssessmentData) => {
+      const response = await fetch("/api/perform/assessments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error("Failed to create assessment");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClientInstance.invalidateQueries({ queryKey: ["/api/perform/assessments"] });
+      toast({ title: "Assessment created successfully" });
+      assessmentForm.reset();
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Failed to create assessment", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const startAssessmentMutation = useMutation({
+    mutationFn: async (assessmentId: string) => {
+      const response = await fetch(`/api/perform/assessments/${assessmentId}/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) throw new Error("Failed to start assessment");
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      queryClientInstance.invalidateQueries({ queryKey: ["/api/perform/assessments"] });
+      toast({ 
+        title: "Assessment Ready!", 
+        description: `Generated ${data.scenarios?.length || 0} clinical scenarios. Assessment started successfully.`
+      });
+      if (data.scenarios && data.scenarios.length > 0) {
+        setAssessmentScenarios(data.scenarios);
+        setCurrentScenarioIndex(0);
+        setCurrentAssessmentScenario(data.scenarios[0]);
+        setAssessmentCompleted(false);
+        setSelectedAssessment(null);
+      }
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Failed to start assessment", 
+        description: "Unable to generate assessment scenarios. Please check your connection and try again.",
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const submitScenarioMutation = useMutation({
+    mutationFn: async ({ scenarioId, responses }: { scenarioId: string; responses: ScenarioResponseData }) => {
+      const response = await fetch(`/api/perform/scenarios/${scenarioId}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userResponses: responses })
+      });
+      if (!response.ok) throw new Error("Failed to submit scenario response");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClientInstance.invalidateQueries({ queryKey: ["/api/perform/assessments"] });
+      queryClientInstance.invalidateQueries({ queryKey: ["/api/perform/scenarios"] });
+      toast({ title: "Scenario response submitted successfully" });
+      scenarioForm.reset();
+      
+      // Check if there are more scenarios to complete
+      const nextIndex = currentScenarioIndex + 1;
+      if (nextIndex < assessmentScenarios.length) {
+        // Load next scenario
+        setCurrentScenarioIndex(nextIndex);
+        setCurrentAssessmentScenario(assessmentScenarios[nextIndex]);
+        toast({ 
+          title: `Loading Scenario ${nextIndex + 1}`, 
+          description: `Progress: ${nextIndex + 1} of ${assessmentScenarios.length} scenarios`
+        });
+      } else {
+        // All scenarios completed
+        setAssessmentCompleted(true);
+        setCurrentAssessmentScenario(null);
+        toast({ 
+          title: "Assessment Completed!", 
+          description: `You have successfully completed all ${assessmentScenarios.length} scenarios.`,
+          duration: 5000
+        });
+      }
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Failed to submit response", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const deleteAssessmentMutation = useMutation({
+    mutationFn: async (assessmentId: string) => {
+      const response = await fetch(`/api/perform/assessments/${assessmentId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) throw new Error("Failed to delete assessment");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClientInstance.invalidateQueries({ queryKey: ["/api/perform/assessments"] });
+      toast({ title: "Assessment deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Failed to delete assessment", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    }
+  });
+
   // Function to parse AI coaching response into structured sections
   const parseCoachingResponse = (content: string) => {
     const sections = {
@@ -453,6 +710,88 @@ export default function PracticePage() {
 
       </div>
     );
+  };
+
+  // Handler functions for assessment simulations
+  const handleCreateAssessment = (data: CreateAssessmentData) => {
+    createAssessmentMutation.mutate(data);
+  };
+
+  const handleStartAssessment = (assessment: PerformAssessment) => {
+    setCurrentAssessmentScenario(null);
+    scenarioForm.reset();
+    setSelectedAssessment(assessment);
+    
+    toast({ 
+      title: "Generating Assessment Scenarios...", 
+      description: "AI is creating personalized clinical scenarios. This may take up to 10 seconds.",
+      duration: 8000
+    });
+    startAssessmentMutation.mutate(assessment.id);
+  };
+
+  const handleSubmitAssessmentScenario = (data: ScenarioResponseData) => {
+    if (currentAssessmentScenario) {
+      submitScenarioMutation.mutate({
+        scenarioId: currentAssessmentScenario.id,
+        responses: data
+      });
+    }
+  };
+
+  const handleDeleteAssessment = (assessmentId: string) => {
+    deleteAssessmentMutation.mutate(assessmentId);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-500';
+      case 'in_progress': return 'bg-blue-500';
+      case 'draft': return 'bg-gray-500';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const formatDuration = (minutes?: number) => {
+    if (!minutes) return 'N/A';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  };
+
+  // Navigation helper functions for assessment scenarios
+  const goToNextScenario = () => {
+    if (currentScenarioIndex + 1 < assessmentScenarios.length) {
+      const nextIndex = currentScenarioIndex + 1;
+      setCurrentScenarioIndex(nextIndex);
+      setCurrentAssessmentScenario(assessmentScenarios[nextIndex]);
+      scenarioForm.reset();
+    }
+  };
+
+  const goToPreviousScenario = () => {
+    if (currentScenarioIndex > 0) {
+      const prevIndex = currentScenarioIndex - 1;
+      setCurrentScenarioIndex(prevIndex);
+      setCurrentAssessmentScenario(assessmentScenarios[prevIndex]);
+      scenarioForm.reset();
+    }
+  };
+
+  const goToScenario = (index: number) => {
+    if (index >= 0 && index < assessmentScenarios.length) {
+      setCurrentScenarioIndex(index);
+      setCurrentAssessmentScenario(assessmentScenarios[index]);
+      scenarioForm.reset();
+    }
+  };
+
+  const exitAssessment = () => {
+    setCurrentAssessmentScenario(null);
+    setAssessmentScenarios([]);
+    setCurrentScenarioIndex(0);
+    setAssessmentCompleted(false);
+    scenarioForm.reset();
   };
 
   return (
@@ -546,11 +885,354 @@ export default function PracticePage() {
 
       <div className="px-6">{/* Content wrapper for remaining sections */}
 
-      {!currentSession ? (
-        // Scenario Selection
-        <div className="space-y-6">
-          {/* Filtering and Search Controls */}
+      {/* Show assessment scenario interface if active */}
+      {currentAssessmentScenario ? (
+        <div className="container mx-auto p-6 max-w-4xl">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="h-6 w-6 text-purple-500" />
+                <h1 className="text-2xl font-bold">Clinical Assessment Scenario</h1>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                <BarChart3 className="h-4 w-4" />
+                Scenario {currentScenarioIndex + 1} of {assessmentScenarios.length}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={goToPreviousScenario} disabled={currentScenarioIndex === 0}>
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
+              <Button variant="outline" size="sm" onClick={goToNextScenario} disabled={currentScenarioIndex === assessmentScenarios.length - 1}>
+                Next
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+              <Button variant="outline" onClick={exitAssessment}>
+                <X className="h-4 w-4 mr-2" />
+                Exit Assessment
+              </Button>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-600">Assessment Progress</span>
+              <span className="text-sm font-medium text-purple-600">
+                {Math.round(((currentScenarioIndex + 1) / assessmentScenarios.length) * 100)}% Complete
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${((currentScenarioIndex + 1) / assessmentScenarios.length) * 100}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-2">
+              {assessmentScenarios.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToScenario(index)}
+                  className={`text-xs px-2 py-1 rounded transition-all ${
+                    index === currentScenarioIndex
+                      ? 'bg-purple-600 text-white'
+                      : index < currentScenarioIndex
+                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-blue-500" />
+                Scenario {currentAssessmentScenario?.scenarioOrder}: {currentAssessmentScenario?.therapeuticArea} ({currentAssessmentScenario?.complexityLevel})
+              </CardTitle>
+              <CardDescription>
+                Practice Area: {currentAssessmentScenario?.practiceArea} • Professional Activity: {currentAssessmentScenario?.professionalActivity}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium text-sm uppercase tracking-wide text-gray-500 mb-2">Patient Background</h3>
+                  <p className="text-sm leading-relaxed">{currentAssessmentScenario?.patientBackground}</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium text-sm uppercase tracking-wide text-gray-500 mb-2">Clinical Presentation</h3>
+                  <p className="text-sm leading-relaxed">{currentAssessmentScenario?.clinicalPresentation}</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium text-sm uppercase tracking-wide text-gray-500 mb-2">Medication History</h3>
+                  <p className="text-sm leading-relaxed">{currentAssessmentScenario?.medicationHistory}</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium text-sm uppercase tracking-wide text-gray-500 mb-2">Assessment Objectives</h3>
+                  <p className="text-sm leading-relaxed">{currentAssessmentScenario?.assessmentObjectives}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
+            <CardHeader>
+              <CardTitle>Singapore 4-Stage Clinical Decision-Making Framework</CardTitle>
+              <CardDescription>
+                Complete each stage of the clinical assessment process
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...scenarioForm}>
+                <form onSubmit={scenarioForm.handleSubmit(handleSubmitAssessmentScenario)} className="space-y-6">
+                  <div className="space-y-4">
+                    <FormField
+                      control={scenarioForm.control}
+                      name="informationGathering"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Search className="h-4 w-4" />
+                            Stage 1: Information Gathering
+                          </FormLabel>
+                          <FormDescription>
+                            Collect and analyze relevant patient information, medical history, and presenting complaints
+                          </FormDescription>
+                          <FormControl>
+                            <textarea 
+                              className="w-full min-h-[100px] p-3 border rounded-md resize-none"
+                              placeholder="Document your information gathering process, key questions, and relevant findings..."
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={scenarioForm.control}
+                      name="clinicalReasoning"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Brain className="h-4 w-4" />
+                            Stage 2: Clinical Reasoning
+                          </FormLabel>
+                          <FormDescription>
+                            Analyze information to identify drug-related problems and potential interventions
+                          </FormDescription>
+                          <FormControl>
+                            <textarea 
+                              className="w-full min-h-[100px] p-3 border rounded-md resize-none"
+                              placeholder="Describe your clinical reasoning process, differential diagnosis considerations, and therapeutic rationale..."
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={scenarioForm.control}
+                      name="clinicalJudgment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4" />
+                            Stage 3: Clinical Judgment
+                          </FormLabel>
+                          <FormDescription>
+                            Make evidence-based decisions on optimal therapeutic interventions
+                          </FormDescription>
+                          <FormControl>
+                            <textarea 
+                              className="w-full min-h-[100px] p-3 border rounded-md resize-none"
+                              placeholder="Provide your clinical judgment, therapeutic recommendations, and evidence-based rationale..."
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={scenarioForm.control}
+                      name="implementationPlanning"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Target className="h-4 w-4" />
+                            Stage 4: Implementation & Monitoring
+                          </FormLabel>
+                          <FormDescription>
+                            Develop monitoring plan and patient counseling strategy
+                          </FormDescription>
+                          <FormControl>
+                            <textarea 
+                              className="w-full min-h-[100px] p-3 border rounded-md resize-none"
+                              placeholder="Outline your implementation plan, monitoring parameters, and patient education approach..."
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <FormField
+                      control={scenarioForm.control}
+                      name="soapNotes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            SOAP Documentation
+                          </FormLabel>
+                          <FormDescription>
+                            Document your assessment using the SOAP format
+                          </FormDescription>
+                          <FormControl>
+                            <textarea 
+                              className="w-full min-h-[120px] p-3 border rounded-md resize-none"
+                              placeholder="Subjective: Patient reports...&#10;Objective: Clinical findings...&#10;Assessment: Drug-related problems...&#10;Plan: Therapeutic interventions..."
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={scenarioForm.control}
+                      name="carePlan"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Heart className="h-4 w-4" />
+                            Patient Care Plan
+                          </FormLabel>
+                          <FormDescription>
+                            Comprehensive care plan including lifestyle recommendations
+                          </FormDescription>
+                          <FormControl>
+                            <textarea 
+                              className="w-full min-h-[100px] p-3 border rounded-md resize-none"
+                              placeholder="Develop a comprehensive care plan including medication management, lifestyle modifications, and follow-up requirements..."
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex justify-between pt-4">
+                    <Button type="button" variant="outline" onClick={() => setCurrentAssessmentScenario(null)}>
+                      Save & Exit
+                    </Button>
+                    <Button type="submit" disabled={submitScenarioMutation.isPending}>
+                      {submitScenarioMutation.isPending ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Submit Response
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+      ) : assessmentCompleted ? (
+        // Assessment Completion Screen
+        <div className="container mx-auto p-6 max-w-4xl">
+          <div className="text-center space-y-6">
+            <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+              <Trophy className="h-10 w-10 text-green-600" />
+            </div>
+            
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-gray-900">Assessment Completed!</h1>
+              <p className="text-lg text-gray-600">
+                Congratulations! You have successfully completed all {assessmentScenarios.length} clinical scenarios.
+              </p>
+            </div>
+
+            <Card className="max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 justify-center">
+                  <BarChart3 className="h-5 w-5 text-purple-500" />
+                  Assessment Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">{assessmentScenarios.length}</div>
+                    <div className="text-sm text-purple-700">Scenarios Completed</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">100%</div>
+                    <div className="text-sm text-green-700">Assessment Progress</div>
+                  </div>
+                </div>
+                
+                <div className="text-center pt-4">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Your responses have been submitted for evaluation. You can review your performance in the analytics section.
+                  </p>
+                  <div className="flex justify-center gap-3">
+                    <Button onClick={exitAssessment} className="bg-purple-600 hover:bg-purple-700">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Back to Assessments
+                    </Button>
+                    <Button variant="outline" onClick={() => window.location.reload()}>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Start New Assessment
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      ) : !currentSession ? (
+        // Tabbed Interface for Both Simulation Types
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div className="bg-white rounded-2xl p-4 shadow-sm border mb-6">
+            <TabsList className="grid w-full grid-cols-2 h-12 bg-gray-50">
+              <TabsTrigger value="chat-simulations" className="flex items-center gap-2 data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-medium">
+                <MessageCircle className="h-4 w-4" />
+                Chat Simulations
+              </TabsTrigger>
+              <TabsTrigger value="assessment-simulations" className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white font-medium">
+                <GraduationCap className="h-4 w-4" />
+                Assessment Simulations
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="chat-simulations" className="space-y-6">
+            <div className="space-y-6">
+              {/* Filtering and Search Controls for Chat Simulations */}
+              <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Filter className="w-5 h-5" />
@@ -809,7 +1491,290 @@ export default function PracticePage() {
               )}
             </CardContent>
           </Card>
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="assessment-simulations" className="space-y-6">
+            {/* Create New Assessment */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-purple-500" />
+                  Create New Assessment
+                </CardTitle>
+                <CardDescription>
+                  Start a new clinical assessment simulation for competency evaluation
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...assessmentForm}>
+                  <form onSubmit={assessmentForm.handleSubmit(handleCreateAssessment)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={assessmentForm.control}
+                        name="assessmentType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Assessment Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select assessment type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {(assessmentConstants as any)?.assessmentTypes?.map((type: string) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type.replace('_', ' ').split(' ').map(word => 
+                                      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                                    ).join(' ')}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={assessmentForm.control}
+                        name="timeLimitMinutes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Time Limit (minutes)</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select time limit" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="60">60 minutes</SelectItem>
+                                <SelectItem value="90">90 minutes</SelectItem>
+                                <SelectItem value="120">120 minutes</SelectItem>
+                                <SelectItem value="150">150 minutes</SelectItem>
+                                <SelectItem value="180">180 minutes</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={assessmentForm.control}
+                      name="therapeuticAreas"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Therapeutic Areas</FormLabel>
+                          <FormDescription>Select the therapeutic areas for your assessment</FormDescription>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {(assessmentConstants as any)?.therapeuticAreas?.map((area: string) => (
+                              <FormField
+                                key={area}
+                                control={assessmentForm.control}
+                                name="therapeuticAreas"
+                                render={({ field }) => (
+                                  <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(area)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, area])
+                                            : field.onChange(field.value?.filter((value) => value !== area))
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="text-sm font-normal capitalize">
+                                      {area}
+                                    </FormLabel>
+                                  </FormItem>
+                                )}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={assessmentForm.control}
+                      name="practiceAreas"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel>Practice Areas</FormLabel>
+                          <FormDescription>Select the practice settings for your assessment</FormDescription>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(assessmentConstants as any)?.practiceAreas?.map((area: string) => (
+                              <FormField
+                                key={area}
+                                control={assessmentForm.control}
+                                name="practiceAreas"
+                                render={({ field }) => (
+                                  <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(area)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, area])
+                                            : field.onChange(field.value?.filter((value) => value !== area))
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="text-sm font-normal capitalize">
+                                      {area}
+                                    </FormLabel>
+                                  </FormItem>
+                                )}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button 
+                      type="submit" 
+                      disabled={createAssessmentMutation.isPending}
+                      className="w-full bg-purple-600 hover:bg-purple-700"
+                    >
+                      {createAssessmentMutation.isPending ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4 mr-2" />
+                      )}
+                      Create Assessment
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+
+            {/* Assessment History */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-gray-900">Assessment History</h3>
+                <div className="flex gap-2 text-sm text-gray-600">
+                  <Badge variant="outline" className="text-purple-600">
+                    {(assessments as PerformAssessment[]).filter(a => a.status === 'in_progress').length} Active
+                  </Badge>
+                  <Badge variant="outline" className="text-green-600">
+                    {(assessments as PerformAssessment[]).filter(a => a.status === 'completed').length} Complete
+                  </Badge>
+                </div>
+              </div>
+              
+              <div className="grid gap-4">
+                {assessmentsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="h-8 w-8 animate-spin text-purple-500" />
+                    <span className="ml-2 text-lg text-gray-600">Loading assessments...</span>
+                  </div>
+                ) : (
+                  (assessments as PerformAssessment[]).map((assessment: PerformAssessment) => (
+                    <Card key={assessment.id} className={`hover:shadow-md transition-shadow ${assessment.status === 'in_progress' ? 'border-l-4 border-l-purple-500' : ''}`}>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge className={getStatusColor(assessment.status)}>
+                                {assessment.status.toUpperCase()}
+                              </Badge>
+                              <span className="font-medium">{assessment.assessmentType.replace('_', ' ').toUpperCase()}</span>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              Started: {new Date(assessment.startedAt).toLocaleDateString()}
+                            </p>
+                            <div className="flex gap-1">
+                              {assessment.therapeuticAreas.map(area => (
+                                <Badge key={area} variant="secondary" className="text-xs">
+                                  {area}
+                                </Badge>
+                              ))}
+                            </div>
+                            {assessment.overallCompetencyScore && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <TrendingUp className="h-4 w-4 text-green-500" />
+                                Overall Score: {parseFloat(assessment.overallCompetencyScore).toFixed(1)}%
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            {(assessment.status === 'draft' || assessment.status === 'in_progress') && !assessment.scenarios?.length && (
+                              <Button 
+                                onClick={() => handleStartAssessment(assessment)}
+                                disabled={startAssessmentMutation.isPending}
+                                className="bg-purple-600 hover:bg-purple-700"
+                              >
+                                {startAssessmentMutation.isPending ? (
+                                  <>
+                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                    Starting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play className="h-4 w-4 mr-2" />
+                                    Start Assessment
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                            {assessment.status === 'in_progress' && (assessment.scenarios?.length ?? 0) > 0 && (
+                              <Button onClick={() => setSelectedAssessment(assessment)} className="bg-purple-600 hover:bg-purple-700">
+                                <Play className="h-4 w-4 mr-2" />
+                                Continue Assessment
+                              </Button>
+                            )}
+                            {assessment.status === 'completed' && (
+                              <Button variant="outline">
+                                <FileText className="h-4 w-4 mr-2" />
+                                View Report
+                              </Button>
+                            )}
+                            
+                            {(assessment.status === 'draft' || assessment.status === 'in_progress') && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Assessment</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete this {assessment.assessmentType.replace('_', ' ')} assessment? 
+                                      This action cannot be undone and will remove all associated scenarios and progress.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteAssessment(assessment.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete Assessment
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       ) : (
         // Interactive Chat Simulation Interface
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

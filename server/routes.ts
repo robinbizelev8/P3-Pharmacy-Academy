@@ -702,12 +702,18 @@ Current module: ${session.module}`;
       // Generate AI responses for patient chat simulation
       const chatResponse = await openaiService.generatePatientChatResponse(content, stage, scenarioContext);
 
-      // Save the user message
+      // Save the user message with detailed scoring from AI evaluation
       const userMessage = await storage.addPharmacyMessage({
         sessionId,
         messageType: 'user',
         content,
-        stageNumber: stage
+        stageNumber: stage,
+        // Store detailed scoring from AI evaluation
+        clinicalRelevance: chatResponse.detailedScoring.clinicalRelevance,
+        therapeuticAccuracy: chatResponse.detailedScoring.therapeuticAccuracy,
+        communicationQuality: chatResponse.detailedScoring.communicationQuality,
+        professionalismScore: chatResponse.detailedScoring.professionalismScore,
+        feedback: `Stage ${stage} Score: ${chatResponse.detailedScoring.overallStageScore}% - Competency: ${chatResponse.detailedScoring.competencyLevel}`
       });
 
       // Save AI responses  
@@ -731,10 +737,54 @@ Current module: ${session.module}`;
       const shouldAdvance = chatResponse.stageComplete && stage < 4;
       const nextStage = shouldAdvance ? stage + 1 : stage;
 
-      // Update session progress
-      const updatedSession = await storage.updatePharmacySession(sessionId, {
+      // Calculate cumulative session scores based on all stages completed so far
+      let sessionUpdates: any = {
         currentStage: nextStage
-      });
+      };
+
+      // If stage is complete, update cumulative session scoring
+      if (chatResponse.stageComplete) {
+        // Get all messages for this session to calculate cumulative scores
+        const allMessages = await storage.getPharmacyMessages(sessionId);
+        const scoredMessages = allMessages.filter((msg: any) => msg.messageType === 'user' && msg.clinicalRelevance);
+        
+        if (scoredMessages.length > 0) {
+          // Calculate average scores across all completed stages
+          const avgClinicalRelevance = scoredMessages.reduce((sum: number, msg: any) => sum + (msg.clinicalRelevance || 0), 0) / scoredMessages.length;
+          const avgTherapeuticAccuracy = scoredMessages.reduce((sum: number, msg: any) => sum + (msg.therapeuticAccuracy || 0), 0) / scoredMessages.length;
+          const avgCommunication = scoredMessages.reduce((sum: number, msg: any) => sum + (msg.communicationQuality || 0), 0) / scoredMessages.length;
+          const avgProfessionalism = scoredMessages.reduce((sum: number, msg: any) => sum + (msg.professionalismScore || 0), 0) / scoredMessages.length;
+          
+          // Map to session scoring schema (1-5 scale to 0-100 scale)
+          sessionUpdates.clinicalKnowledgeScore = (avgClinicalRelevance * 20).toFixed(2); // Convert 1-5 to 0-100
+          sessionUpdates.therapeuticReasoningScore = (avgTherapeuticAccuracy * 20).toFixed(2);
+          sessionUpdates.patientCommunicationScore = (avgCommunication * 20).toFixed(2);
+          sessionUpdates.professionalPracticeScore = (avgProfessionalism * 20).toFixed(2);
+          
+          // Calculate overall score
+          const overallScore = ((avgClinicalRelevance + avgTherapeuticAccuracy + avgCommunication + avgProfessionalism) / 4 * 20).toFixed(2);
+          sessionUpdates.overallScore = overallScore;
+
+          // Accumulate strengths and improvements
+          const allStrengths = [
+            ...(session.strengths as string[] || []),
+            ...chatResponse.detailedScoring.strengths
+          ];
+          const allImprovements = [
+            ...(session.improvements as string[] || []),
+            ...chatResponse.detailedScoring.improvements
+          ];
+          
+          sessionUpdates.strengths = [...new Set(allStrengths)]; // Remove duplicates
+          sessionUpdates.improvements = [...new Set(allImprovements)];
+          
+          // Update qualitative feedback
+          sessionUpdates.qualitativeFeedback = `Latest assessment - ${chatResponse.detailedScoring.competencyLevel} level competency demonstrated`;
+        }
+      }
+
+      // Update session progress and scoring
+      const updatedSession = await storage.updatePharmacySession(sessionId, sessionUpdates);
 
       // Update auto-save
       await storage.autoSaveSession(sessionId, {});
@@ -745,7 +795,8 @@ Current module: ${session.module}`;
         evaluation: chatResponse.evaluation,
         advanceStage: shouldAdvance,
         nextStage,
-        session: updatedSession
+        session: updatedSession,
+        detailedScoring: chatResponse.detailedScoring
       });
 
     } catch (error) {
@@ -1117,6 +1168,69 @@ This format helps students learn from expert examples before progressing. Focus 
     } catch (error) {
       console.error("Error fetching analytics:", error);
       res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  // Enhanced competency analytics endpoints
+  app.get("/api/perform/competency-progress", addMockUser, async (req: any, res) => {
+    try {
+      const analytics = await storage.getCompetencyProgressAnalytics(req.user?.id);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching competency progress analytics:", error);
+      res.status(500).json({ message: "Failed to fetch competency progress analytics" });
+    }
+  });
+
+  app.get("/api/perform/spc-compliance", addMockUser, async (req: any, res) => {
+    try {
+      const compliance = await storage.getSPCComplianceStatus(req.user?.id);
+      res.json(compliance);
+    } catch (error) {
+      console.error("Error fetching SPC compliance status:", error);
+      res.status(500).json({ message: "Failed to fetch SPC compliance status" });
+    }
+  });
+
+  app.get("/api/perform/dashboard", addMockUser, async (req: any, res) => {
+    try {
+      const dashboard = await storage.getPerformanceAnalyticsDashboard(req.user?.id);
+      res.json(dashboard);
+    } catch (error) {
+      console.error("Error fetching performance analytics dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch performance analytics dashboard" });
+    }
+  });
+
+  app.get("/api/perform/gap-analysis", addMockUser, async (req: any, res) => {
+    try {
+      const gapAnalysis = await storage.getCompetencyGapAnalysis(req.user?.id);
+      res.json(gapAnalysis);
+    } catch (error) {
+      console.error("Error fetching competency gap analysis:", error);
+      res.status(500).json({ message: "Failed to fetch competency gap analysis" });
+    }
+  });
+
+  app.get("/api/perform/recommendations", addMockUser, async (req: any, res) => {
+    try {
+      const recommendations = await storage.getRecommendedScenarios(req.user?.id);
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Error fetching scenario recommendations:", error);
+      res.status(500).json({ message: "Failed to fetch scenario recommendations" });
+    }
+  });
+
+  app.get("/api/perform/supervisor-analytics/:supervisorId", addMockUser, async (req: any, res) => {
+    try {
+      const { traineeIds } = req.query;
+      const traineeIdArray = traineeIds ? (traineeIds as string).split(',') : undefined;
+      const analytics = await storage.getSupervisorAnalytics(req.params.supervisorId, traineeIdArray);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching supervisor analytics:", error);
+      res.status(500).json({ message: "Failed to fetch supervisor analytics" });
     }
   });
 

@@ -85,13 +85,33 @@ Then naturally continue the conversation by asking the next relevant clinical qu
     coaching: string;
     evaluation: string;
     stageComplete: boolean;
+    detailedScoring: {
+      clinicalRelevance: number;
+      therapeuticAccuracy: number;
+      communicationQuality: number;
+      professionalismScore: number;
+      overallStageScore: number;
+      strengths: string[];
+      improvements: string[];
+      competencyLevel: string;
+    };
   }> {
     if (!this.client) {
       return {
         patientResponse: this.getPatientFallbackResponse(stage, scenarioContext),
         coaching: "AI coaching unavailable. Please configure OpenAI API key for full functionality.",
         evaluation: "Unable to evaluate without AI service.",
-        stageComplete: false
+        stageComplete: false,
+        detailedScoring: {
+          clinicalRelevance: 3,
+          therapeuticAccuracy: 3,
+          communicationQuality: 3,
+          professionalismScore: 3,
+          overallStageScore: 60,
+          strengths: ["Attempted to engage with the scenario"],
+          improvements: ["Enable AI service for detailed evaluation"],
+          competencyLevel: "Unable to assess"
+        }
       };
     }
 
@@ -164,12 +184,22 @@ Structure your coaching in exactly 3 sections:
 
 Then naturally continue by suggesting their next question or action for this consultation stage.
 
-Respond with a JSON object containing exactly 4 fields:
+Respond with a JSON object containing exactly these fields:
 {
   "patientResponse": "Natural patient response using simple, layperson language - NO medical terminology",
   "coaching": "1. **Feedback**: [evaluation]\\n\\n2. **Model Answer**: [expert approach]\\n\\n3. **Learning Tip**: [practical guidance]\\n\\n[Next suggested action for this consultation stage]",
   "evaluation": "Brief clinical evaluation of the student's approach",
-  "stageComplete": boolean - true if student has adequately completed this stage's objectives
+  "stageComplete": boolean - true if student has adequately completed this stage's objectives,
+  "detailedScoring": {
+    "clinicalRelevance": number (1-5) - How clinically relevant and appropriate was their response,
+    "therapeuticAccuracy": number (1-5) - Accuracy of their therapeutic knowledge and reasoning,
+    "communicationQuality": number (1-5) - Quality of communication skills demonstrated,
+    "professionalismScore": number (1-5) - Level of professionalism and ethical awareness,
+    "overallStageScore": number (1-100) - Overall performance score for this stage,
+    "strengths": [array of specific strengths demonstrated],
+    "improvements": [array of specific areas needing improvement],
+    "competencyLevel": string - Current competency level: "Novice", "Advanced Beginner", "Competent", "Proficient", or "Expert"
+  }
 }
 
 Make the patient response authentic to how real patients speak in Singapore healthcare settings.`;
@@ -197,7 +227,17 @@ Make the patient response authentic to how real patients speak in Singapore heal
         patientResponse: parsedResponse.patientResponse || this.getPatientFallbackResponse(stage, scenarioContext),
         coaching: parsedResponse.coaching || "Unable to generate coaching feedback.",
         evaluation: parsedResponse.evaluation || "Unable to generate evaluation.",
-        stageComplete: parsedResponse.stageComplete || false
+        stageComplete: parsedResponse.stageComplete || false,
+        detailedScoring: parsedResponse.detailedScoring || {
+          clinicalRelevance: 3,
+          therapeuticAccuracy: 3,
+          communicationQuality: 3,
+          professionalismScore: 3,
+          overallStageScore: 60,
+          strengths: ["Attempted to complete stage objectives"],
+          improvements: ["Continue developing clinical reasoning skills"],
+          competencyLevel: "Advanced Beginner"
+        }
       };
 
     } catch (error) {
@@ -206,7 +246,17 @@ Make the patient response authentic to how real patients speak in Singapore heal
         patientResponse: this.getPatientFallbackResponse(stage, scenarioContext),
         coaching: "I'm here to support your learning. Please continue with your clinical approach so I can provide feedback.",
         evaluation: "Unable to evaluate due to technical issue.",
-        stageComplete: false
+        stageComplete: false,
+        detailedScoring: {
+          clinicalRelevance: 3,
+          therapeuticAccuracy: 3,
+          communicationQuality: 3,
+          professionalismScore: 3,
+          overallStageScore: 60,
+          strengths: ["Continuing to engage with clinical scenario"],
+          improvements: ["Technical issue prevented detailed evaluation"],
+          competencyLevel: "Unable to assess"
+        }
       };
     }
   }
