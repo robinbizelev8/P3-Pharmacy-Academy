@@ -47,7 +47,7 @@ function Router() {
           <Route path="/practice" component={Practice} />
           <Route path="/practice/*" component={Practice} />
           <Route path="/perform" component={Perform} />
-          <Route path="/assessments" component={AssessmentsPage} />
+          <Route path="/perform/assessments" component={AssessmentsPage} />
           <Route path="/perform/assessment-report/:assessmentId" component={AssessmentReportPage} />
           <Route path="/perform/create-assessment" component={AssessmentCreatorPage} />
           <Route path="/perform/adaptive-assessment/:sessionId" component={AdaptiveAssessmentPage} />

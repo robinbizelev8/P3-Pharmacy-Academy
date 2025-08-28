@@ -634,10 +634,14 @@ export default function PerformPage() {
       {/* Main Content Tabs with Enhanced Design */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="bg-white rounded-2xl p-4 shadow-sm border">
-          <TabsList className="grid w-full grid-cols-3 h-12 bg-gray-50">
+          <TabsList className="grid w-full grid-cols-4 h-12 bg-gray-50">
             <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white font-medium">
               <BarChart3 className="h-4 w-4" />
               Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="assessments" className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium">
+              <Target className="h-4 w-4" />
+              Assessments
             </TabsTrigger>
             <TabsTrigger value="portfolio" className="flex items-center gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white font-medium">
               <FileText className="h-4 w-4" />
@@ -1562,6 +1566,160 @@ function PerformAssessment() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="assessments" className="space-y-6">
+          {/* Assessment Quick Actions */}
+          <div className="grid gap-4 md:grid-cols-3 mb-8">
+            <Card className="border-green-200 bg-green-50 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6 text-center">
+                <FileText className="h-10 w-10 mx-auto mb-3 text-green-600" />
+                <h3 className="font-semibold text-green-900 mb-2">Assessment Report</h3>
+                <p className="text-sm text-green-700 mb-4">View detailed performance analysis with question feedback</p>
+                <Link to="/perform/assessment-report/demo-assessment-id">
+                  <Button className="bg-green-600 hover:bg-green-700 text-white w-full" data-testid="button-view-report">
+                    <FileText className="h-4 w-4 mr-2" />
+                    View Report
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="border-blue-200 bg-blue-50 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6 text-center">
+                <Plus className="h-10 w-10 mx-auto mb-3 text-blue-600" />
+                <h3 className="font-semibold text-blue-900 mb-2">Create Assessment</h3>
+                <p className="text-sm text-blue-700 mb-4">Design custom competency evaluations</p>
+                <Link to="/perform/create-assessment">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full" data-testid="button-create-assessment">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create New
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="border-purple-200 bg-purple-50 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6 text-center">
+                <Brain className="h-10 w-10 mx-auto mb-3 text-purple-600" />
+                <h3 className="font-semibold text-purple-900 mb-2">Adaptive Assessment</h3>
+                <p className="text-sm text-purple-700 mb-4">AI-powered difficulty adjustment</p>
+                <Link to="/perform/adaptive-assessment/demo-session-123">
+                  <Button className="bg-purple-600 hover:bg-purple-700 text-white w-full" data-testid="button-adaptive-assessment">
+                    <Brain className="h-4 w-4 mr-2" />
+                    Try Adaptive
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Assessment Statistics */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">Average Score</p>
+                  <p className="text-2xl font-bold text-blue-600">81.5%</p>
+                </div>
+                <div className="ml-4">
+                  <Award className="h-8 w-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">Completion Rate</p>
+                  <p className="text-2xl font-bold text-green-600">94%</p>
+                </div>
+                <div className="ml-4">
+                  <CheckCircle className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">Total Assessments</p>
+                  <p className="text-2xl font-bold text-purple-600">12</p>
+                </div>
+                <div className="ml-4">
+                  <FileCheck className="h-8 w-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">Improvement</p>
+                  <p className="text-2xl font-bold text-emerald-600">+12%</p>
+                </div>
+                <div className="ml-4">
+                  <TrendingUp className="h-8 w-8 text-emerald-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Assessments */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Assessments</CardTitle>
+              <CardDescription>Your latest assessment activities and performance</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">PA1-PA4 Competency Assessment</h4>
+                      <p className="text-sm text-gray-500">Comprehensive • 2024-01-15</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">85/100</p>
+                      <Badge className="text-xs bg-green-100 text-green-800">Excellent</Badge>
+                    </div>
+                    <Link to="/perform/assessment-report/demo-assessment-id">
+                      <Button variant="ghost" size="sm">
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <Brain className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Adaptive Clinical Scenarios</h4>
+                      <p className="text-sm text-gray-500">Adaptive • 2024-01-12</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">78/100</p>
+                      <Badge variant="secondary" className="text-xs">Good</Badge>
+                    </div>
+                    <Link to="/perform/adaptive-assessment/demo-session-123">
+                      <Button variant="ghost" size="sm">
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="portfolio" className="space-y-6">

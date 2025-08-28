@@ -53,14 +53,6 @@ const navigationItems = [
     color: "bg-purple-600",
     gradient: "from-purple-500 to-violet-600",
     description: "Competency Dashboard"
-  },
-  {
-    name: "Assessments",
-    href: "/assessments", 
-    icon: Target,
-    color: "bg-blue-600",
-    gradient: "from-blue-500 to-indigo-600",
-    description: "Reports & Evaluations"
   }
 ];
 
