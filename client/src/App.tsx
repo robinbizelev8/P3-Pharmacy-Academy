@@ -14,6 +14,8 @@ import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import SupervisorDashboard from "@/pages/supervisor/dashboard";
 import Profile from "@/pages/profile";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 
 import { useAuth } from "@/hooks/use-auth";
 import { PharmacyNavigation } from "@/components/navigation/pharmacy-navigation";
@@ -29,6 +31,8 @@ function Router() {
           <Route path="/" component={Landing} />
           <Route path="/login" component={Login} />
           <Route path="/signup" component={Login} />
+          <Route path="/forgot-password" component={ForgotPassword} />
+          <Route path="/reset-password" component={ResetPassword} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/supervisor/dashboard" component={SupervisorDashboard} />
           <Route path="/profile" component={Profile} />
