@@ -4,10 +4,8 @@ import passport from "passport";
 import { storage } from "./storage";
 import { sealionService } from "./services/sealion";
 import { openaiService } from "./services/openai";
-import { setupAuth, isAuthenticated } from "./replit-auth";
-import { initializeAuthStrategies } from "./auth-strategies";
-import { setupAuthRoutes } from "./auth-routes";
-import { requireAuth, requireRole, requireStudent, requireSupervisor, requireAdmin } from "./middleware/auth";
+import { setupJWTAuthRoutes } from "./auth-routes-jwt";
+import { requireAuth, requireRole, requireStudent, requireSupervisor, requireAdmin } from "./jwt-auth";
 import { 
   insertPharmacyScenarioSchema, 
   insertPharmacySessionSchema, 
@@ -45,14 +43,8 @@ declare global {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup session-based auth first
-  await setupAuth(app);
-  
-  // Initialize authentication strategies (this must come after setupAuth)
-  initializeAuthStrategies();
-  
-  // Setup authentication routes
-  setupAuthRoutes(app);
+  // Setup JWT-based authentication routes
+  setupJWTAuthRoutes(app);
 
   // Profile update route
   app.put('/api/auth/profile', requireAuth, async (req: any, res) => {

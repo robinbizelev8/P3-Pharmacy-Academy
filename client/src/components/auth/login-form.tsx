@@ -54,10 +54,16 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
         throw new Error(result.message || 'Login failed');
       }
 
-      // Login successful - do immediate redirect without cache invalidation
+      // Login successful
       onSuccess?.();
       
-      // Direct redirect without any delay or cache operations to avoid session issues
+      // Invalidate auth cache to refetch user data with new JWT token
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
+      // Small delay to ensure cache invalidation before redirect
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Redirect based on user role
       const userRole = result.user?.role || 'student';
       const redirectUrl = getRoleBasedRedirect(userRole);
       window.location.href = redirectUrl;
