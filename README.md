@@ -49,10 +49,12 @@ P³ Pharmacy Academy supports Pre-registration Training pharmacists in managing 
 - **Structured AI Responses** - 3-section coaching format (Feedback, Model Answer, Learning Tip)
 
 ### **Authentication & Security**
-- **Replit Auth** - Integrated authentication system
-- **Session Management** - Secure user sessions with PostgreSQL storage
+- **JWT Authentication** - Secure JSON Web Token authentication with HTTP-only cookies
+- **Role-based Access Control** - Multi-tier permissions (student, supervisor, admin)
+- **Session Management** - Persistent user sessions with PostgreSQL storage
+- **Password Security** - bcrypt hashing with comprehensive validation rules
+- **Rate Limiting** - Authentication rate limiting and brute force protection
 - **Environment Variables** - Secure API key management
-- **Role-based Access** - User/admin permission system
 
 ### **Development & Build Tools**
 - **ESBuild** - Fast JavaScript bundler
@@ -113,8 +115,9 @@ P³ Pharmacy Academy supports Pre-registration Training pharmacists in managing 
 - **Frontend**: React SPA with TypeScript and modern tooling
 - **Backend**: RESTful API with Express.js and PostgreSQL
 - **AI Integration**: OpenAI GPT-4o for intelligent coaching
-- **Authentication**: Secure session-based auth with Replit Auth
+- **Authentication**: JWT-based authentication with role-based access control
 - **Data Layer**: Type-safe ORM with automatic migrations
+- **Progress Tracking**: Real-time competency progress with session persistence
 
 ## 🚀 Getting Started
 
@@ -127,6 +130,8 @@ P³ Pharmacy Academy supports Pre-registration Training pharmacists in managing 
 ```env
 DATABASE_URL=your_postgresql_connection_string
 OPENAI_API_KEY=your_openai_api_key
+JWT_SECRET=your_jwt_secret_key
+NODE_ENV=development_or_production
 ```
 
 ### Installation
@@ -138,6 +143,24 @@ npm run dev
 ### Database Setup
 ```bash
 npm run db:push
+```
+
+### Development Commands
+```bash
+# Start development server (frontend + backend)
+npm run dev
+
+# Build for production  
+npm run build
+
+# Start production server
+npm start
+
+# TypeScript type checking
+npm run check
+
+# Database operations
+npm run db:push        # Push schema changes
 ```
 
 ### Git LFS Setup (for large files)
@@ -225,7 +248,16 @@ Supports 10 Southeast Asian languages:
 
 ## 📈 Recent Updates
 
-- Enhanced loading indicators for assessment processes
+### **Authentication System Rebuild (Latest)**
+- **Complete JWT Migration** - Transitioned from session-based to JWT authentication
+- **Multi-role Dashboard** - Role-specific dashboards with progress tracking
+- **Progress Persistence** - User progress saved across login sessions
+- **Enhanced Security** - HTTP-only cookies with comprehensive password validation
+- **Real-time Progress Tracking** - Dynamic dashboard with competency improvements
+- **Session Continuity** - Uncompleted sessions display and resumption functionality
+
+### **Previous Updates**
+- Enhanced loading indicators for assessment processes  
 - Improved AI coaching format consistency across modules
 - Fixed page scrolling behavior in scenario loads
 - Comprehensive visual design improvements
