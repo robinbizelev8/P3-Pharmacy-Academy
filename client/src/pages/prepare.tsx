@@ -254,8 +254,8 @@ export default function PreparePage() {
           <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertTitle className="text-blue-900">Singapore Pre-registration Training Program</AlertTitle>
           <AlertDescription className="text-blue-800">
-            This module aligns with Singapore's pharmacy competency framework for the 30-week pre-registration period. 
-            Complete assessments across all 7 therapeutic areas to build your foundation for supervised practice.
+            This module provides guided learning aligned with Singapore's pharmacy competency framework for the 30-week pre-registration period. 
+            Build your foundation across all 7 therapeutic areas through structured coaching and evidence-based resources.
           </AlertDescription>
         </Alert>
       </div>
@@ -264,7 +264,7 @@ export default function PreparePage() {
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="assessment" className="flex items-center space-x-2">
             <GraduationCap className="w-4 h-4" />
-            <span>Assessment</span>
+            <span>Learning</span>
           </TabsTrigger>
           <TabsTrigger value="resources" className="flex items-center space-x-2">
             <BookOpen className="w-4 h-4" />
@@ -284,7 +284,7 @@ export default function PreparePage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Assessment Tab - Step 1: Foundation Assessment */}
+        {/* Learning Tab - Step 1: Guided Foundation Learning */}
         <TabsContent value="assessment" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Therapeutic Area Selection */}
@@ -353,7 +353,7 @@ export default function PreparePage() {
                       className="w-full"
                       disabled={!selectedProfessionalActivity || createAssessmentMutation.isPending}
                     >
-                      {createAssessmentMutation.isPending ? "Creating Assessment..." : "Start Competency Assessment"}
+                      {createAssessmentMutation.isPending ? "Loading..." : "Begin Guided Learning"}
                     </Button>
                   </div>
                 )}
@@ -368,7 +368,7 @@ export default function PreparePage() {
                   <span>Your Progress</span>
                 </CardTitle>
                 <CardDescription>
-                  Foundation building progress across therapeutic areas
+                  Guided learning progress across therapeutic areas
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -384,7 +384,7 @@ export default function PreparePage() {
                   ))
                 ) : (
                   <div className="text-center py-4 text-gray-500">
-                    <p>Complete your first assessment to see progress</p>
+                    <p>Begin your first guided learning session to see progress</p>
                   </div>
                 )}
                 {userAssessments && userAssessments.length > 0 && (
