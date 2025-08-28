@@ -51,8 +51,15 @@ export function setupPassportSerialization() {
 
   passport.deserializeUser(async (id: string, done) => {
     try {
+      console.log(`Deserializing user with ID: ${id}`);
       const user = await storage.getUserById(id);
-      done(null, user);
+      if (user) {
+        console.log(`User deserialized successfully: ${user.email}`);
+        done(null, user);
+      } else {
+        console.log(`User not found for ID: ${id}`);
+        done(null, false);
+      }
     } catch (error) {
       console.error('Deserialization error:', error);
       done(error, null);

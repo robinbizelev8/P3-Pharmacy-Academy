@@ -35,12 +35,12 @@ export function getSession() {
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
+    name: 'connect.sid', // Explicit session name
     cookie: {
       httpOnly: true,
       secure: false, // Always false for localhost development
       maxAge: sessionTtl,
-      sameSite: 'lax',
-      domain: undefined, // Let browser determine domain
+      sameSite: 'lax', 
       path: '/',
     },
   });
