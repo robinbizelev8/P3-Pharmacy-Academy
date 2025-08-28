@@ -30,6 +30,15 @@ app.use((req, res, next) => {
       }
 
       log(logLine);
+      
+      // Log session cookie info for auth endpoints
+      if (path.includes('/auth/')) {
+        console.log(`Session ID for ${path}: ${(req as any).sessionID}`);
+        const setCookieHeader = res.getHeader('Set-Cookie');
+        if (setCookieHeader) {
+          console.log(`Set-Cookie header: ${setCookieHeader}`);
+        }
+      }
     }
   });
 

@@ -46,6 +46,7 @@ export function setupLocalStrategy() {
 // Serialize/Deserialize user for sessions
 export function setupPassportSerialization() {
   passport.serializeUser((user: any, done) => {
+    console.log(`Serializing user: ${user.id} (${user.email})`);
     done(null, user.id);
   });
 

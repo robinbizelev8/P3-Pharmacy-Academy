@@ -34,7 +34,7 @@ export function getSession() {
     secret: process.env.SESSION_SECRET || "dev-session-secret-key-change-in-production",
     store: sessionStore,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true, // Changed to true to ensure cookies are set
     name: 'connect.sid', // Explicit session name
     cookie: {
       httpOnly: true,

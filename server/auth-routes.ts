@@ -168,7 +168,8 @@ export function setupAuthRoutes(app: Express) {
 
           console.log(`User logged in: ${user.id} (${user.email})`);
           console.log(`Session ID: ${req.sessionID}`);
-          console.log(`Session data:`, req.session);
+          console.log(`Session data after login:`, req.session);
+          console.log(`Passport data in session after login:`, (req.session as any).passport);
           
           // Force session save before responding
           req.session.save((saveErr) => {
@@ -181,6 +182,7 @@ export function setupAuthRoutes(app: Express) {
             }
             
             console.log('Session saved successfully');
+            console.log('Response headers will include:', res.getHeaders());
             res.json({
               success: true,
               message: 'Login successful',
@@ -233,8 +235,10 @@ export function setupAuthRoutes(app: Express) {
   app.get('/api/auth/user', (req: Request, res: Response) => {
     console.log(`Auth check - Session ID: ${req.sessionID}`);
     console.log(`Auth check - Session data:`, req.session);
+    console.log(`Auth check - Passport data in session:`, (req.session as any).passport);
     console.log(`Auth check - req.user:`, req.user ? 'Present' : 'Not present');
     console.log(`Auth check - isAuthenticated:`, req.isAuthenticated());
+    console.log(`Auth check - Cookies received:`, req.headers.cookie);
     
     if (!req.user) {
       return res.status(401).json({
