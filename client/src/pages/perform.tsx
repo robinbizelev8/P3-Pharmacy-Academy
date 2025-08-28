@@ -343,18 +343,19 @@ export default function PerformPage() {
     ]
   });
 
-  // Use real data when available, fallback to demo data with better checking
+  // Phase 1: Enable real data flow - Remove demo fallbacks
   const hasRealSPCData = spcCompliance && typeof spcCompliance === 'object' && !complianceLoading;
   const hasRealCompetencyData = competencyProgress && typeof competencyProgress === 'object' && !competencyLoading;
   const hasRealDashboardData = dashboardData && typeof dashboardData === 'object' && !dashboardLoading;
   const hasRealGapData = gapAnalysis && typeof gapAnalysis === 'object' && !gapLoading;
   const hasRealRecommendationData = recommendations && typeof recommendations === 'object' && !recommendationsLoading;
 
-  const displaySPCCompliance: any = hasRealSPCData ? spcCompliance : getDemoSPCCompliance();
-  const displayCompetencyProgress: any = hasRealCompetencyData ? competencyProgress : getDemoCompetencyProgress();
-  const displayDashboardData: any = hasRealDashboardData ? dashboardData : getDemoDashboardData();
-  const displayGapAnalysis: any = hasRealGapData ? gapAnalysis : getDemoGapAnalysis();
-  const displayRecommendations: any = hasRealRecommendationData ? recommendations : getDemoRecommendations();
+  // Use real data only - no more demo fallbacks
+  const displaySPCCompliance: any = hasRealSPCData ? spcCompliance : null;
+  const displayCompetencyProgress: any = hasRealCompetencyData ? competencyProgress : null;
+  const displayDashboardData: any = hasRealDashboardData ? dashboardData : null;
+  const displayGapAnalysis: any = hasRealGapData ? gapAnalysis : null;
+  const displayRecommendations: any = hasRealRecommendationData ? recommendations : null;
   
   // Additional mock data for portfolio and knowledge features
   const displayPortfolioProgress = {

@@ -1021,7 +1021,7 @@ export class DatabaseStorage implements IStorage {
 
       // Portfolio completion status
       const portfolio = await this.getUserPerformPortfolio(userId);
-      const portfolioReadiness = portfolio ? parseFloat(portfolio.completionPercentage) : 0;
+      const portfolioReadiness = portfolio && portfolio.completionPercentage ? parseFloat(portfolio.completionPercentage) : 0;
       
       return {
         overallReadinessPercentage: Math.round((totalReadiness + portfolioReadiness) / 2),
@@ -1266,11 +1266,15 @@ export class DatabaseStorage implements IStorage {
     const rollingScores: any = { PA1: [], PA2: [], PA3: [], PA4: [] };
     
     for (const activity of allActivities) {
-      rollingScores[activity.pa].push(activity.score);
+      const pa = activity.pa || 'PA1'; // Default to PA1 if pa is null/undefined
+      if (!rollingScores[pa]) {
+        rollingScores[pa] = [];
+      }
+      rollingScores[pa].push(activity.score);
       
       // Keep only last 5 scores for rolling average
-      if (rollingScores[activity.pa].length > 5) {
-        rollingScores[activity.pa].shift();
+      if (rollingScores[pa].length > 5) {
+        rollingScores[pa].shift();
       }
       
       const avgScores: any = {};
@@ -1385,6 +1389,7 @@ export class DatabaseStorage implements IStorage {
       .from(pharmacySessions)
       .where(and(
         eq(pharmacySessions.userId, userId),
+        isNotNull(pharmacySessions.completedAt),
         gte(pharmacySessions.completedAt, oneWeekAgo.toISOString())
       ));
     
