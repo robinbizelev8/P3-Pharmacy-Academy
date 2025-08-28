@@ -86,7 +86,7 @@ class ResourceSeederService {
             title: alert.title,
             description: `${alert.description}\n\nAction Required: ${alert.actionRequired || 'Review alert details'}`,
             resourceType: alert.alertType === 'product_recall' ? 'drug_recall' : 'hsa_alert',
-            therapeuticArea: alert.therapeuticAreas[0] || 'general',
+            therapeuticArea: (alert.therapeuticAreas && alert.therapeuticAreas.length > 0) ? alert.therapeuticAreas[0] : 'general',
             practiceArea: 'hospital', // Default, will create community version if needed
             professionalActivity: this.getPAForAlert(alert.alertType),
             contentUrl: alert.sourceUrl || null,
@@ -120,7 +120,7 @@ class ResourceSeederService {
           }
 
           // Create community version if applicable
-          if (alert.targetAudience.includes('pharmacist') || alert.targetAudience.includes('consumer')) {
+          if (alert.targetAudience && (alert.targetAudience.includes('pharmacist') || alert.targetAudience.includes('consumer'))) {
             const communityResourceData = {
               ...resourceData,
               title: `${resourceData.title} (Community Practice)`,
@@ -173,8 +173,11 @@ class ResourceSeederService {
 
       for (const guideline of guidelines) {
         try {
-          for (const therapeuticArea of guideline.therapeuticAreas) {
-            for (const practiceArea of guideline.practiceAreas) {
+          const therapeuticAreas = guideline.therapeuticAreas || ['general'];
+          const practiceAreas = guideline.practiceAreas || ['hospital', 'community'];
+          
+          for (const therapeuticArea of therapeuticAreas) {
+            for (const practiceArea of practiceAreas) {
               const resourceData: InsertLearningResource = {
                 title: `${guideline.title} (v${guideline.currentVersion})`,
                 description: `Official MOH clinical practice guideline for ${therapeuticArea} management. ${guideline.changesSummary || 'Current evidence-based recommendations for Singapore clinical practice.'}`,
@@ -245,7 +248,8 @@ class ResourceSeederService {
       const drugsByTherapeuticArea = new Map<string, any[]>();
       
       for (const drug of drugs) {
-        for (const therapeuticArea of drug.therapeuticAreas) {
+        const therapeuticAreas = drug.therapeuticAreas || ['general'];
+        for (const therapeuticArea of therapeuticAreas) {
           if (!drugsByTherapeuticArea.has(therapeuticArea)) {
             drugsByTherapeuticArea.set(therapeuticArea, []);
           }
@@ -254,7 +258,7 @@ class ResourceSeederService {
       }
 
       // Create comprehensive therapeutic area formulary resources
-      for (const [therapeuticArea, areaDrugs] of drugsByTherapeuticArea) {
+      for (const [therapeuticArea, areaDrugs] of Array.from(drugsByTherapeuticArea.entries())) {
         try {
           const practiceAreas = ['hospital', 'community'];
           
@@ -272,7 +276,7 @@ class ResourceSeederService {
                 drugCount: areaDrugs.length,
                 ndfVersion: areaDrugs[0]?.ndfVersion || '2025.1',
                 lastReviewDate: new Date(),
-                includedDrugs: areaDrugs.map(d => ({
+                includedDrugs: areaDrugs.map((d: any) => ({
                   name: d.drugName,
                   class: d.therapeuticClass,
                   subsidy: d.subsidyStatus

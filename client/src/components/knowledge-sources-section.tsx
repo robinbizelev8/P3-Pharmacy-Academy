@@ -30,6 +30,16 @@ import {
 export function KnowledgeSourcesSection() {
   const { data, loading, error, refresh, lastFetched } = useKnowledgeStatus();
 
+  // Don't render anything if there's no data and no loading/error state
+  if (!data && !loading && !error) {
+    return null;
+  }
+
+  // Don't render if data exists but has no active sources
+  if (data && (!data.sources || data.sources.filter(s => s.isActive).length === 0)) {
+    return null;
+  }
+
   if (loading && !data) {
     return (
       <div className="mb-20">
@@ -59,7 +69,7 @@ export function KnowledgeSourcesSection() {
           </h2>
         </div>
         
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-200 bg-red-50 max-w-2xl mx-auto">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center text-red-600">
               <AlertCircle className="w-5 h-5 mr-2" />
@@ -166,9 +176,9 @@ export function KnowledgeSourcesSection() {
   };
 
   return (
-    <div className="mb-20">
+    <div className="mb-20 px-4 md:px-0">
       {/* Section Header */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 max-w-5xl mx-auto">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">
           Evidence-Based Knowledge Sources
         </h2>
@@ -216,17 +226,33 @@ export function KnowledgeSourcesSection() {
       </div>
 
       {/* Knowledge Sources Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {data.sources
-          .filter(source => source.isActive)
-          .map((source) => {
+      <div className="mb-8">
+        {(() => {
+          const activeSources = data.sources.filter(source => source.isActive);
+          const sourceCount = activeSources.length;
+          
+          // Determine optimal grid layout based on source count
+          let gridCols = 'grid-cols-1';
+          if (sourceCount === 1) {
+            gridCols = 'grid-cols-1 max-w-md mx-auto';
+          } else if (sourceCount === 2) {
+            gridCols = 'grid-cols-1 md:grid-cols-2 max-w-2xl mx-auto';
+          } else if (sourceCount === 3) {
+            gridCols = 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto';
+          } else {
+            gridCols = 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4';
+          }
+          
+          return (
+            <div className={`grid ${gridCols} gap-6`}>
+              {activeSources.map((source) => {
             const displayInfo = getSourceDisplayInfo(source);
             const Icon = () => getSourceIcon(source.sourceType);
             
             return (
               <Card 
                 key={source.id} 
-                className="relative overflow-hidden hover:shadow-lg transition-shadow border-gray-200 bg-white"
+                className="relative overflow-hidden hover:shadow-lg transition-shadow border-gray-200 bg-white h-full"
               >
                 {/* Status indicator bar */}
                 <div className={`absolute top-0 left-0 right-0 h-1 ${
@@ -260,8 +286,8 @@ export function KnowledgeSourcesSection() {
                   </div>
                 </CardHeader>
                 
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
+                <CardContent className="pt-0 flex-1">
+                  <div className="space-y-3 h-full flex flex-col">
                     {/* Data count */}
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">{displayInfo.dataLabel}:</span>
@@ -272,7 +298,7 @@ export function KnowledgeSourcesSection() {
                     
                     {/* Last update */}
                     <div className="flex items-center space-x-2 text-xs text-gray-500">
-                      <Clock className="w-3 h-3" />
+                      <Clock className="w-3 h-3 flex-shrink-0" />
                       <span>Updated {formatTimeSinceUpdate(source.lastSyncAt)}</span>
                     </div>
                     
@@ -280,55 +306,60 @@ export function KnowledgeSourcesSection() {
                     <div className="flex items-center justify-between text-xs">
                       <Badge 
                         variant="secondary" 
-                        className="text-xs"
+                        className="text-xs px-2 py-1"
                       >
                         {source.syncFrequency} sync
                       </Badge>
-                      <span className="text-gray-500">
+                      <span className="text-gray-500 text-right">
                         Next: {source.nextUpdateEstimate}
                       </span>
                     </div>
                     
                     {/* Source link */}
-                    <a 
-                      href={displayInfo.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                      <span>View official source</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                    <div className="mt-auto pt-2">
+                      <a 
+                        href={displayInfo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
+                      >
+                        <span>View official source</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             );
           })}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Summary Stats */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600 mb-1">
+            <div className="text-2xl md:text-3xl font-bold text-blue-600 mb-1">
               {data.summary.activeAlerts}
             </div>
             <div className="text-sm text-gray-600">Active Safety Alerts</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600 mb-1">
+            <div className="text-2xl md:text-3xl font-bold text-purple-600 mb-1">
               {data.summary.currentGuidelines}
             </div>
             <div className="text-sm text-gray-600">Clinical Guidelines</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600 mb-1">
+            <div className="text-2xl md:text-3xl font-bold text-green-600 mb-1">
               {formatNumber(data.summary.formularyDrugs)}
             </div>
             <div className="text-sm text-gray-600">Formulary Medications</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600 mb-1">
+            <div className="text-2xl md:text-3xl font-bold text-orange-600 mb-1">
               {data.summary.clinicalProtocols}
             </div>
             <div className="text-sm text-gray-600">Clinical Protocols</div>

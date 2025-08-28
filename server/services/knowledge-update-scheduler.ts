@@ -6,7 +6,7 @@ import { singaporeHealthcareService } from './singapore-healthcare.js';
  * Implements scheduled sync for HSA, MOH, NDF and other official sources
  */
 class KnowledgeUpdateScheduler {
-  private updateIntervals: Map<string, NodeJS.Timer> = new Map();
+  private updateIntervals: Map<string, NodeJS.Timeout> = new Map();
   private isRunning = false;
 
   constructor() {
@@ -189,7 +189,7 @@ class KnowledgeUpdateScheduler {
   /**
    * Create a daily interval for a specific time (Singapore time)
    */
-  private createDailyInterval(time: string, callback: () => Promise<void>): NodeJS.Timer {
+  private createDailyInterval(time: string, callback: () => Promise<void>): NodeJS.Timeout {
     const [hours, minutes] = time.split(':').map(Number);
     
     const scheduleNext = () => {
@@ -225,7 +225,7 @@ class KnowledgeUpdateScheduler {
   /**
    * Create a weekly interval for a specific day and time
    */
-  private createWeeklyInterval(dayOfWeek: number, time: string, callback: () => Promise<void>): NodeJS.Timer {
+  private createWeeklyInterval(dayOfWeek: number, time: string, callback: () => Promise<void>): NodeJS.Timeout {
     const [hours, minutes] = time.split(':').map(Number);
     
     const scheduleNext = () => {
@@ -263,7 +263,7 @@ class KnowledgeUpdateScheduler {
   /**
    * Create a monthly interval for a specific day and time
    */
-  private createMonthlyInterval(dayOfMonth: number, time: string, callback: () => Promise<void>): NodeJS.Timer {
+  private createMonthlyInterval(dayOfMonth: number, time: string, callback: () => Promise<void>): NodeJS.Timeout {
     const [hours, minutes] = time.split(':').map(Number);
     
     const scheduleNext = () => {
