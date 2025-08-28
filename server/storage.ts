@@ -57,7 +57,7 @@ import {
   type SupervisorScenarioWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, count, avg, sql, ne, gte } from "drizzle-orm";
+import { eq, desc, and, count, avg, sql, ne, gte, isNotNull } from "drizzle-orm";
 
 // Knowledge sources status types
 export interface KnowledgeSourceStatus {
@@ -923,7 +923,7 @@ export class DatabaseStorage implements IStorage {
         .where(and(
           eq(pharmacySessions.userId, userId),
           eq(pharmacySessions.module, "practice"),
-          ne(pharmacySessions.completedAt, null)
+          isNotNull(pharmacySessions.completedAt)
         ))
         .orderBy(desc(pharmacySessions.completedAt));
 
@@ -945,7 +945,7 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(performAssessments, eq(performScenarios.assessmentId, performAssessments.id))
         .where(and(
           eq(performAssessments.userId, userId),
-          ne(performScenarios.completedAt, null)
+          isNotNull(performScenarios.completedAt)
         ))
         .orderBy(desc(performScenarios.completedAt));
 

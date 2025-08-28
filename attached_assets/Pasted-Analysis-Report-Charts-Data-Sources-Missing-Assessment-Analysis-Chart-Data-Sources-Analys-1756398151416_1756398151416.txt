@@ -1,0 +1,54 @@
+Analysis Report: Charts Data Sources & Missing Assessment Analysis
+
+     Chart Data Sources Analysis:
+
+     1. Radar Chart (Competency Progress):
+     - Location: /client/src/pages/perform.tsx lines 776-807 & 1501-1532
+     - Data Source: Currently using DEMO DATA from getDemoCompetencyProgress() 
+     - Values: Hard-coded scores (PA1: 52, PA2: 38, PA3: 61, PA4: 43)
+     - Backend API: /api/perform/competency-progress (DISABLED - line 190: enabled: false)
+     - Real Implementation: storage.getCompetencyProgressAnalytics() exists but not connected
+
+     2. Second Chart (Performance Dashboard):
+     - Data Source: Demo data from getDemoDashboardData() 
+     - Backend API: /api/perform/dashboard calls storage.getPerformanceAnalyticsDashboard()
+     - Values: Combines competency data with performance metrics, but also using demo data
+
+     Critical Issues Found:
+
+     1. Charts Using Demo Data:
+     - Both charts show static demo values, not real user data
+     - Backend APIs exist but frontend queries are disabled
+     - No connection between completed assessments and chart values
+
+     2. Missing Assessment Analysis System:
+     - "View Report" Button: Exists but has NO FUNCTIONALITY (line 1735-1738)
+     - No Assessment Marking: No system to analyze answers and provide marks
+     - No Detailed Feedback: Missing individual question analysis
+     - No Score Breakdown: No detailed scoring per question/scenario
+
+     Implementation Plan:
+
+     Phase 1: Enable Real Chart Data
+     1. Enable backend API calls in perform.tsx (remove enabled: false)
+     2. Fix data flow from completed assessments to analytics
+     3. Replace demo data with real competency calculations
+
+     Phase 2: Implement Assessment Analysis System
+     1. Create assessment report/results page component
+     2. Add detailed scoring breakdown per question
+     3. Implement AI-powered answer analysis and feedback
+     4. Add question-by-question marking system
+     5. Connect "View Report" button to results page
+
+     Phase 3: Enhanced Assessment Features
+     1. Add answer comparison (student vs. model answer)
+     2. Implement competency area scoring 
+     3. Add improvement recommendations based on wrong answers
+     4. Create exportable assessment reports
+
+     Key Missing Components:
+     - Assessment results storage and retrieval
+     - Individual question analysis and marking
+     - Detailed feedback generation for trainee answers
+     - Connection between assessment completion and performance charts

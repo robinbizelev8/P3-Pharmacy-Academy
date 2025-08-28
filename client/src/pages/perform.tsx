@@ -183,35 +183,35 @@ export default function PerformPage() {
     staleTime: 30 * 60 * 1000
   });
 
-  // Enhanced analytics queries - Always enabled for dashboard
+  // Enhanced analytics queries - Now enabled for real data
   const { data: competencyProgress, isLoading: competencyLoading } = useQuery({
     queryKey: ["/api/perform/competency-progress"],
     staleTime: 2 * 60 * 1000,
-    enabled: false // Disable until backend is ready
+    enabled: true
   });
 
   const { data: spcCompliance, isLoading: complianceLoading } = useQuery({
     queryKey: ["/api/perform/spc-compliance"], 
     staleTime: 2 * 60 * 1000,
-    enabled: false // Disable until backend is ready
+    enabled: true
   });
 
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
     queryKey: ["/api/perform/dashboard"],
     staleTime: 2 * 60 * 1000,
-    enabled: false // Disable until backend is ready
+    enabled: true
   });
 
   const { data: gapAnalysis, isLoading: gapLoading } = useQuery({
     queryKey: ["/api/perform/gap-analysis"],
     staleTime: 2 * 60 * 1000,
-    enabled: false // Disable until backend is ready
+    enabled: true
   });
 
   const { data: recommendations, isLoading: recommendationsLoading } = useQuery({
     queryKey: ["/api/perform/recommendations"],
     staleTime: 2 * 60 * 1000,
-    enabled: false // Disable until backend is ready
+    enabled: true
   });
 
   // Demo/Placeholder data for transparency and expectation setting
@@ -343,12 +343,18 @@ export default function PerformPage() {
     ]
   });
 
-  // Use demo data when real data is not available (with proper type assertions)
-  const displaySPCCompliance: any = (spcCompliance && Object.keys(spcCompliance).length > 0) ? spcCompliance : getDemoSPCCompliance();
-  const displayCompetencyProgress: any = (competencyProgress && Object.keys(competencyProgress).length > 0) ? competencyProgress : getDemoCompetencyProgress();
-  const displayDashboardData: any = (dashboardData && Object.keys(dashboardData).length > 0) ? dashboardData : getDemoDashboardData();
-  const displayGapAnalysis: any = (gapAnalysis && Object.keys(gapAnalysis).length > 0) ? gapAnalysis : getDemoGapAnalysis();
-  const displayRecommendations: any = (recommendations && Object.keys(recommendations).length > 0) ? recommendations : getDemoRecommendations();
+  // Use real data when available, fallback to demo data with better checking
+  const hasRealSPCData = spcCompliance && typeof spcCompliance === 'object' && !complianceLoading;
+  const hasRealCompetencyData = competencyProgress && typeof competencyProgress === 'object' && !competencyLoading;
+  const hasRealDashboardData = dashboardData && typeof dashboardData === 'object' && !dashboardLoading;
+  const hasRealGapData = gapAnalysis && typeof gapAnalysis === 'object' && !gapLoading;
+  const hasRealRecommendationData = recommendations && typeof recommendations === 'object' && !recommendationsLoading;
+
+  const displaySPCCompliance: any = hasRealSPCData ? spcCompliance : getDemoSPCCompliance();
+  const displayCompetencyProgress: any = hasRealCompetencyData ? competencyProgress : getDemoCompetencyProgress();
+  const displayDashboardData: any = hasRealDashboardData ? dashboardData : getDemoDashboardData();
+  const displayGapAnalysis: any = hasRealGapData ? gapAnalysis : getDemoGapAnalysis();
+  const displayRecommendations: any = hasRealRecommendationData ? recommendations : getDemoRecommendations();
   
   // Additional mock data for portfolio and knowledge features
   const displayPortfolioProgress = {
@@ -765,6 +771,16 @@ export default function PerformPage() {
                 <CardTitle className="flex items-center gap-2">
                   <GraduationCap className="h-5 w-5 text-blue-600" />
                   Professional Activities Competency
+                  {!hasRealCompetencyData && (
+                    <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
+                      Demo Data
+                    </Badge>
+                  )}
+                  {hasRealCompetencyData && (
+                    <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+                      Live Data
+                    </Badge>
+                  )}
                 </CardTitle>
                 <CardDescription>
                   Your competency across Singapore's core pharmacy activities: Clinical Care, Supply & Safety, Patient Education, and Drug Information Services
@@ -1490,6 +1506,16 @@ function PerformAssessment() {
                 <CardTitle className="flex items-center gap-2">
                   <GraduationCap className="h-5 w-5 text-blue-600" />
                   Professional Activities Competency
+                  {!hasRealCompetencyData && (
+                    <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
+                      Demo Data
+                    </Badge>
+                  )}
+                  {hasRealCompetencyData && (
+                    <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+                      Live Data
+                    </Badge>
+                  )}
                 </CardTitle>
                 <CardDescription>
                   Your competency across Singapore's core pharmacy activities: Clinical Care, Supply & Safety, Patient Education, and Drug Information Services
