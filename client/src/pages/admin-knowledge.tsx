@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Database, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react";
+import { RefreshCw, Database, AlertTriangle, CheckCircle2, ExternalLink, ArrowLeft, Home } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
 /**
  * Admin Knowledge Base Management Page
@@ -32,6 +33,11 @@ export function AdminKnowledgePage() {
           title: "Knowledge Base Initialized",
           description: `Successfully populated ${result.results.total} knowledge entries from authentic Singapore healthcare sources.`,
         });
+        
+        // Refresh the page after 2 seconds to show updated numbers
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
         toast({
           title: "Initialization Failed",
@@ -54,6 +60,25 @@ export function AdminKnowledgePage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
+        {/* Navigation Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard">
+              <Button variant="outline" size="sm" data-testid="button-back-dashboard">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Button>
+            </Link>
+            <Link href="/">
+              <Button variant="ghost" size="sm" data-testid="button-home">
+                <Home className="w-4 h-4 mr-2" />
+                Home
+              </Button>
+            </Link>
+          </div>
+          <Badge variant="secondary">Admin Panel</Badge>
+        </div>
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Singapore Healthcare Knowledge Base Administration
