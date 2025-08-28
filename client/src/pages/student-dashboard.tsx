@@ -275,29 +275,73 @@ export default function StudentDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <ActivityItem
-                    icon={CheckCircle}
-                    color="green"
-                    title="Completed Cardiovascular Assessment"
-                    description="Module 1: Prepare - Therapeutic Area Assessment"
-                    time="2 hours ago"
-                  />
-                  <ActivityItem
-                    icon={Brain}
-                    color="blue"
-                    title="Started Clinical Reasoning Practice"
-                    description="Module 2: Practice - Patient Case Analysis"
-                    time="1 day ago"
-                  />
-                  <ActivityItem
-                    icon={Star}
-                    color="yellow"
-                    title="Achieved Competency Milestone"
-                    description="PA2: Accurate Supply of Health Products - Level 3"
-                    time="3 days ago"
-                  />
-                </div>
+                {(dashboardData?.recentActivity?.length ?? 0) > 0 ? (
+                  <div className="space-y-4">
+                    {(dashboardData?.recentActivity ?? []).slice(0, 5).map((activity: any, index: number) => {
+                      const getActivityProps = (activity: any) => {
+                        if (activity.type === 'session') {
+                          if (activity.status === 'completed') {
+                            return {
+                              icon: CheckCircle,
+                              color: "green",
+                              title: `Completed ${activity.title}`,
+                              description: `Module: ${activity.module.charAt(0).toUpperCase() + activity.module.slice(1)} - ${activity.therapeuticArea}${activity.score ? ` (Score: ${Math.round(activity.score)}%)` : ''}`
+                            };
+                          } else {
+                            return {
+                              icon: Brain,
+                              color: "blue", 
+                              title: `Started ${activity.title}`,
+                              description: `Module: ${activity.module.charAt(0).toUpperCase() + activity.module.slice(1)} - ${activity.therapeuticArea}`
+                            };
+                          }
+                        } else if (activity.type === 'assessment') {
+                          if (activity.status === 'completed') {
+                            return {
+                              icon: Star,
+                              color: "yellow",
+                              title: `Achieved Competency Milestone`,
+                              description: `${activity.title} - ${activity.therapeuticArea}${activity.score ? ` (Level ${Math.ceil(activity.score / 25)})` : ''}`
+                            };
+                          } else {
+                            return {
+                              icon: Target,
+                              color: "blue",
+                              title: `Started ${activity.title}`,
+                              description: `Module: Prepare - ${activity.therapeuticArea}`
+                            };
+                          }
+                        }
+                        return {
+                          icon: Clock,
+                          color: "blue",
+                          title: activity.title,
+                          description: activity.therapeuticArea
+                        };
+                      };
+                      
+                      const props = getActivityProps(activity);
+                      const timeAgo = getTimeAgo(new Date(activity.date));
+                      
+                      return (
+                        <ActivityItem
+                          key={`${activity.type}-${activity.id}-${index}`}
+                          icon={props.icon}
+                          color={props.color}
+                          title={props.title}
+                          description={props.description}
+                          time={timeAgo}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <Clock className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">No recent activity</p>
+                    <p className="text-xs text-gray-500">Start learning to see your progress here</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -471,6 +515,28 @@ function ActivityItem({ icon: Icon, color, title, description, time }: ActivityI
       </div>
     </div>
   );
+}
+
+// Helper function to format time ago
+function getTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) {
+    return 'Just now';
+  } else if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+  } else if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  } else if (diffInSeconds < 2592000) {
+    const days = Math.floor(diffInSeconds / 86400);
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  } else {
+    const months = Math.floor(diffInSeconds / 2592000);
+    return `${months} month${months > 1 ? 's' : ''} ago`;
+  }
 }
 
 // Component for milestone items
