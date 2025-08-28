@@ -1094,6 +1094,9 @@ This format helps students learn from expert examples before progressing. Focus 
       // Calculate Singapore pharmacy competency metrics
       const competencyMetrics = await calculateCompetencyMetrics(userId, storage);
       
+      // Generate upcoming milestones based on current progress
+      const upcomingMilestones = await generateUpcomingMilestones(userId, storage, competencyProgression, moduleProgress);
+      
       const dashboardData = {
         user: {
           id: req.user.id,
@@ -1107,6 +1110,7 @@ This format helps students learn from expert examples before progressing. Focus 
         competencyProgression,
         recentActivity,
         competencyMetrics,
+        upcomingMilestones,
         summary: {
           totalSessionsCompleted: allSessions.filter(s => s.status === 'completed').length,
           totalSessionsInProgress: allSessions.filter(s => s.status === 'in_progress').length,
@@ -1634,6 +1638,114 @@ async function getRecentActivityTimeline(userId: string, storage: any) {
   return activities
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 10);
+}
+
+// Generate upcoming milestones based on user's current progress
+async function generateUpcomingMilestones(userId: string, storage: any, competencyProgression: any, moduleProgress: any) {
+  const milestones = [];
+  const assessments = await storage.getUserCompetencyAssessments(userId);
+  
+  // Get current date for calculating due dates
+  const now = new Date();
+  
+  // Check for PA assessments that need to be completed or advanced
+  const paKeys = ['PA1', 'PA2', 'PA3', 'PA4'];
+  const paDescriptions = {
+    PA1: 'Pharmacy Practice and Professional Standards',
+    PA2: 'Accurate Supply of Health Products', 
+    PA3: 'Patient Education and Health Promotion',
+    PA4: 'Pharmaceutical Care and Clinical Services'
+  };
+  
+  for (const pa of paKeys) {
+    const progression = competencyProgression[pa];
+    const existingAssessment = assessments.find(a => a.professionalActivity === pa);
+    
+    if (!existingAssessment && progression.competencyLevel < 3) {
+      // Need to start PA assessment
+      const dueDate = new Date(now);
+      dueDate.setDate(dueDate.getDate() + 7); // Due in 1 week
+      
+      milestones.push({
+        id: `${pa}-start`,
+        type: 'assessment',
+        title: `Start ${pa} Assessment`,
+        description: paDescriptions[pa],
+        dueDate: dueDate.toISOString(),
+        priority: progression.competencyLevel === 1 ? 'high' : 'medium',
+        relativeTime: 'Next week'
+      });
+    } else if (existingAssessment && !existingAssessment.completedAt && progression.competencyLevel < 4) {
+      // Need to complete existing PA assessment
+      const dueDate = new Date(now);
+      dueDate.setDate(dueDate.getDate() + 3); // Due in 3 days
+      
+      milestones.push({
+        id: `${pa}-complete`,
+        type: 'assessment',
+        title: `Complete ${pa} Assessment`,
+        description: paDescriptions[pa],
+        dueDate: dueDate.toISOString(),
+        priority: 'high',
+        relativeTime: '3 days'
+      });
+    }
+  }
+  
+  // Check for module progression milestones
+  const modules = ['prepare', 'practice', 'perform'];
+  const moduleDescriptions = {
+    prepare: 'Foundation Building Module',
+    practice: 'Clinical Practice Module', 
+    perform: 'Competency Assessment Module'
+  };
+  
+  for (const module of modules) {
+    const progress = moduleProgress[module];
+    
+    if (progress.competencyLevel < 3 && progress.completedSessions < 5) {
+      const dueDate = new Date(now);
+      dueDate.setDate(dueDate.getDate() + 14); // Due in 2 weeks
+      
+      milestones.push({
+        id: `${module}-progress`,
+        type: 'module',
+        title: `Advance ${module.charAt(0).toUpperCase() + module.slice(1)} Module`,
+        description: `Complete 2 more sessions in ${moduleDescriptions[module]}`,
+        dueDate: dueDate.toISOString(),
+        priority: progress.competencyLevel === 1 ? 'high' : 'medium',
+        relativeTime: '2 weeks'
+      });
+    }
+  }
+  
+  // Portfolio submission milestone (if user has enough completed sessions)
+  const totalCompletedSessions = Object.values(moduleProgress).reduce((sum: number, prog: any) => sum + prog.completedSessions, 0);
+  
+  if (totalCompletedSessions >= 3) {
+    const dueDate = new Date(now);
+    dueDate.setDate(dueDate.getDate() + 21); // Due in 3 weeks
+    
+    milestones.push({
+      id: 'portfolio-submission',
+      type: 'portfolio',
+      title: 'Portfolio Submission',
+      description: 'Compile evidence from completed learning sessions',
+      dueDate: dueDate.toISOString(),
+      priority: 'medium',
+      relativeTime: '3 weeks'
+    });
+  }
+  
+  // Sort by priority and due date, limit to 5 most urgent
+  const priorityOrder = { high: 3, medium: 2, low: 1 };
+  return milestones
+    .sort((a, b) => {
+      const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+      if (priorityDiff !== 0) return priorityDiff;
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    })
+    .slice(0, 5);
 }
 
 // Get detailed activity timeline with filters

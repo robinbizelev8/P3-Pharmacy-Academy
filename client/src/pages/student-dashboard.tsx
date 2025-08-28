@@ -285,14 +285,14 @@ export default function StudentDashboard() {
                               icon: CheckCircle,
                               color: "green",
                               title: `Completed ${activity.title}`,
-                              description: `Module: ${activity.module.charAt(0).toUpperCase() + activity.module.slice(1)} - ${activity.therapeuticArea}${activity.score ? ` (Score: ${Math.round(activity.score)}%)` : ''}`
+                              description: `Module: ${activity.module.charAt(0).toUpperCase() + activity.module.slice(1)}${activity.therapeuticArea ? ` - ${activity.therapeuticArea}` : ''}${activity.score ? ` (Score: ${Math.round(activity.score)}%)` : ''}`
                             };
                           } else {
                             return {
                               icon: Brain,
                               color: "blue", 
                               title: `Started ${activity.title}`,
-                              description: `Module: ${activity.module.charAt(0).toUpperCase() + activity.module.slice(1)} - ${activity.therapeuticArea}`
+                              description: `Module: ${activity.module.charAt(0).toUpperCase() + activity.module.slice(1)}${activity.therapeuticArea ? ` - ${activity.therapeuticArea}` : ''}`
                             };
                           }
                         } else if (activity.type === 'assessment') {
@@ -357,26 +357,25 @@ export default function StudentDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <MilestoneItem
-                    title="Complete PA3 Assessment"
-                    description="Patient education competency"
-                    dueDate="Next week"
-                    priority="high"
-                  />
-                  <MilestoneItem
-                    title="Portfolio Submission"
-                    description="Compile evidence for Module 2"
-                    dueDate="2 weeks"
-                    priority="medium"
-                  />
-                  <MilestoneItem
-                    title="Supervisor Review Meeting"
-                    description="Monthly progress discussion"
-                    dueDate="3 weeks"
-                    priority="low"
-                  />
-                </div>
+                {(dashboardData?.upcomingMilestones?.length ?? 0) > 0 ? (
+                  <div className="space-y-3">
+                    {(dashboardData?.upcomingMilestones ?? []).map((milestone: any) => (
+                      <MilestoneItem
+                        key={milestone.id}
+                        title={milestone.title}
+                        description={milestone.description}
+                        dueDate={milestone.relativeTime}
+                        priority={milestone.priority}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <Calendar className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">No upcoming milestones</p>
+                    <p className="text-xs text-gray-500">Complete more activities to unlock new goals</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
