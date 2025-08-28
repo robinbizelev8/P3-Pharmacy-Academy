@@ -711,30 +711,16 @@ export default function PreparePage() {
                         </div>
                         <div className="flex justify-between items-center">
                           <Badge className="text-xs capitalize">{resource.professionalActivity}</Badge>
-                          <div className="flex space-x-2">
-                            <Button 
-                              size="sm" 
-                              onClick={() => markResourceProgress(resource.id, { 
-                                progressStatus: 'in_progress', 
-                                timeSpent: 0, 
-                                completionPercentage: 10 
-                              })}
-                              className="text-xs"
-                            >
-                              <Play className="w-3 h-3 mr-1" />
-                              Start Learning
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => window.open(resource.url || resource.contentUrl, '_blank')}
-                              className="text-xs"
-                              disabled={!resource.url && !resource.contentUrl}
-                            >
-                              <FileText className="w-3 h-3 mr-1" />
-                              View Resource
-                            </Button>
-                          </div>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => window.open(resource.url || resource.contentUrl, '_blank')}
+                            className="text-xs"
+                            disabled={!resource.url && !resource.contentUrl}
+                          >
+                            <FileText className="w-3 h-3 mr-1" />
+                            View Resource
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
