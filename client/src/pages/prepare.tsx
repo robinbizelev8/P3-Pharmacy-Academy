@@ -260,27 +260,15 @@ export default function PreparePage() {
         </Alert>
       </div>
 
-      <Tabs defaultValue="assessment" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="assessment" className="flex items-center space-x-2">
+      <Tabs defaultValue="learning" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="learning" className="flex items-center space-x-2">
             <GraduationCap className="w-4 h-4" />
-            <span>Learning</span>
+            <span>Guided Learning</span>
           </TabsTrigger>
           <TabsTrigger value="resources" className="flex items-center space-x-2">
             <BookOpen className="w-4 h-4" />
-            <span>Resources</span>
-          </TabsTrigger>
-          <TabsTrigger value="progress" className="flex items-center space-x-2">
-            <TrendingUp className="w-4 h-4" />
-            <span>Progress</span>
-          </TabsTrigger>
-          <TabsTrigger value="objectives" className="flex items-center space-x-2">
-            <Target className="w-4 h-4" />
-            <span>Objectives</span>
-          </TabsTrigger>
-          <TabsTrigger value="portfolio" className="flex items-center space-x-2">
-            <Award className="w-4 h-4" />
-            <span>Portfolio</span>
+            <span>Learning Resources</span>
           </TabsTrigger>
         </TabsList>
 
