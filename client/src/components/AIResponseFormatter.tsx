@@ -40,15 +40,6 @@ export function AIResponseFormatter({ content, className = '' }: AIResponseForma
           );
         }
         
-        // Handle numbered lists
-        if (trimmedParagraph.match(/^\d+\./)) {
-          return (
-            <div key={pIndex} className={`${pIndex > 0 ? 'mt-3' : ''}`}>
-              <p className="text-gray-700">{trimmedParagraph}</p>
-            </div>
-          );
-        }
-        
         // Handle bullet points
         if (trimmedParagraph.match(/^[-•]/)) {
           return (
@@ -63,11 +54,11 @@ export function AIResponseFormatter({ content, className = '' }: AIResponseForma
         
         // Handle inline bold text **text** (not headers)
         if (trimmedParagraph.includes('**') && !trimmedParagraph.match(/\*\*.*?\*\*:/)) {
-          const parts = trimmedParagraph.split(/(\*\*.*?\*\*)/);
+          const parts = trimmedParagraph.split(/(\*\*[^*]+\*\*)/);
           return (
             <p key={pIndex} className={`text-gray-700 ${pIndex > 0 ? 'mt-3' : ''}`}>
               {parts.map((part: string, partIndex: number) => {
-                if (part.match(/\*\*.*?\*\*/)) {
+                if (part.match(/\*\*[^*]+\*\*/)) {
                   const boldText = part.replace(/\*\*/g, '');
                   return <strong key={partIndex} className="font-bold text-gray-900">{boldText}</strong>;
                 }

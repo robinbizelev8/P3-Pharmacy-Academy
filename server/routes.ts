@@ -666,10 +666,14 @@ Context:
 Student's response: "${message}"
 
 Provide targeted clinical coaching in exactly 4 sections:
-1. **Feedback**: Brief evaluation of their response (1-2 sentences)
-2. **Model Answer**: Provide a comprehensive expert response demonstrating best practice for their question
-3. **Learning Tip**: One practical guidance point relevant to their response
-4. **Next Question**: Present the next clinical question in bold text to help the student focus on what comes next
+
+**Feedback**: Brief evaluation of their response (1-2 sentences)
+
+**Model Answer**: Provide a comprehensive expert response demonstrating best practice for their question
+
+**Learning Tip**: One practical guidance point relevant to their response
+
+**Next Question**: Present the next clinical question in bold text to help the student focus on what comes next
 
 This format helps students learn from expert examples before progressing. Focus on building competency through model answers and structured learning progression.`;
 
