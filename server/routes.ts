@@ -1917,8 +1917,8 @@ async function generateUpcomingMilestones(userId: string, storage: any, competen
   
   const moduleDescriptions: ModuleDescriptionType = {
     prepare: 'Foundation Building Module',
-    practice: 'Clinical Practice Module', 
-    perform: 'Competency Assessment Module'
+    practice: 'Clinical Practice & Assessment Module', 
+    perform: 'Competency Dashboard Module'
   };
   
   for (const module of modules) {

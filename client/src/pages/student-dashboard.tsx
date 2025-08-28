@@ -167,7 +167,7 @@ export default function StudentDashboard() {
                     icon={Play}
                     progress={dashboardData?.progress?.practice || { completed: 0, total: 20 }}
                     color="green"
-                    description="Clinical Scenarios"
+                    description="Clinical Scenarios & Assessment"
                     href="/practice"
                   />
                   <ModuleProgressCard
@@ -175,7 +175,7 @@ export default function StudentDashboard() {
                     icon={Trophy}
                     progress={dashboardData?.progress?.perform || { completed: 0, total: 15 }}
                     color="purple"
-                    description="Competency Assessment"
+                    description="Competency Dashboard"
                     href="/perform"
                   />
                 </div>
@@ -427,13 +427,13 @@ export default function StudentDashboard() {
                 <Button variant="outline" className="w-full justify-start" asChild>
                   <Link href="/practice">
                     <Play className="w-4 h-4 mr-2" />
-                    Practice Scenarios
+                    Practice & Assess
                   </Link>
                 </Button>
                 <Button variant="outline" className="w-full justify-start" asChild>
                   <Link href="/perform">
                     <Trophy className="w-4 h-4 mr-2" />
-                    Take Assessment
+                    View Dashboard
                   </Link>
                 </Button>
               </CardContent>
