@@ -7,6 +7,7 @@ import { rateLimitAuth, logAuthEvent } from "./middleware/auth";
 import { insertUserSchema } from "@shared/schema";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { emailService } from "./services/email-service.js";
 
 // Validation schemas
 const registerSchema = z.object({
@@ -271,8 +272,24 @@ export function setupAuthRoutes(app: Express) {
 
         resetTokens.set(token, { email, expires });
 
-        // TODO: Send password reset email
+        // Send password reset email
         console.log(`Password reset requested for: ${email}, token: ${token}`);
+        
+        try {
+          const emailSent = await emailService.sendPasswordResetEmail({
+            email,
+            token,
+            userName: user.firstName || user.email
+          });
+          
+          if (emailSent) {
+            console.log(`Password reset email sent successfully to: ${email}`);
+          } else {
+            console.log(`Password reset email failed to send to: ${email}, but logged to console`);
+          }
+        } catch (emailError) {
+          console.error('Email service error:', emailError);
+        }
 
       } catch (error) {
         console.error('Forgot password error:', error);
