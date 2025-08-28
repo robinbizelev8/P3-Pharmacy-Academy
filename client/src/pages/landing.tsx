@@ -266,21 +266,6 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Key Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
-          {keyStats.map((stat, index) => (
-            <Card key={index} className="text-center p-6 border-none bg-gradient-to-br from-blue-50 to-purple-50 hover:shadow-lg transition-shadow">
-              <CardContent className="p-0">
-                <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                  {stat.number}
-                </div>
-                <div className="font-semibold text-gray-900 mb-1">{stat.label}</div>
-                <div className="text-sm text-gray-600">{stat.description}</div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
         {/* Knowledge Sources Section */}
         <StakeholderOutcomesSection />
 
@@ -390,6 +375,21 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Key Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+          {keyStats.map((stat, index) => (
+            <Card key={index} className="text-center p-6 border-none bg-gradient-to-br from-blue-50 to-purple-50 hover:shadow-lg transition-shadow">
+              <CardContent className="p-0">
+                <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                  {stat.number}
+                </div>
+                <div className="font-semibold text-gray-900 mb-1">{stat.label}</div>
+                <div className="text-sm text-gray-600">{stat.description}</div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Therapeutic Areas - Streamlined */}
