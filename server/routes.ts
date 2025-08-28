@@ -27,6 +27,7 @@ import {
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { webSearchService } from "./services/web-search.js";
+import { singaporeKnowledgeService } from "./services/singapore-knowledge-simple.js";
 
 // Authentic clinical resource management for medical accuracy
 
@@ -104,96 +105,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Knowledge Sources Status API - Public endpoint for landing page (using fallback data)
+  // Initialize Singapore Knowledge Base - Admin only
+  app.post("/api/knowledge/initialize", requireRole(['admin']), async (req, res) => {
+    try {
+      console.log("Initializing Singapore healthcare knowledge base...");
+      const results = await singaporeKnowledgeService.initializeKnowledgeBase();
+      
+      res.json({
+        success: true,
+        message: "Knowledge base initialized successfully",
+        results
+      });
+    } catch (error) {
+      console.error("Error initializing knowledge base:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to initialize knowledge base",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Knowledge Sources Status API - Real Singapore healthcare data
   app.get("/api/knowledge/sources-status", async (req, res) => {
     try {
-      // Get actual knowledge base data counts
-      const knowledgeCacheQuery = `
-        SELECT context_type, COUNT(*) as cache_count
-        FROM ai_knowledge_cache
-        WHERE is_active = true
-        GROUP BY context_type
-      `;
+      // Get real knowledge base statistics
+      const stats = await singaporeKnowledgeService.getKnowledgeStats();
       
-      const alertsQuery = `
-        SELECT COUNT(*) as alert_count
-        FROM drug_safety_alerts
-      `;
-      
-      const resourcesQuery = `
-        SELECT COUNT(*) as resource_count
-        FROM learning_resources
-      `;
-      
-      const [cacheResult, alertsResult, resourcesResult] = await Promise.all([
-        storage.db.execute(sql.raw(knowledgeCacheQuery)),
-        storage.db.execute(sql.raw(alertsQuery)),
-        storage.db.execute(sql.raw(resourcesQuery))
-      ]);
-      
-      const spcDataPoints = cacheResult.rows.reduce((sum: number, row: any) => sum + parseInt(row.cache_count), 0);
-      const hsaDataPoints = parseInt(alertsResult.rows[0]?.alert_count || 0);
-      const resourceDataPoints = parseInt(resourcesResult.rows[0]?.resource_count || 0);
-      
+      // Create knowledge source status entries with real data
       const sources = [
         {
-          id: "spc-standards",
-          sourceType: "official",
-          sourceName: "Singapore Pharmacy Council",
-          description: "Day-One Pharmacist Blueprint, competency standards, assessment frameworks",
+          id: 'moh-guidelines',
+          sourceType: 'moh',
+          sourceName: 'MOH Guidelines',
           isActive: true,
-          dataPoints: spcDataPoints,
-          lastSyncAt: new Date(),
-          syncFrequency: "manual",
-          freshness: "excellent"
+          lastSyncAt: stats.lastUpdate,
+          syncFrequency: 'weekly',
+          dataCount: stats.mohGuidelines,
+          freshness: 'fresh' as const,
+          lastUpdateHours: Math.floor((Date.now() - stats.lastUpdate.getTime()) / (1000 * 60 * 60)),
+          nextUpdateEstimate: 'Weekly'
         },
         {
-          id: "hsa-alerts",
-          sourceType: "safety",
-          sourceName: "Health Sciences Authority",
-          description: "Drug safety alerts, adverse reactions, regulatory updates",
+          id: 'ndf-medications',
+          sourceType: 'ndf',
+          sourceName: 'NDF Medications',
           isActive: true,
-          dataPoints: hsaDataPoints,
-          lastSyncAt: new Date(),
-          syncFrequency: "daily",
-          freshness: "fresh"
+          lastSyncAt: stats.lastUpdate,
+          syncFrequency: 'monthly',
+          dataCount: stats.ndfMedications,
+          freshness: 'fresh' as const,
+          lastUpdateHours: Math.floor((Date.now() - stats.lastUpdate.getTime()) / (1000 * 60 * 60)),
+          nextUpdateEstimate: 'Monthly'
         },
         {
-          id: "clinical-resources",
-          sourceType: "educational",
-          sourceName: "Clinical Resources",
-          description: "Therapeutic guidelines, practice protocols, educational materials",
+          id: 'hsa-alerts',
+          sourceType: 'hsa',
+          sourceName: 'HSA Safety Alerts',
           isActive: true,
-          dataPoints: resourceDataPoints,
-          lastSyncAt: new Date(),
-          syncFrequency: "weekly",
-          freshness: "good"
+          lastSyncAt: stats.lastUpdate,
+          syncFrequency: 'daily',
+          dataCount: stats.hsaAlerts,
+          freshness: 'fresh' as const,
+          lastUpdateHours: Math.floor((Date.now() - stats.lastUpdate.getTime()) / (1000 * 60 * 60)),
+          nextUpdateEstimate: 'Daily'
+        },
+        {
+          id: 'spc-protocols',
+          sourceType: 'spc',
+          sourceName: 'SPC Protocols',
+          isActive: true,
+          lastSyncAt: stats.lastUpdate,
+          syncFrequency: 'monthly',
+          dataCount: stats.spcProtocols,
+          freshness: 'fresh' as const,
+          lastUpdateHours: Math.floor((Date.now() - stats.lastUpdate.getTime()) / (1000 * 60 * 60)),
+          nextUpdateEstimate: 'Monthly'
         }
       ];
-      
-      const totalDataPoints = sources.reduce((sum, source) => sum + source.dataPoints, 0);
-      
+
+      const totalDataPoints = stats.mohGuidelines + stats.ndfMedications + stats.hsaAlerts + stats.spcProtocols;
+
       res.json({
         sources,
         totalDataPoints,
-        lastGlobalUpdate: new Date(),
-        overallFreshness: "excellent",
+        lastGlobalUpdate: stats.lastUpdate,
+        overallFreshness: totalDataPoints > 0 ? "excellent" : "needs_update",
         summary: {
-          activeAlerts: hsaDataPoints,
-          competencyStandards: spcDataPoints,
-          clinicalProtocols: resourceDataPoints,
-          knowledgeCategories: cacheResult.rows.length
+          activeAlerts: stats.hsaAlerts,
+          competencyStandards: stats.spcProtocols,
+          clinicalProtocols: stats.mohGuidelines,
+          knowledgeCategories: stats.ndfMedications
         }
       });
     } catch (error) {
       console.error("Error fetching knowledge sources status:", error);
       
-      // Return fallback data instead of error
+      // Return empty state to encourage initialization
       res.json({
         sources: [],
         totalDataPoints: 0,
         lastGlobalUpdate: new Date(),
-        overallFreshness: "unknown",
+        overallFreshness: "needs_update",
         summary: {
           activeAlerts: 0,
           competencyStandards: 0,

@@ -10,6 +10,7 @@ import NotFound from "@/pages/not-found";
 import Practice from "@/pages/practice";
 import Prepare from "@/pages/prepare";
 import Perform from "@/pages/perform";
+import { AdminKnowledgePage } from "@/pages/admin-knowledge";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import StudentDashboard from "@/pages/student-dashboard";
@@ -42,6 +43,7 @@ function Router() {
           <Route path="/practice" component={Practice} />
           <Route path="/practice/*" component={Practice} />
           <Route path="/perform" component={Perform} />
+          <Route path="/admin/knowledge" component={AdminKnowledgePage} />
           <Route component={NotFound} />
         </Switch>
       </main>
