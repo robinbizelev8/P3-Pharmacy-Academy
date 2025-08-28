@@ -934,6 +934,160 @@ export default function PerformPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="assessments" className="space-y-6">
+          {/* Assessment Quick Actions */}
+          <div className="grid gap-4 md:grid-cols-3 mb-8">
+            <Card className="border-green-200 bg-green-50 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6 text-center">
+                <FileText className="h-10 w-10 mx-auto mb-3 text-green-600" />
+                <h3 className="font-semibold text-green-900 mb-2">Assessment Report</h3>
+                <p className="text-sm text-green-700 mb-4">View detailed performance analysis with question feedback</p>
+                <Link to="/perform/assessment-report/demo-assessment-id">
+                  <Button className="bg-green-600 hover:bg-green-700 text-white w-full" data-testid="button-view-report">
+                    <FileText className="h-4 w-4 mr-2" />
+                    View Report
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="border-blue-200 bg-blue-50 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6 text-center">
+                <Plus className="h-10 w-10 mx-auto mb-3 text-blue-600" />
+                <h3 className="font-semibold text-blue-900 mb-2">Create Assessment</h3>
+                <p className="text-sm text-blue-700 mb-4">Design custom competency evaluations</p>
+                <Link to="/perform/create-assessment">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full" data-testid="button-create-assessment">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create New
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="border-purple-200 bg-purple-50 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6 text-center">
+                <Brain className="h-10 w-10 mx-auto mb-3 text-purple-600" />
+                <h3 className="font-semibold text-purple-900 mb-2">Adaptive Assessment</h3>
+                <p className="text-sm text-purple-700 mb-4">AI-powered difficulty adjustment</p>
+                <Link to="/perform/adaptive-assessment/demo-session-123">
+                  <Button className="bg-purple-600 hover:bg-purple-700 text-white w-full" data-testid="button-adaptive-assessment">
+                    <Brain className="h-4 w-4 mr-2" />
+                    Try Adaptive
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Assessment Statistics */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">Average Score</p>
+                  <p className="text-2xl font-bold text-blue-600">81.5%</p>
+                </div>
+                <div className="ml-4">
+                  <Award className="h-8 w-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">Completion Rate</p>
+                  <p className="text-2xl font-bold text-green-600">94%</p>
+                </div>
+                <div className="ml-4">
+                  <CheckCircle className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">Total Assessments</p>
+                  <p className="text-2xl font-bold text-purple-600">12</p>
+                </div>
+                <div className="ml-4">
+                  <FileCheck className="h-8 w-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600">Improvement</p>
+                  <p className="text-2xl font-bold text-emerald-600">+12%</p>
+                </div>
+                <div className="ml-4">
+                  <TrendingUp className="h-8 w-8 text-emerald-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Assessments */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Assessments</CardTitle>
+              <CardDescription>Your latest assessment activities and performance</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <FileText className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">PA1-PA4 Competency Assessment</h4>
+                      <p className="text-sm text-gray-500">Comprehensive • 2024-01-15</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">85/100</p>
+                      <Badge className="text-xs bg-green-100 text-green-800">Excellent</Badge>
+                    </div>
+                    <Link to="/perform/assessment-report/demo-assessment-id">
+                      <Button variant="ghost" size="sm">
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <Brain className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Adaptive Clinical Scenarios</h4>
+                      <p className="text-sm text-gray-500">Adaptive • 2024-01-12</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900">78/100</p>
+                      <Badge variant="secondary" className="text-xs">Good</Badge>
+                    </div>
+                    <Link to="/perform/adaptive-assessment/demo-session-123">
+                      <Button variant="ghost" size="sm">
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="portfolio" className="space-y-6">
           {/* Portfolio Building Dashboard */}
           <div className="grid lg:grid-cols-3 gap-6">
@@ -1209,588 +1363,6 @@ export default function PerformPage() {
         </TabsContent>
       </Tabs>
 
-      </div>{/* End content wrapper */}
-    </div>
-  );
-}
-
-function PerformAssessment() {
-  const [activeTab, setActiveTab] = useState("dashboard");
-  
-  // Use the same demo data as main component
-  const displaySPCCompliance = {
-    overallReadinessPercentage: 45,
-    requirementStatus: {
-      PA1: { minScore: 70, currentScore: 52, supervisionLevel: 2, minSupervisionLevel: 3, completed: false, progressPercentage: 74 },
-      PA2: { minScore: 75, currentScore: 38, supervisionLevel: 1, minSupervisionLevel: 4, completed: false, progressPercentage: 51 },
-      PA3: { minScore: 70, currentScore: 61, supervisionLevel: 2, minSupervisionLevel: 3, completed: false, progressPercentage: 87 },
-      PA4: { minScore: 65, currentScore: 43, supervisionLevel: 2, minSupervisionLevel: 3, completed: false, progressPercentage: 66 }
-    },
-    nextFocusAreas: [
-      "Improve PA2 medication safety competency",
-      "Expand neurological therapeutic area knowledge",
-      "Practice patient counseling techniques"
-    ],
-    readyForPreRegistration: false
-  };
-  
-  const displayDashboardData = {
-    totalSessions: 10,
-    recentActivity: {
-      sessionsThisWeek: 2,
-      averageScoreThisWeek: 58
-    }
-  };
-  
-  const displayRecommendations = {
-    nextSessionObjectives: [
-      "Improve PA2 competency",
-      "Practice Neurological therapeutic area scenarios",
-      "Maintain excellence in PA3"
-    ]
-  };
-  
-  const displayCompetencyProgress = {
-    competencyScores: {
-      PA1: { averageScore: 52, sessionCount: 3, supervisionLevel: 2, competencyLevel: 'Advanced Beginner' },
-      PA2: { averageScore: 38, sessionCount: 1, supervisionLevel: 1, competencyLevel: 'Novice' },
-      PA3: { averageScore: 61, sessionCount: 4, supervisionLevel: 2, competencyLevel: 'Advanced Beginner' },
-      PA4: { averageScore: 43, sessionCount: 2, supervisionLevel: 2, competencyLevel: 'Advanced Beginner' }
-    }
-  };
-
-  return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      {/* Hero Section with Visual Elements */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 rounded-3xl">
-        <div className="grid lg:grid-cols-2 gap-8 items-center p-8 lg:p-12">
-          <div className="space-y-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Trophy className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-4xl lg:text-5xl font-bold text-gray-900">Perform</h1>
-                <p className="text-lg text-purple-700 font-medium">Competency Assessment & Portfolio</p>
-              </div>
-            </div>
-            
-            <p className="text-xl text-gray-700 leading-relaxed">
-              Demonstrate clinical mastery through standardized assessments and comprehensive portfolio development for Singapore Pre-registration Training.
-            </p>
-            
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center space-x-2 bg-white/70 rounded-full px-4 py-2">
-                <GraduationCap className="w-5 h-5 text-purple-600" />
-                <span className="text-sm font-medium text-gray-700">Professional Activities Framework</span>
-                <div className="flex gap-1">
-                  <ProfessionalActivityBadge code="PA1" size="sm" showTooltip={false} />
-                  <ProfessionalActivityBadge code="PA2" size="sm" showTooltip={false} />
-                  <ProfessionalActivityBadge code="PA3" size="sm" showTooltip={false} />
-                  <ProfessionalActivityBadge code="PA4" size="sm" showTooltip={false} />
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 bg-white/70 rounded-full px-4 py-2">
-                <BarChart3 className="w-5 h-5 text-purple-600" />
-                <span className="text-sm font-medium text-gray-700">Multi-domain Scoring</span>
-              </div>
-              <div className="flex items-center space-x-2 bg-white/70 rounded-full px-4 py-2">
-                <FileText className="w-5 h-5 text-purple-600" />
-                <span className="text-sm font-medium text-gray-700">Portfolio Development</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="lg:justify-self-end">
-            <img 
-              src={assessmentDashboardImage} 
-              alt="Competency assessment dashboard interface" 
-              className="w-full h-auto rounded-2xl shadow-2xl"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Assessment Process Overview */}
-      <div className="bg-white rounded-2xl p-8 shadow-sm border">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">Assessment & Portfolio Process</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Follow our comprehensive evaluation framework aligned with Singapore's pharmacy competency standards.
-          </p>
-        </div>
-        
-        <div className="mb-8">
-          <img 
-            src={processFlowImage} 
-            alt="Assessment process flow visualization" 
-            className="w-full h-auto rounded-xl shadow-lg"
-          />
-        </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border hover:shadow-md transition-shadow">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold">
-                1
-              </div>
-              <h3 className="font-semibold text-gray-900 text-sm">Knowledge Assessment</h3>
-            </div>
-            <p className="text-sm text-gray-600 mb-3">Evaluate clinical knowledge across therapeutic areas</p>
-          </div>
-          
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border hover:shadow-md transition-shadow">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center text-white font-bold">
-                2
-              </div>
-              <h3 className="font-semibold text-gray-900 text-sm">Clinical Simulation</h3>
-            </div>
-            <p className="text-sm text-gray-600 mb-3">Apply knowledge through structured patient scenarios</p>
-          </div>
-          
-          <div className="bg-gradient-to-br from-purple-50 to-violet-50 p-6 rounded-2xl border hover:shadow-md transition-shadow">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-violet-600 rounded-xl flex items-center justify-center text-white font-bold">
-                3
-              </div>
-              <h3 className="font-semibold text-gray-900 text-sm">Portfolio Review</h3>
-            </div>
-            <p className="text-sm text-gray-600 mb-3">Compile evidence of competency development</p>
-          </div>
-          
-          <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-2xl border hover:shadow-md transition-shadow">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-600 to-amber-600 rounded-xl flex items-center justify-center text-white font-bold">
-                4
-              </div>
-              <h3 className="font-semibold text-gray-900 text-sm">Competency Validation</h3>
-            </div>
-            <p className="text-sm text-gray-600 mb-3">Receive detailed feedback and progression recommendations</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-6">{/* Content wrapper */}
-
-      {/* Main Content Tabs with Enhanced Design */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border">
-          <TabsList className="grid w-full grid-cols-3 h-12 bg-gray-50">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white font-medium">
-              <BarChart3 className="h-4 w-4" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="portfolio" className="flex items-center gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white font-medium">
-              <FileText className="h-4 w-4" />
-              Portfolio
-            </TabsTrigger>
-            <TabsTrigger value="resources" className="flex items-center gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white font-medium">
-              <BookOpen className="h-4 w-4" />
-              Resources
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="dashboard" className="space-y-6">
-          {/* Training Progress Overview */}
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Overall Readiness */}
-            <Card className="lg:col-span-2 border-l-4 border-l-purple-500">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-6 w-6 text-purple-600" />
-                    <CardTitle>Your Training Progress</CardTitle>
-                  </div>
-                  <Badge 
-                    className={`${
-                      displaySPCCompliance?.readyForPreRegistration 
-                        ? 'bg-green-100 text-green-800' 
-                        : displaySPCCompliance?.overallReadinessPercentage >= 60
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-orange-100 text-orange-800'
-                    }`}
-                  >
-                    {displaySPCCompliance?.overallReadinessPercentage}% Ready
-                  </Badge>
-                </div>
-                <CardDescription>
-                  Track your progress towards Singapore Pharmacy Council pre-registration requirements
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="w-full">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="font-medium">Overall Readiness</span>
-                      <span className="text-purple-600 font-bold">{displaySPCCompliance?.overallReadinessPercentage}%</span>
-                    </div>
-                    <Progress value={displaySPCCompliance?.overallReadinessPercentage} className="h-3" />
-                    <div className="flex justify-between text-xs text-gray-500 mt-1">
-                      <span>Current Level</span>
-                      <span>Pre-registration Ready</span>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {displaySPCCompliance?.requirementStatus && Object.entries(displaySPCCompliance.requirementStatus).map(([pa, status]: [string, any]) => (
-                      <div key={pa} className="text-center">
-                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-2 ${
-                          status.completed ? 'bg-green-100 text-green-600' : 
-                          status.progressPercentage >= 70 ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'
-                        }`}>
-                          {status.completed ? <CheckCircle className="h-8 w-8" /> : 
-                           status.progressPercentage >= 70 ? <Clock className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
-                        </div>
-                        <div className="mb-1">
-                          <ProfessionalActivityBadge code={pa as ProfessionalActivityCode} size="sm" showDescription />
-                        </div>
-                        <div className="text-xs text-gray-500">{status.currentScore}% / {status.minScore}%</div>
-                        <Progress value={status.progressPercentage} className="h-1 mt-2" />
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="bg-purple-50 rounded-lg p-4">
-                    <h4 className="font-medium text-purple-900 mb-2">Next Focus Areas</h4>
-                    <div className="space-y-2">
-                      {displaySPCCompliance?.nextFocusAreas?.slice(0, 3).map((area: string, index: number) => (
-                        <div key={index} className="flex items-center gap-2 text-sm">
-                          <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                          <span className="text-purple-800">{area}</span>
-                        </div>
-                      )) || (
-                        <p className="text-sm text-purple-700">Complete more scenarios to see focus areas!</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Session Summary */}
-            <Card className="border-l-4 border-l-blue-500">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-blue-600" />
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{displayDashboardData?.totalSessions || 0}</div>
-                  <div className="text-sm text-gray-600">Total Sessions</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">{displayDashboardData?.recentActivity?.sessionsThisWeek || 0}</div>
-                  <div className="text-sm text-gray-600">This Week</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-orange-600">{Math.round(displayDashboardData?.recentActivity?.averageScoreThisWeek || 0)}%</div>
-                  <div className="text-sm text-gray-600">Avg Score</div>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Current Focus Areas</h4>
-                  {displayRecommendations?.nextSessionObjectives?.slice(0, 2).map((objective: string, index: number) => (
-                    <div key={index} className="flex items-center gap-2 text-xs">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <span className="text-gray-600">{objective}</span>
-                    </div>
-                  )) || (
-                    <p className="text-xs text-gray-500">Start practicing to see focus areas!</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Competency Visualization */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* PA1-PA4 Radar Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5 text-blue-600" />
-                  Professional Activities Competency
-                  {!hasRealCompetencyData && (
-                    <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
-                      Demo Data
-                    </Badge>
-                  )}
-                  {hasRealCompetencyData && (
-                    <Badge variant="outline" className="text-xs text-green-600 border-green-300">
-                      Live Data
-                    </Badge>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  Your competency across Singapore's core pharmacy activities: Clinical Care, Supply & Safety, Patient Education, and Drug Information Services
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart 
-                      data={displayCompetencyProgress?.competencyScores ? Object.entries(displayCompetencyProgress.competencyScores).map(([pa, data]: [string, any]) => ({
-                        pa,
-                        score: data.averageScore,
-                        target: pa === 'PA2' ? 75 : pa === 'PA1' || pa === 'PA3' ? 70 : 65
-                      })) : []}
-                    >
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="pa" tick={{ fontSize: 12, fontWeight: 'bold' }} />
-                      <PolarRadiusAxis 
-                        angle={0} 
-                        domain={[0, 100]} 
-                        tick={{ fontSize: 10 }}
-                        tickCount={6}
-                      />
-                      <Radar
-                        name="Your Score"
-                        dataKey="score"
-                        stroke="#8B5CF6"
-                        fill="#8B5CF6"
-                        fillOpacity={0.3}
-                        strokeWidth={3}
-                      />
-                      <Radar
-                        name="Target"
-                        dataKey="target"
-                        stroke="#E5E7EB"
-                        fill="transparent"
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="assessments" className="space-y-6">
-          {/* Assessment Quick Actions */}
-          <div className="grid gap-4 md:grid-cols-3 mb-8">
-            <Card className="border-green-200 bg-green-50 hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 text-center">
-                <FileText className="h-10 w-10 mx-auto mb-3 text-green-600" />
-                <h3 className="font-semibold text-green-900 mb-2">Assessment Report</h3>
-                <p className="text-sm text-green-700 mb-4">View detailed performance analysis with question feedback</p>
-                <Link to="/perform/assessment-report/demo-assessment-id">
-                  <Button className="bg-green-600 hover:bg-green-700 text-white w-full" data-testid="button-view-report">
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Report
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="border-blue-200 bg-blue-50 hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 text-center">
-                <Plus className="h-10 w-10 mx-auto mb-3 text-blue-600" />
-                <h3 className="font-semibold text-blue-900 mb-2">Create Assessment</h3>
-                <p className="text-sm text-blue-700 mb-4">Design custom competency evaluations</p>
-                <Link to="/perform/create-assessment">
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full" data-testid="button-create-assessment">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create New
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="border-purple-200 bg-purple-50 hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 text-center">
-                <Brain className="h-10 w-10 mx-auto mb-3 text-purple-600" />
-                <h3 className="font-semibold text-purple-900 mb-2">Adaptive Assessment</h3>
-                <p className="text-sm text-purple-700 mb-4">AI-powered difficulty adjustment</p>
-                <Link to="/perform/adaptive-assessment/demo-session-123">
-                  <Button className="bg-purple-600 hover:bg-purple-700 text-white w-full" data-testid="button-adaptive-assessment">
-                    <Brain className="h-4 w-4 mr-2" />
-                    Try Adaptive
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Assessment Statistics */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardContent className="flex items-center p-6">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Average Score</p>
-                  <p className="text-2xl font-bold text-blue-600">81.5%</p>
-                </div>
-                <div className="ml-4">
-                  <Award className="h-8 w-8 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="flex items-center p-6">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Completion Rate</p>
-                  <p className="text-2xl font-bold text-green-600">94%</p>
-                </div>
-                <div className="ml-4">
-                  <CheckCircle className="h-8 w-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="flex items-center p-6">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Total Assessments</p>
-                  <p className="text-2xl font-bold text-purple-600">12</p>
-                </div>
-                <div className="ml-4">
-                  <FileCheck className="h-8 w-8 text-purple-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="flex items-center p-6">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Improvement</p>
-                  <p className="text-2xl font-bold text-emerald-600">+12%</p>
-                </div>
-                <div className="ml-4">
-                  <TrendingUp className="h-8 w-8 text-emerald-600" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Assessments */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Assessments</CardTitle>
-              <CardDescription>Your latest assessment activities and performance</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">PA1-PA4 Competency Assessment</h4>
-                      <p className="text-sm text-gray-500">Comprehensive • 2024-01-15</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="font-medium text-gray-900">85/100</p>
-                      <Badge className="text-xs bg-green-100 text-green-800">Excellent</Badge>
-                    </div>
-                    <Link to="/perform/assessment-report/demo-assessment-id">
-                      <Button variant="ghost" size="sm">
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <Brain className="h-6 w-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Adaptive Clinical Scenarios</h4>
-                      <p className="text-sm text-gray-500">Adaptive • 2024-01-12</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="font-medium text-gray-900">78/100</p>
-                      <Badge variant="secondary" className="text-xs">Good</Badge>
-                    </div>
-                    <Link to="/perform/adaptive-assessment/demo-session-123">
-                      <Button variant="ghost" size="sm">
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="portfolio" className="space-y-6">
-          <div className="text-center py-12 text-gray-500">
-            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Portfolio features coming soon...</p>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="resources" className="space-y-6">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Assessment Performance Analytics</h2>
-              <p className="text-gray-600 mt-1">
-                Track your competency development according to Singapore Pharmacy Council guidelines
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Link to="/perform/assessment-report/demo-assessment-id">
-                <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50" data-testid="button-view-report">
-                  <FileText className="h-4 w-4 mr-2" />
-                  View Report
-                </Button>
-              </Link>
-              <Link to="/perform/create-assessment">
-                <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-new-assessment">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Assessment
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Assessment Analysis Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Detailed Assessment Analysis</CardTitle>
-              <CardDescription>
-                Comprehensive breakdown of your latest assessment performance with question-by-question feedback
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Assessment Report Available</h3>
-                <p className="text-gray-600 mb-4">
-                  View your detailed assessment analysis with question-by-question feedback, competency breakdown, and personalized learning recommendations.
-                </p>
-                <div className="flex gap-3">
-                  <Link to="/perform/assessment-report/demo-assessment-id">
-                    <Button className="bg-green-600 hover:bg-green-700">
-                      <FileText className="h-4 w-4 mr-2" />
-                      View Detailed Report
-                    </Button>
-                  </Link>
-                  <Link to="/perform/adaptive-assessment/demo-session-123">
-                    <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
-                      <Brain className="h-4 w-4 mr-2" />
-                      Try Adaptive Assessment
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
       </div>{/* End content wrapper */}
     </div>
   );
