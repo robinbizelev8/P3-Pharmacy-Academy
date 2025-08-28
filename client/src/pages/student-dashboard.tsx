@@ -182,14 +182,37 @@ export default function StudentDashboard() {
 
                 {/* Overall Progress Bar */}
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">Overall Program Progress</span>
-                    <span>32%</span>
-                  </div>
-                  <Progress value={32} className="h-2" />
-                  <p className="text-xs text-gray-600">
-                    Keep going! You're making great progress towards your pharmacy practice readiness.
-                  </p>
+                  {(() => {
+                    const prepareProgress = dashboardData?.progress?.prepare || { completed: 0, total: 10 };
+                    const practiceProgress = dashboardData?.progress?.practice || { completed: 0, total: 20 };
+                    const performProgress = dashboardData?.progress?.perform || { completed: 0, total: 15 };
+                    
+                    const totalCompleted = prepareProgress.completed + practiceProgress.completed + performProgress.completed;
+                    const totalSessions = prepareProgress.total + practiceProgress.total + performProgress.total;
+                    const overallPercentage = totalSessions > 0 ? Math.round((totalCompleted / totalSessions) * 100) : 0;
+                    
+                    return (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="font-medium">Overall Program Progress</span>
+                          <span>{overallPercentage}%</span>
+                        </div>
+                        <Progress value={overallPercentage} className="h-2" />
+                        <p className="text-xs text-gray-600">
+                          {overallPercentage === 0 
+                            ? "Start your pharmacy training journey today!"
+                            : overallPercentage < 25
+                            ? "Great start! Keep building your foundation."
+                            : overallPercentage < 50
+                            ? "Good progress! You're building strong pharmacy skills."
+                            : overallPercentage < 75
+                            ? "Excellent work! You're well on your way to competency."
+                            : "Outstanding progress! You're approaching pharmacy practice readiness."
+                          }
+                        </p>
+                      </>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
