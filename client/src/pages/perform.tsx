@@ -1586,10 +1586,12 @@ function PerformAssessment() {
                   View Report
                 </Button>
               </Link>
-              <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-new-assessment">
-                <Plus className="h-4 w-4 mr-2" />
-                New Assessment
-              </Button>
+              <Link to="/perform/create-assessment">
+                <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-new-assessment">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Assessment
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -1608,12 +1610,20 @@ function PerformAssessment() {
                 <p className="text-gray-600 mb-4">
                   View your detailed assessment analysis with question-by-question feedback, competency breakdown, and personalized learning recommendations.
                 </p>
-                <Link to="/perform/assessment-report/demo-assessment-id">
-                  <Button className="bg-green-600 hover:bg-green-700">
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Detailed Report
-                  </Button>
-                </Link>
+                <div className="flex gap-3">
+                  <Link to="/perform/assessment-report/demo-assessment-id">
+                    <Button className="bg-green-600 hover:bg-green-700">
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Detailed Report
+                    </Button>
+                  </Link>
+                  <Link to="/perform/adaptive-assessment/demo-session-123">
+                    <Button variant="outline" className="border-purple-600 text-purple-600 hover:bg-purple-50">
+                      <Brain className="h-4 w-4 mr-2" />
+                      Try Adaptive Assessment
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </CardContent>
           </Card>

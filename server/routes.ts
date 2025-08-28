@@ -1243,6 +1243,65 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
+  // Enhanced Assessment API Routes for Phase 3
+  app.post("/api/assessments", addMockUser, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const assessment = await storage.createEnhancedAssessment(userId, req.body);
+      res.json(assessment);
+    } catch (error) {
+      console.error("Error creating assessment:", error);
+      res.status(500).json({ 
+        message: "Failed to create assessment",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.get("/api/adaptive-assessment/:sessionId", addMockUser, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const sessionId = req.params.sessionId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const session = await storage.getAdaptiveAssessmentSession(userId, sessionId);
+      res.json(session);
+    } catch (error) {
+      console.error("Error fetching adaptive assessment session:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch adaptive assessment session",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.post("/api/adaptive-assessment/:sessionId/answer", addMockUser, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const sessionId = req.params.sessionId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const result = await storage.submitAdaptiveAnswer(userId, sessionId, req.body);
+      res.json(result);
+    } catch (error) {
+      console.error("Error submitting adaptive answer:", error);
+      res.status(500).json({ 
+        message: "Failed to submit answer",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   app.get("/api/perform/supervisor-analytics/:supervisorId", addMockUser, async (req: any, res) => {
     try {
       const { traineeIds } = req.query;
