@@ -19,8 +19,11 @@ export function AIResponseFormatter({ content, className = '' }: AIResponseForma
               {parts.map((part: string, partIndex: number) => {
                 if (part.match(/\*\*.*?\*\*:/)) {
                   const headerText = part.replace(/\*\*/g, '').replace(':', '');
+                  const isNextQuestion = headerText.toLowerCase().includes('next question');
                   return (
-                    <div key={partIndex} className="font-semibold text-blue-700 mb-2 text-sm">
+                    <div key={partIndex} className={`font-semibold mb-2 text-sm ${
+                      isNextQuestion ? 'text-green-700 bg-green-50 p-2 rounded border-l-4 border-green-400' : 'text-blue-700'
+                    }`}>
                       {headerText}
                     </div>
                   );
@@ -55,6 +58,22 @@ export function AIResponseFormatter({ content, className = '' }: AIResponseForma
                 <span>{trimmedParagraph.replace(/^[-•]\s*/, '')}</span>
               </p>
             </div>
+          );
+        }
+        
+        // Handle inline bold text **text** (not headers)
+        if (trimmedParagraph.includes('**') && !trimmedParagraph.match(/\*\*.*?\*\*:/)) {
+          const parts = trimmedParagraph.split(/(\*\*.*?\*\*)/);
+          return (
+            <p key={pIndex} className={`text-gray-700 ${pIndex > 0 ? 'mt-3' : ''}`}>
+              {parts.map((part: string, partIndex: number) => {
+                if (part.match(/\*\*.*?\*\*/)) {
+                  const boldText = part.replace(/\*\*/g, '');
+                  return <strong key={partIndex} className="font-bold text-gray-900">{boldText}</strong>;
+                }
+                return part;
+              })}
+            </p>
           );
         }
         
