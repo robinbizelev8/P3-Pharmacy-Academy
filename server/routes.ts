@@ -45,11 +45,11 @@ declare global {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize authentication strategies
-  initializeAuthStrategies();
-  
-  // Setup session-based auth (for Replit compatibility and additional providers)
+  // Setup session-based auth first
   await setupAuth(app);
+  
+  // Initialize authentication strategies (this must come after setupAuth)
+  initializeAuthStrategies();
   
   // Setup authentication routes
   setupAuthRoutes(app);
