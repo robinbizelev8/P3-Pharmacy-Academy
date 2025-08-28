@@ -625,7 +625,7 @@ export default function PerformPage() {
                           status.progressPercentage >= 70 ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'
                         }`}>
                           {status.completed ? <CheckCircle className="h-8 w-8" /> : 
-                           status.progressPercentage >= 70 ? <ClockIcon className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
+                           status.progressPercentage >= 70 ? <Clock className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
                         </div>
                         <div className="text-sm font-medium">{pa}</div>
                         <div className="text-xs text-gray-500">{status.currentScore}% / {status.minScore}%</div>
@@ -1272,7 +1272,7 @@ function PerformAssessment() {
                           status.progressPercentage >= 70 ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'
                         }`}>
                           {status.completed ? <CheckCircle className="h-8 w-8" /> : 
-                           status.progressPercentage >= 70 ? <ClockIcon className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
+                           status.progressPercentage >= 70 ? <Clock className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
                         </div>
                         <div className="text-sm font-medium">{pa}</div>
                         <div className="text-xs text-gray-500">{status.currentScore}% / {status.minScore}%</div>
