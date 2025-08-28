@@ -37,7 +37,7 @@ import dashboardImage from "@assets/generated_images/Clinical_Assessment_Dashboa
 import achievementImage from "@assets/generated_images/Pharmacy_Achievement_Success_e8bfd117.png";
 
 export default function LandingPage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { loop: true },
@@ -421,7 +421,12 @@ export default function LandingPage() {
           <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
             Join Singapore's premier pre-registration training platform and accelerate your journey to independent practice.
           </p>
-          {user ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center space-x-3 bg-white/10 rounded-xl p-4 max-w-md mx-auto">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              <span className="font-medium">Loading...</span>
+            </div>
+          ) : user ? (
             <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl">
               <Link href="/prepare">
                 Begin Your Journey
@@ -429,9 +434,19 @@ export default function LandingPage() {
               </Link>
             </Button>
           ) : (
-            <div className="flex items-center justify-center space-x-3 bg-white/10 rounded-xl p-4 max-w-md mx-auto">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-              <span className="font-medium">Preparing your personalized academy...</span>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl">
+                <Link href="/login">
+                  Sign In
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold rounded-xl">
+                <Link href="/login">
+                  Create Account
+                  <Users className="w-5 h-5 ml-2" />
+                </Link>
+              </Button>
             </div>
           )}
         </div>
