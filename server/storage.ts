@@ -742,6 +742,14 @@ export class DatabaseStorage implements IStorage {
     return scenario;
   }
 
+  async getPerformScenario(id: string): Promise<PerformScenario | undefined> {
+    const [scenario] = await db
+      .select()
+      .from(performScenarios)
+      .where(eq(performScenarios.id, id));
+    return scenario;
+  }
+
   async getAssessmentScenarios(assessmentId: string): Promise<PerformScenario[]> {
     return await db
       .select()

@@ -883,8 +883,8 @@ This format helps students learn from expert examples before progressing. Focus 
   // Submit scenario response for evaluation
   app.post("/api/perform/scenarios/:id/submit", addMockUser, async (req: any, res) => {
     try {
-      const scenario = await storage.getAssessmentScenarios(req.params.id);
-      if (!scenario.length) {
+      const scenario = await storage.getPerformScenario(req.params.id);
+      if (!scenario) {
         return res.status(404).json({ message: "Scenario not found" });
       }
 
@@ -892,7 +892,7 @@ This format helps students learn from expert examples before progressing. Focus 
 
       // Use OpenAI to evaluate the response
       const evaluation = await openaiService.evaluatePerformResponse(
-        scenario[0],
+        scenario,
         userResponses
       );
 
@@ -916,12 +916,12 @@ This format helps students learn from expert examples before progressing. Focus 
       // Record analytics
       await storage.recordPerformAnalytics({
         userId: req.user?.id,
-        assessmentId: scenario[0].assessmentId,
+        assessmentId: scenario.assessmentId,
         metricCategory: 'scenario_performance',
         metricName: 'response_quality',
         metricValue: evaluation.responseQuality.toString(),
-        therapeuticArea: scenario[0].therapeuticArea,
-        practiceArea: scenario[0].practiceArea,
+        therapeuticArea: scenario.therapeuticArea,
+        practiceArea: scenario.practiceArea,
         assessmentType: 'clinical_scenario'
       });
 
