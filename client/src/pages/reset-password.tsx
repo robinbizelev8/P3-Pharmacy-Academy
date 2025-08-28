@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -8,27 +7,19 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
 export default function ResetPasswordPage() {
-  const [location] = useLocation();
   const [token, setToken] = useState<string | null>(null);
   const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
 
   useEffect(() => {
     // Extract token from URL parameters
-    console.log('Current URL:', window.location.href);
-    console.log('Search params:', window.location.search);
-    
     const urlParams = new URLSearchParams(window.location.search);
     const tokenParam = urlParams.get('token');
-    
-    console.log('Extracted token:', tokenParam);
     
     if (tokenParam) {
       setToken(tokenParam);
       setIsValidToken(true);
-      console.log('Token set successfully');
     } else {
       setIsValidToken(false);
-      console.log('No token found in URL');
     }
   }, []);
 

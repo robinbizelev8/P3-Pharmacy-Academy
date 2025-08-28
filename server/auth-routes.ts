@@ -240,7 +240,7 @@ export function setupAuthRoutes(app: Express) {
 
   // Forgot Password
   app.post('/api/auth/forgot-password',
-    rateLimitAuth(3, 60 * 60 * 1000), // 3 attempts per hour
+    // rateLimitAuth(3, 60 * 60 * 1000), // Temporarily disabled for testing
     logAuthEvent('FORGOT_PASSWORD'),
     async (req: Request, res: Response) => {
       try {
