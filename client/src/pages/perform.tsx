@@ -139,14 +139,7 @@ interface PerformPortfolio {
   supervisorValidated?: boolean;
 }
 
-const createAssessmentSchema = z.object({
-  assessmentType: z.string().min(1, "Assessment type is required"),
-  therapeuticAreas: z.array(z.string()).min(1, "Select at least one therapeutic area"),
-  practiceAreas: z.array(z.string()).min(1, "Select at least one practice area"),
-  timeLimitMinutes: z.number().min(30).max(180, "Time limit must be between 30-180 minutes")
-});
-
-type CreateAssessmentData = z.infer<typeof createAssessmentSchema>;
+// Removed assessment schema
 
 const scenarioResponseSchema = z.object({
   informationGathering: z.string().min(50, "Provide detailed information gathering approach"),
@@ -160,7 +153,6 @@ const scenarioResponseSchema = z.object({
 type ScenarioResponseData = z.infer<typeof scenarioResponseSchema>;
 
 export default function PerformPage() {
-  const [selectedAssessment, setSelectedAssessment] = useState<PerformAssessment | null>(null);
   const [currentScenario, setCurrentScenario] = useState<PerformScenario | null>(null);
 
   // Scroll to top when scenario loads
@@ -173,11 +165,7 @@ export default function PerformPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch user's assessments
-  const { data: assessments = [], isLoading: assessmentsLoading } = useQuery({
-    queryKey: ["/api/perform/assessments"],
-    staleTime: 5 * 60 * 1000
-  });
+  // Removed assessments query
 
   // Fetch portfolio
   const { data: portfolio } = useQuery({
@@ -321,16 +309,7 @@ export default function PerformPage() {
   const displayGapAnalysis = gapAnalysis || getDemoGapAnalysis();
   const displayRecommendations = recommendations || getDemoRecommendations();
 
-  // Create assessment form
-  const assessmentForm = useForm<CreateAssessmentData>({
-    resolver: zodResolver(createAssessmentSchema),
-    defaultValues: {
-      assessmentType: "competency_evaluation",
-      therapeuticAreas: [],
-      practiceAreas: [],
-      timeLimitMinutes: 120
-    }
-  });
+  // Removed assessment form
 
   // Scenario response form
   const scenarioForm = useForm<ScenarioResponseData>({
@@ -345,64 +324,9 @@ export default function PerformPage() {
     }
   });
 
-  // Create assessment mutation
-  const createAssessmentMutation = useMutation({
-    mutationFn: async (data: CreateAssessmentData) => {
-      const response = await fetch("/api/perform/assessments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-      if (!response.ok) throw new Error("Failed to create assessment");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/perform/assessments"] });
-      toast({ title: "Assessment created successfully" });
-      assessmentForm.reset();
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: "Failed to create assessment", 
-        description: error.message,
-        variant: "destructive" 
-      });
-    }
-  });
+  // Removed assessment mutations
 
-  // Start assessment mutation
-  const startAssessmentMutation = useMutation({
-    mutationFn: async (assessmentId: string) => {
-      const response = await fetch(`/api/perform/assessments/${assessmentId}/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-      if (!response.ok) throw new Error("Failed to start assessment");
-      return response.json();
-    },
-    onSuccess: (data: any) => {
-      console.log('Start assessment response:', data);
-      queryClient.invalidateQueries({ queryKey: ["/api/perform/assessments"] });
-      toast({ 
-        title: "Assessment Ready!", 
-        description: `Generated ${data.scenarios?.length || 0} clinical scenarios. Assessment started successfully.`
-      });
-      if (data.scenarios && data.scenarios.length > 0) {
-        console.log('Setting current scenario:', data.scenarios[0]);
-        setCurrentScenario(data.scenarios[0]);
-        setSelectedAssessment(null); // Switch to scenario view
-      } else {
-        console.log('No scenarios in response, data:', data);
-      }
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: "Failed to start assessment", 
-        description: "Unable to generate assessment scenarios. Please check your connection and try again.",
-        variant: "destructive" 
-      });
-    }
-  });
+  // Removed start assessment mutation
 
   // Submit scenario response mutation
   const submitScenarioMutation = useMutation({
@@ -493,24 +417,7 @@ export default function PerformPage() {
     }
   });
 
-  const handleCreateAssessment = (data: CreateAssessmentData) => {
-    createAssessmentMutation.mutate(data);
-  };
-
-  const handleStartAssessment = (assessment: PerformAssessment) => {
-    // Clear any existing scenario state to ensure fresh start
-    setCurrentScenario(null);
-    scenarioForm.reset();
-    setSelectedAssessment(assessment);
-    
-    // Show immediate feedback to user about the generation process
-    toast({ 
-      title: "Generating Assessment Scenarios...", 
-      description: "AI is creating personalized clinical scenarios. This may take up to 10 seconds.",
-      duration: 8000 // Show for 8 seconds during generation
-    });
-    startAssessmentMutation.mutate(assessment.id);
-  };
+  // Removed assessment handlers
 
   const handleSubmitScenario = (data: ScenarioResponseData) => {
     if (currentScenario) {
@@ -521,9 +428,7 @@ export default function PerformPage() {
     }
   };
 
-  const handleDeleteAssessment = (assessmentId: string) => {
-    deleteAssessmentMutation.mutate(assessmentId);
-  };
+  // Removed delete assessment handler
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -541,16 +446,7 @@ export default function PerformPage() {
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
-  if (assessmentsLoading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-96">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
-          <span className="ml-2 text-lg text-gray-600">Loading Module 3: Perform...</span>
-        </div>
-      </div>
-    );
-  }
+  // Removed assessment loading check
 
   // Show scenario interface if currentScenario is set
   if (currentScenario) {
@@ -563,7 +459,7 @@ export default function PerformPage() {
           </div>
           <Button variant="outline" onClick={() => setCurrentScenario(null)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Assessments
+            Back to Portfolio
           </Button>
         </div>
 
@@ -1259,14 +1155,10 @@ export default function PerformPage() {
       {/* Main Content Tabs with Enhanced Design */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="bg-white rounded-2xl p-4 shadow-sm border">
-          <TabsList className="grid w-full grid-cols-4 h-12 bg-gray-50">
+          <TabsList className="grid w-full grid-cols-3 h-12 bg-gray-50">
             <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white font-medium">
               <BarChart3 className="h-4 w-4" />
               Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="assessments" className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium">
-              <GraduationCap className="h-4 w-4" />
-              Assessments
             </TabsTrigger>
             <TabsTrigger value="portfolio" className="flex items-center gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white font-medium">
               <FileText className="h-4 w-4" />
@@ -1673,11 +1565,11 @@ export default function PerformPage() {
                         </div>
                         <Button 
                           size="sm" 
-                          onClick={() => setActiveTab("assessments")}
+                          onClick={() => setActiveTab("portfolio")}
                           className="w-full text-xs"
                         >
                           <Play className="h-3 w-3 mr-1" />
-                          Start Practicing
+                          Build Portfolio
                         </Button>
                       </div>
                     ))}
@@ -1686,9 +1578,9 @@ export default function PerformPage() {
                   <div className="text-center py-8">
                     <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50 text-yellow-500" />
                     <p className="text-gray-600 mb-4">Complete practice sessions to unlock personalized recommendations!</p>
-                    <Button onClick={() => setActiveTab("assessments")}>
+                    <Button onClick={() => setActiveTab("portfolio")}>
                       <Plus className="h-4 w-4 mr-2" />
-                      Start Your First Assessment
+                      Start Building Portfolio
                     </Button>
                   </div>
                 )}
@@ -1723,9 +1615,9 @@ export default function PerformPage() {
                     <div className="text-sm text-gray-600">Estimated Weeks</div>
                   </div>
                   <div className="text-center">
-                    <Button onClick={() => setActiveTab("assessments")} className="h-auto flex-col py-3">
+                    <Button onClick={() => setActiveTab("portfolio")} className="h-auto flex-col py-3">
                       <Play className="h-6 w-6 mb-1" />
-                      <span className="text-xs">Start Closing Gaps</span>
+                      <span className="text-xs">Build Portfolio</span>
                     </Button>
                   </div>
                 </div>
@@ -1776,296 +1668,20 @@ export default function PerformPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4">
-                <Button onClick={() => setActiveTab("assessments")} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                <Button onClick={() => setActiveTab("portfolio")} className="flex-1 bg-purple-600 hover:bg-purple-700">
                   <GraduationCap className="h-4 w-4 mr-2" />
-                  Start Assessment
-                </Button>
-                <Button onClick={() => setActiveTab("portfolio")} variant="outline" className="flex-1">
-                  <FileText className="h-4 w-4 mr-2" />
                   Build Portfolio
                 </Button>
-                <Button onClick={() => setActiveTab("resources")} variant="outline" className="flex-1">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Study Resources
+                <Button onClick={() => setActiveTab("dashboard")} variant="outline" className="flex-1">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  View Analytics
                 </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="assessments" className="space-y-6">
-          {/* Create New Assessment */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-blue-500" />
-                Create New Assessment
-              </CardTitle>
-              <CardDescription>
-                Start a new competency assessment for your Pre-registration Training portfolio
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...assessmentForm}>
-                <form onSubmit={assessmentForm.handleSubmit(handleCreateAssessment)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={assessmentForm.control}
-                      name="assessmentType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Assessment Type</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select assessment type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {(constants as any)?.assessmentTypes?.map((type: string) => (
-                                <SelectItem key={type} value={type}>
-                                  {type.replace('_', ' ').split(' ').map(word => 
-                                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                                  ).join(' ')}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
-                    <FormField
-                      control={assessmentForm.control}
-                      name="timeLimitMinutes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Time Limit (minutes)</FormLabel>
-                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select time limit" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="60">60 minutes</SelectItem>
-                              <SelectItem value="90">90 minutes</SelectItem>
-                              <SelectItem value="120">120 minutes</SelectItem>
-                              <SelectItem value="150">150 minutes</SelectItem>
-                              <SelectItem value="180">180 minutes</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={assessmentForm.control}
-                    name="therapeuticAreas"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Therapeutic Areas</FormLabel>
-                        <FormDescription>Select the therapeutic areas for your assessment</FormDescription>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {(constants as any)?.therapeuticAreas?.map((area: string) => (
-                            <FormField
-                              key={area}
-                              control={assessmentForm.control}
-                              name="therapeuticAreas"
-                              render={({ field }) => (
-                                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(area)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, area])
-                                          : field.onChange(field.value?.filter((value) => value !== area))
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="text-sm font-normal capitalize">
-                                    {area}
-                                  </FormLabel>
-                                </FormItem>
-                              )}
-                            />
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={assessmentForm.control}
-                    name="practiceAreas"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Practice Areas</FormLabel>
-                        <FormDescription>Select the practice settings for your assessment</FormDescription>
-                        <div className="grid grid-cols-2 gap-2">
-                          {(constants as any)?.practiceAreas?.map((area: string) => (
-                            <FormField
-                              key={area}
-                              control={assessmentForm.control}
-                              name="practiceAreas"
-                              render={({ field }) => (
-                                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(area)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, area])
-                                          : field.onChange(field.value?.filter((value) => value !== area))
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="text-sm font-normal capitalize">
-                                    {area}
-                                  </FormLabel>
-                                </FormItem>
-                              )}
-                            />
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button 
-                    type="submit" 
-                    disabled={createAssessmentMutation.isPending}
-                    className="w-full"
-                  >
-                    {createAssessmentMutation.isPending ? (
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Play className="h-4 w-4 mr-2" />
-                    )}
-                    Create Assessment
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-
-          {/* Assessment History with Better Management */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Assessment Management</h3>
-              <div className="flex gap-2 text-sm text-gray-600">
-                <Badge variant="outline" className="text-blue-600">
-                  {(assessments as PerformAssessment[]).filter(a => a.status === 'in_progress').length} Active
-                </Badge>
-                <Badge variant="outline" className="text-green-600">
-                  {(assessments as PerformAssessment[]).filter(a => a.status === 'completed').length} Complete
-                </Badge>
-              </div>
-            </div>
-            
-            <div className="grid gap-4">
-              {(assessments as PerformAssessment[]).map((assessment: PerformAssessment) => (
-                <Card key={assessment.id} className={`hover:shadow-md transition-shadow ${assessment.status === 'in_progress' ? 'border-l-4 border-l-blue-500' : ''}`}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Badge className={getStatusColor(assessment.status)}>
-                            {assessment.status.toUpperCase()}
-                          </Badge>
-                          <span className="font-medium">{assessment.assessmentType.replace('_', ' ').toUpperCase()}</span>
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Started: {new Date(assessment.startedAt).toLocaleDateString()}
-                        </p>
-                        <div className="flex gap-1">
-                          {assessment.therapeuticAreas.map(area => (
-                            <Badge key={area} variant="secondary" className="text-xs">
-                              {area}
-                            </Badge>
-                          ))}
-                        </div>
-                        {assessment.overallCompetencyScore && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <TrendingUp className="h-4 w-4 text-green-500" />
-                            Overall Score: {parseFloat(assessment.overallCompetencyScore).toFixed(1)}%
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        {(assessment.status === 'draft' || assessment.status === 'in_progress') && !assessment.scenarios?.length && (
-                          <Button 
-                            onClick={() => handleStartAssessment(assessment)}
-                            disabled={startAssessmentMutation.isPending}
-                          >
-                            {startAssessmentMutation.isPending ? (
-                              <>
-                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                Starting Assessment...
-                              </>
-                            ) : (
-                              <>
-                                <Play className="h-4 w-4 mr-2" />
-                                Start Assessment
-                              </>
-                            )}
-                          </Button>
-                        )}
-                        {assessment.status === 'in_progress' && (assessment.scenarios?.length ?? 0) > 0 && (
-                          <Button onClick={() => setSelectedAssessment(assessment)}>
-                            <Play className="h-4 w-4 mr-2" />
-                            Continue Assessment
-                          </Button>
-                        )}
-                        {assessment.status === 'completed' && (
-                          <Button variant="outline">
-                            <FileText className="h-4 w-4 mr-2" />
-                            View Report
-                          </Button>
-                        )}
-                        
-                        {/* Delete button for draft and in-progress assessments */}
-                        {(assessment.status === 'draft' || assessment.status === 'in_progress') && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Assessment</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this {assessment.assessmentType.replace('_', ' ')} assessment? 
-                                  This action cannot be undone and will remove all associated scenarios and progress.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteAssessment(assessment.id)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Delete Assessment
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </TabsContent>
 
         <TabsContent value="portfolio" className="space-y-6">
           {/* Portfolio Overview */}

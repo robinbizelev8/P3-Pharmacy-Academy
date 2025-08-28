@@ -922,7 +922,7 @@ export class DatabaseStorage implements IStorage {
         .where(and(
           eq(pharmacySessions.userId, userId),
           eq(pharmacySessions.module, "practice"),
-          isNotNull(pharmacySessions.completedAt)
+          ne(pharmacySessions.completedAt, null)
         ))
         .orderBy(desc(pharmacySessions.completedAt));
 
@@ -944,7 +944,7 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(performAssessments, eq(performScenarios.assessmentId, performAssessments.id))
         .where(and(
           eq(performAssessments.userId, userId),
-          isNotNull(performScenarios.completedAt)
+          ne(performScenarios.completedAt, null)
         ))
         .orderBy(desc(performScenarios.completedAt));
 
