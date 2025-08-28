@@ -1572,10 +1572,51 @@ function PerformAssessment() {
         </TabsContent>
 
         <TabsContent value="resources" className="space-y-6">
-          <div className="text-center py-12 text-gray-500">
-            <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Assessment resources coming soon...</p>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Assessment Performance Analytics</h2>
+              <p className="text-gray-600 mt-1">
+                Track your competency development according to Singapore Pharmacy Council guidelines
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Link to="/perform/assessment-report/demo-assessment-id">
+                <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50" data-testid="button-view-report">
+                  <FileText className="h-4 w-4 mr-2" />
+                  View Report
+                </Button>
+              </Link>
+              <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-new-assessment">
+                <Plus className="h-4 w-4 mr-2" />
+                New Assessment
+              </Button>
+            </div>
           </div>
+
+          {/* Assessment Analysis Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Detailed Assessment Analysis</CardTitle>
+              <CardDescription>
+                Comprehensive breakdown of your latest assessment performance with question-by-question feedback
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <FileText className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Assessment Report Available</h3>
+                <p className="text-gray-600 mb-4">
+                  View your detailed assessment analysis with question-by-question feedback, competency breakdown, and personalized learning recommendations.
+                </p>
+                <Link to="/perform/assessment-report/demo-assessment-id">
+                  <Button className="bg-green-600 hover:bg-green-700">
+                    <FileText className="h-4 w-4 mr-2" />
+                    View Detailed Report
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
       

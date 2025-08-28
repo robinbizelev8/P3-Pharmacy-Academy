@@ -160,6 +160,9 @@ export interface IStorage {
   getCompetencyGapAnalysis(userId: string): Promise<any>;
   getRecommendedScenarios(userId: string): Promise<any>;
   getSupervisorAnalytics(supervisorId: string, traineeIds?: string[]): Promise<any>;
+  
+  // Assessment Analysis System
+  getAssessmentReport(userId: string, assessmentId: string): Promise<any>;
 
   // Knowledge sources status
   getKnowledgeSourcesStatus(): Promise<KnowledgeSourcesStatus>;
@@ -1829,6 +1832,80 @@ export class DatabaseStorage implements IStorage {
         inProgressSessions: sessions.filter(s => s.status === 'in_progress').length
       }
     };
+  }
+
+  // Assessment Analysis System Implementation
+  async getAssessmentReport(userId: string, assessmentId: string): Promise<any> {
+    try {
+      // Create demo assessment report for now
+      return {
+        assessmentId,
+        title: `Clinical Assessment Report - ${new Date().toLocaleDateString()}`,
+        completedAt: new Date().toISOString(),
+        overallScore: 72,
+        maxScore: 100,
+        percentage: 72,
+        competencyBreakdown: {
+          PA1: { score: 18, maxScore: 25, questions: 3 },
+          PA2: { score: 15, maxScore: 25, questions: 2 },
+          PA3: { score: 20, maxScore: 25, questions: 3 },
+          PA4: { score: 19, maxScore: 25, questions: 2 }
+        },
+        questions: [
+          {
+            id: "q1",
+            questionText: "A 65-year-old patient with diabetes presents with symptoms of peripheral neuropathy. What therapeutic approach would you recommend?",
+            questionType: "clinical_scenario",
+            userAnswer: "I would recommend pregabalin as first-line treatment and ensure proper diabetes management.",
+            modelAnswer: "First-line treatment includes pregabalin or gabapentin for neuropathic pain, with dose titration based on response. Ensure optimal glycemic control (HbA1c <7%) and consider vitamin B12 supplementation if deficient. Patient education on foot care and regular monitoring is essential.",
+            isCorrect: true,
+            partialScore: 8,
+            maxScore: 10,
+            competencyArea: "PA1",
+            therapeuticArea: "Endocrine",
+            feedback: "Good understanding of neuropathic pain management. Your recommendation aligns with Singapore guidelines.",
+            learningTip: "Always consider the underlying cause when treating complications. Optimal diabetes control is key to preventing progression.",
+            improvementSuggestion: "Consider mentioning monitoring parameters and potential side effects of prescribed medications."
+          },
+          {
+            id: "q2",
+            questionText: "A patient is prescribed warfarin and asks about drug interactions. What counseling points would you provide?",
+            questionType: "short_answer",
+            userAnswer: "Avoid alcohol and green vegetables. Get regular blood tests.",
+            modelAnswer: "Key counseling points: 1) Maintain consistent vitamin K intake (don't avoid green vegetables, just be consistent), 2) Regular INR monitoring as scheduled, 3) Report any unusual bleeding/bruising, 4) Inform all healthcare providers about warfarin use, 5) Avoid aspirin and NSAIDs unless prescribed, 6) Limited alcohol consumption, 7) Use soft toothbrush and electric razor.",
+            isCorrect: false,
+            partialScore: 4,
+            maxScore: 10,
+            competencyArea: "PA3",
+            therapeuticArea: "Cardiovascular",
+            feedback: "Your answer shows basic understanding but misses key counseling points. Avoiding green vegetables is a common misconception.",
+            learningTip: "Focus on consistency rather than avoidance for vitamin K-containing foods. Comprehensive patient education prevents complications.",
+            improvementSuggestion: "Study Singapore MOH anticoagulation guidelines and practice comprehensive medication counseling scenarios."
+          }
+        ],
+        strengths: [
+          "Strong clinical reasoning in endocrine cases",
+          "Good understanding of first-line treatments",
+          "Appropriate consideration of underlying conditions"
+        ],
+        areasForImprovement: [
+          "Comprehensive medication counseling techniques",
+          "Drug interaction awareness and communication",
+          "Patient education completeness"
+        ],
+        nextSteps: [
+          "Review Singapore MOH anticoagulation guidelines",
+          "Practice comprehensive medication counseling scenarios",
+          "Study drug interaction databases and resources",
+          "Focus on PA3 competency development",
+          "Complete additional cardiovascular therapeutic area scenarios"
+        ],
+        estimatedStudyTime: 12
+      };
+    } catch (error) {
+      console.error("Error generating assessment report:", error);
+      throw error;
+    }
   }
 }
 

@@ -1222,6 +1222,27 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
+  // Assessment Report Route for detailed analysis
+  app.get("/api/perform/assessment-report/:assessmentId", addMockUser, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const assessmentId = req.params.assessmentId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const report = await storage.getAssessmentReport(userId, assessmentId);
+      res.json(report);
+    } catch (error) {
+      console.error("Error fetching assessment report:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch assessment report",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   app.get("/api/perform/supervisor-analytics/:supervisorId", addMockUser, async (req: any, res) => {
     try {
       const { traineeIds } = req.query;
