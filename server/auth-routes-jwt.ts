@@ -219,8 +219,8 @@ export function setupJWTAuthRoutes(app: Express) {
         // Generate JWT token
         const token = generateToken({
           userId: user.id,
-          email: user.email,
-          role: user.role
+          email: user.email || '',
+          role: user.role || 'student'
         });
 
         // Set HTTP-only cookie
@@ -331,7 +331,7 @@ export function setupJWTAuthRoutes(app: Express) {
           const emailSent = await emailService.sendPasswordResetEmail({
             email,
             token,
-            userName: user.firstName || user.email
+            userName: user.firstName || user.email || 'User'
           });
           
           if (emailSent) {

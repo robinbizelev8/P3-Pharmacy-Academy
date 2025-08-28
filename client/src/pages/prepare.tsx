@@ -12,6 +12,11 @@ import { CheckCircle, BookOpen, Target, Clock, Brain, Play, Award, TrendingUp, F
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { AIResponseFormatter } from "@/components/AIResponseFormatter";
+import { 
+  ProfessionalActivityBadge,
+  ProfessionalActivitiesGrid,
+  type ProfessionalActivityCode
+} from "@/components/ui/professional-activity-badge";
 
 // Module 1: Prepare - Foundation Building
 export default function PreparePage() {
@@ -258,6 +263,54 @@ export default function PreparePage() {
             Build your foundation across all 7 therapeutic areas through structured coaching and evidence-based resources.
           </AlertDescription>
         </Alert>
+
+        {/* Professional Activities Overview */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-purple-600" />
+              Professional Activities Framework
+            </CardTitle>
+            <CardDescription>
+              Understand the four core competency areas required for pharmacy practice in Singapore
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Singapore Pharmacy Council requires pre-registration pharmacists to demonstrate competency in four Professional Activities (PA1-PA4). 
+                Each represents essential skills for safe pharmaceutical care:
+              </p>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="text-center">
+                  <ProfessionalActivityBadge code="PA1" size="lg" showTooltip={false} />
+                  <p className="text-xs text-gray-600 mt-2">Clinical Care Planning</p>
+                </div>
+                <div className="text-center">
+                  <ProfessionalActivityBadge code="PA2" size="lg" showTooltip={false} />
+                  <p className="text-xs text-gray-600 mt-2">Supply & Safety</p>
+                </div>
+                <div className="text-center">
+                  <ProfessionalActivityBadge code="PA3" size="lg" showTooltip={false} />
+                  <p className="text-xs text-gray-600 mt-2">Patient Education</p>
+                </div>
+                <div className="text-center">
+                  <ProfessionalActivityBadge code="PA4" size="lg" showTooltip={false} />
+                  <p className="text-xs text-gray-600 mt-2">Drug Information</p>
+                </div>
+              </div>
+
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h4 className="font-medium text-purple-900 mb-2">Your Learning Journey</h4>
+                <p className="text-sm text-purple-800">
+                  As you complete this preparation module, you'll build foundational knowledge that supports all four Professional Activities. 
+                  Your coaching conversations and assessments will identify strengths and areas for development across these competencies.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="learning" className="space-y-6">

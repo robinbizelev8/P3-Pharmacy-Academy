@@ -1699,8 +1699,14 @@ async function getDetailedModuleProgress(userId: string, module: string, storage
   const moduleSessions = sessions.filter((s: any) => s.module === module);
   
   // Group by therapeutic area for detailed analysis
-  const therapeuticAreaProgress = {};
-  const practiceAreaProgress = {};
+  type ProgressStatsType = Record<string, {
+    completed: number;
+    total: number;
+    averageScore: number;
+  }>;
+  
+  const therapeuticAreaProgress: ProgressStatsType = {};
+  const practiceAreaProgress: ProgressStatsType = {};
   
   moduleSessions.forEach((session: any) => {
     const ta = session.therapeuticArea;
@@ -1751,7 +1757,14 @@ async function getCompetencyProgression(userId: string, storage: any) {
   const sessions = await storage.getUserPharmacySessions(userId);
   const completedSessions = sessions.filter((s: any) => s.status === 'completed');
   
-  const progressionData = {
+  type ProfessionalActivityType = {
+    PA1: { sessions: number; averageScore: number; competencyLevel: number };
+    PA2: { sessions: number; averageScore: number; competencyLevel: number };
+    PA3: { sessions: number; averageScore: number; competencyLevel: number };
+    PA4: { sessions: number; averageScore: number; competencyLevel: number };
+  };
+  
+  const progressionData: ProfessionalActivityType = {
     PA1: { sessions: 0, averageScore: 0, competencyLevel: 1 },
     PA2: { sessions: 0, averageScore: 0, competencyLevel: 1 },
     PA3: { sessions: 0, averageScore: 0, competencyLevel: 1 },
@@ -1759,7 +1772,7 @@ async function getCompetencyProgression(userId: string, storage: any) {
   };
   
   completedSessions.forEach((session: any) => {
-    const pa = session.scenario.professionalActivity;
+    const pa = session.scenario.professionalActivity as keyof ProfessionalActivityType;
     if (progressionData[pa]) {
       progressionData[pa].sessions++;
       progressionData[pa].averageScore += parseFloat(session.overallScore) || 0;
@@ -1767,7 +1780,7 @@ async function getCompetencyProgression(userId: string, storage: any) {
   });
   
   // Calculate averages and competency levels
-  Object.keys(progressionData).forEach(key => {
+  (Object.keys(progressionData) as Array<keyof ProfessionalActivityType>).forEach(key => {
     const pa = progressionData[key];
     if (pa.sessions > 0) {
       pa.averageScore = Math.round(pa.averageScore / pa.sessions);
@@ -1844,8 +1857,15 @@ async function generateUpcomingMilestones(userId: string, storage: any, competen
   const now = new Date();
   
   // Check for PA assessments that need to be completed or advanced
-  const paKeys = ['PA1', 'PA2', 'PA3', 'PA4'];
-  const paDescriptions = {
+  const paKeys = ['PA1', 'PA2', 'PA3', 'PA4'] as const;
+  type PADescriptionType = {
+    PA1: string;
+    PA2: string;
+    PA3: string;
+    PA4: string;
+  };
+  
+  const paDescriptions: PADescriptionType = {
     PA1: 'Pharmacy Practice and Professional Standards',
     PA2: 'Accurate Supply of Health Products', 
     PA3: 'Patient Education and Health Promotion',
@@ -1888,8 +1908,14 @@ async function generateUpcomingMilestones(userId: string, storage: any, competen
   }
   
   // Check for module progression milestones
-  const modules = ['prepare', 'practice', 'perform'];
-  const moduleDescriptions = {
+  const modules = ['prepare', 'practice', 'perform'] as const;
+  type ModuleDescriptionType = {
+    prepare: string;
+    practice: string;
+    perform: string;
+  };
+  
+  const moduleDescriptions: ModuleDescriptionType = {
     prepare: 'Foundation Building Module',
     practice: 'Clinical Practice Module', 
     perform: 'Competency Assessment Module'
@@ -1933,10 +1959,11 @@ async function generateUpcomingMilestones(userId: string, storage: any, competen
   }
   
   // Sort by priority and due date, limit to 5 most urgent
-  const priorityOrder = { high: 3, medium: 2, low: 1 };
+  type PriorityType = 'high' | 'medium' | 'low';
+  const priorityOrder: Record<PriorityType, number> = { high: 3, medium: 2, low: 1 };
   return milestones
     .sort((a, b) => {
-      const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+      const priorityDiff = priorityOrder[b.priority as PriorityType] - priorityOrder[a.priority as PriorityType];
       if (priorityDiff !== 0) return priorityDiff;
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     })

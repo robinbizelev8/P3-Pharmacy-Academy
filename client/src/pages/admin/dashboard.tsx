@@ -108,13 +108,13 @@ function AdminOverview({
 
   // Calculate stats
   const totalScenarios = scenarios?.length || 0;
-  const activeSessions = sessions?.filter(s => s.status === 'in_progress').length || 0;
-  const completedSessions = sessions?.filter(s => s.status === 'completed').length || 0;
+  const activeSessions = sessions?.filter((s: any) => s.status === 'in_progress').length || 0;
+  const completedSessions = sessions?.filter((s: any) => s.status === 'completed').length || 0;
   
   const averageRating = completedSessions > 0 
     ? sessions
-        ?.filter(s => s.status === 'completed' && s.overallScore)
-        ?.reduce((sum, s) => sum + parseFloat(s.overallScore || '0'), 0) / completedSessions
+        ?.filter((s: any) => s.status === 'completed' && s.overallScore)
+        ?.reduce((sum: number, s: any) => sum + parseFloat(s.overallScore || '0'), 0) / completedSessions
     : 0;
 
   return (

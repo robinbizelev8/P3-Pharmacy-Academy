@@ -256,9 +256,38 @@ export const PRACTICE_AREAS = {
   'community': 'Community'
 } as const;
 
+// Professional Activities as defined by Singapore Pharmacy Council
 export const PROFESSIONAL_ACTIVITIES = {
+  'PA1': {
+    title: 'Clinical Care Planning',
+    description: 'Develop and implement a care plan',
+    detailedDescription: 'Develop comprehensive pharmaceutical care plans by assessing patient medication needs, identifying drug therapy problems, and creating evidence-based treatment recommendations in collaboration with healthcare teams.',
+    category: 'Clinical Practice'
+  },
+  'PA2': {
+    title: 'Medication Supply & Safety',
+    description: 'Accurate supply of health products',
+    detailedDescription: 'Ensure safe, accurate, and legal supply of medicines and health products through proper dispensing practices, inventory management, and quality assurance procedures.',
+    category: 'Supply Chain & Safety'
+  },
+  'PA3': {
+    title: 'Patient Education & Counseling',
+    description: 'Educate patients on appropriate use of health products',
+    detailedDescription: 'Provide comprehensive patient education and counseling on proper medication use, potential side effects, interactions, and adherence strategies to optimize therapeutic outcomes.',
+    category: 'Patient Care'
+  },
+  'PA4': {
+    title: 'Drug Information Services',
+    description: 'Respond to drug information or health product enquiry',
+    detailedDescription: 'Provide evidence-based drug information and clinical expertise to healthcare professionals, patients, and caregivers through comprehensive literature review and clinical knowledge application.',
+    category: 'Information Services'
+  }
+} as const;
+
+// Legacy export for backwards compatibility
+export const PROFESSIONAL_ACTIVITIES_SIMPLE = {
   'PA1': 'Develop and implement a care plan',
-  'PA2': 'Accurate supply of health products',
+  'PA2': 'Accurate supply of health products', 
   'PA3': 'Educate patients on appropriate use of health products',
   'PA4': 'Respond to drug information or health product enquiry'
 } as const;

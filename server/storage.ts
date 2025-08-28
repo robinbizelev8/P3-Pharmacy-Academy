@@ -57,7 +57,7 @@ import {
   type SupervisorScenarioWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, count, avg, sql } from "drizzle-orm";
+import { eq, desc, and, count, avg, sql, ne, gte } from "drizzle-orm";
 
 // Knowledge sources status types
 export interface KnowledgeSourceStatus {
@@ -908,7 +908,7 @@ export class DatabaseStorage implements IStorage {
           module: pharmacySessions.module,
           therapeuticArea: pharmacySessions.therapeuticArea,
           practiceArea: pharmacySessions.practiceArea,
-          professionalActivity: pharmacySessions.professionalActivity,
+          professionalActivity: pharmacyScenarios.professionalActivity,
           clinicalKnowledgeScore: pharmacySessions.clinicalKnowledgeScore,
           therapeuticReasoningScore: pharmacySessions.therapeuticReasoningScore,
           patientCommunicationScore: pharmacySessions.patientCommunicationScore,
@@ -919,6 +919,7 @@ export class DatabaseStorage implements IStorage {
           improvements: pharmacySessions.improvements
         })
         .from(pharmacySessions)
+        .leftJoin(pharmacyScenarios, eq(pharmacySessions.scenarioId, pharmacyScenarios.id))
         .where(and(
           eq(pharmacySessions.userId, userId),
           eq(pharmacySessions.module, "practice"),
@@ -927,7 +928,7 @@ export class DatabaseStorage implements IStorage {
         .orderBy(desc(pharmacySessions.completedAt));
 
       // Get all perform assessment scenarios
-      const performScenarios = await db
+      const performScenariosData = await db
         .select({
           id: performScenarios.id,
           therapeuticArea: performScenarios.therapeuticArea,
@@ -950,25 +951,25 @@ export class DatabaseStorage implements IStorage {
 
       // Calculate PA1-PA4 competency scores
       const competencyScores = {
-        PA1: this.calculatePACompetency(practiceSessions, performScenarios, 'PA1'),
-        PA2: this.calculatePACompetency(practiceSessions, performScenarios, 'PA2'), 
-        PA3: this.calculatePACompetency(practiceSessions, performScenarios, 'PA3'),
-        PA4: this.calculatePACompetency(practiceSessions, performScenarios, 'PA4')
+        PA1: this.calculatePACompetency(practiceSessions, performScenariosData, 'PA1'),
+        PA2: this.calculatePACompetency(practiceSessions, performScenariosData, 'PA2'), 
+        PA3: this.calculatePACompetency(practiceSessions, performScenariosData, 'PA3'),
+        PA4: this.calculatePACompetency(practiceSessions, performScenariosData, 'PA4')
       };
 
       // Calculate competency progression timeline
-      const timelineData = this.calculateCompetencyTimeline(practiceSessions, performScenarios);
+      const timelineData = this.calculateCompetencyTimeline(practiceSessions, performScenariosData);
 
       // Calculate therapeutic area mastery
-      const therapeuticAreaMastery = this.calculateTherapeuticAreaMastery(practiceSessions, performScenarios);
+      const therapeuticAreaMastery = this.calculateTherapeuticAreaMastery(practiceSessions, performScenariosData);
 
       return {
         competencyScores,
         timelineData,
         therapeuticAreaMastery,
-        totalSessions: practiceSessions.length + performScenarios.length,
+        totalSessions: practiceSessions.length + performScenariosData.length,
         lastActivityDate: Math.max(
-          ...[...practiceSessions, ...performScenarios]
+          ...[...practiceSessions, ...performScenariosData]
             .map(s => new Date(s.completedAt || '').getTime())
             .filter(t => !isNaN(t))
         )
@@ -1080,7 +1081,8 @@ export class DatabaseStorage implements IStorage {
       const gaps = [];
       
       // Identify gaps in PA requirements
-      for (const [pa, status] of Object.entries(spcStatus.requirementStatus)) {
+      for (const [pa, statusUnknown] of Object.entries(spcStatus.requirementStatus)) {
+        const status = statusUnknown as { completed: boolean; currentScore: number; minScore: number; [key: string]: any };
         if (!status.completed) {
           const gap = {
             type: 'competency',
@@ -1400,7 +1402,8 @@ export class DatabaseStorage implements IStorage {
   private getNextCompetencyMilestones(requirementStatus: any): any[] {
     const milestones = [];
     
-    for (const [pa, status] of Object.entries(requirementStatus)) {
+    for (const [pa, statusUnknown] of Object.entries(requirementStatus)) {
+      const status = statusUnknown as { completed: boolean; minScore: number; currentScore: number; progressPercentage: number };
       if (!status.completed) {
         milestones.push({
           professionalActivity: pa,
@@ -1727,7 +1730,8 @@ export class DatabaseStorage implements IStorage {
 
     return sessions.map(row => ({
       ...row.session,
-      scenario: row.scenario!
+      scenario: row.scenario!,
+      messages: [] as PharmacyMessage[]
     }));
   }
 
@@ -1736,24 +1740,31 @@ export class DatabaseStorage implements IStorage {
     const completedSessions = allSessions.filter(s => s.status === 'completed');
     
     // Group by module
-    const moduleStats = {
+    type ModuleStatsType = {
+      prepare: { total: number; completed: number; avgScore: number };
+      practice: { total: number; completed: number; avgScore: number };
+      perform: { total: number; completed: number; avgScore: number };
+    };
+    
+    const moduleStats: ModuleStatsType = {
       prepare: { total: 0, completed: 0, avgScore: 0 },
       practice: { total: 0, completed: 0, avgScore: 0 },
       perform: { total: 0, completed: 0, avgScore: 0 }
     };
 
     allSessions.forEach(session => {
-      if (moduleStats[session.module]) {
-        moduleStats[session.module].total++;
+      const module = session.module as keyof ModuleStatsType;
+      if (moduleStats[module]) {
+        moduleStats[module].total++;
         if (session.status === 'completed') {
-          moduleStats[session.module].completed++;
-          moduleStats[session.module].avgScore += parseFloat(session.overallScore || '0');
+          moduleStats[module].completed++;
+          moduleStats[module].avgScore += parseFloat(session.overallScore || '0');
         }
       }
     });
 
     // Calculate averages
-    Object.keys(moduleStats).forEach(module => {
+    (Object.keys(moduleStats) as Array<keyof ModuleStatsType>).forEach(module => {
       const stats = moduleStats[module];
       stats.avgScore = stats.completed > 0 ? Math.round(stats.avgScore / stats.completed) : 0;
     });
@@ -1775,7 +1786,14 @@ export class DatabaseStorage implements IStorage {
     const performAssessments = await this.getUserPerformAssessments(userId);
 
     // Group sessions by professional activity
-    const activityProgress = {};
+    type ActivityProgressType = Record<string, {
+      total: number;
+      completed: number;
+      avgScore: number;
+      sessions: any[];
+    }>;
+    
+    const activityProgress: ActivityProgressType = {};
     sessions.forEach(session => {
       const pa = session.scenario.professionalActivity;
       if (!activityProgress[pa]) {

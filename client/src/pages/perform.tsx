@@ -41,6 +41,11 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { 
+  ProfessionalActivityBadge,
+  ProfessionalActivitiesGrid,
+  type ProfessionalActivityCode
+} from "@/components/ui/professional-activity-badge";
+import { 
   BookOpen, 
   Award, 
   CheckCircle, 
@@ -181,27 +186,32 @@ export default function PerformPage() {
   // Enhanced analytics queries - Always enabled for dashboard
   const { data: competencyProgress, isLoading: competencyLoading } = useQuery({
     queryKey: ["/api/perform/competency-progress"],
-    staleTime: 2 * 60 * 1000
+    staleTime: 2 * 60 * 1000,
+    enabled: false // Disable until backend is ready
   });
 
   const { data: spcCompliance, isLoading: complianceLoading } = useQuery({
     queryKey: ["/api/perform/spc-compliance"], 
-    staleTime: 2 * 60 * 1000
+    staleTime: 2 * 60 * 1000,
+    enabled: false // Disable until backend is ready
   });
 
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
     queryKey: ["/api/perform/dashboard"],
-    staleTime: 2 * 60 * 1000
+    staleTime: 2 * 60 * 1000,
+    enabled: false // Disable until backend is ready
   });
 
   const { data: gapAnalysis, isLoading: gapLoading } = useQuery({
     queryKey: ["/api/perform/gap-analysis"],
-    staleTime: 2 * 60 * 1000
+    staleTime: 2 * 60 * 1000,
+    enabled: false // Disable until backend is ready
   });
 
   const { data: recommendations, isLoading: recommendationsLoading } = useQuery({
     queryKey: ["/api/perform/recommendations"],
-    staleTime: 2 * 60 * 1000
+    staleTime: 2 * 60 * 1000,
+    enabled: false // Disable until backend is ready
   });
 
   // Demo/Placeholder data for transparency and expectation setting
@@ -217,6 +227,11 @@ export default function PerformPage() {
       { professionalActivity: "PA3", milestone: "Achieve 70% competency in PA3", currentProgress: 87, estimatedSessions: 2 },
       { professionalActivity: "PA1", milestone: "Achieve 70% competency in PA1", currentProgress: 74, estimatedSessions: 4 },
       { professionalActivity: "PA4", milestone: "Achieve 65% competency in PA4", currentProgress: 66, estimatedSessions: 5 }
+    ],
+    nextFocusAreas: [
+      "Improve PA2 medication safety competency",
+      "Expand neurological therapeutic area knowledge",
+      "Practice patient counseling techniques"
     ],
     readyForPreRegistration: false
   });
@@ -271,6 +286,33 @@ export default function PerformPage() {
       { area: "Neurological", currentSessions: 0, targetSessions: 3, gap: 3, priority: 7, type: 'therapeutic_area' },
       { area: "Dermatological", currentSessions: 0, targetSessions: 3, gap: 3, priority: 6, type: 'therapeutic_area' }
     ],
+    priorityAreas: [
+      {
+        competency: "PA2 - Medication Safety",
+        therapeuticArea: "Cardiovascular",
+        currentScore: 38,
+        targetScore: 75,
+        priority: "high",
+        recommendation: "Focus on drug interaction assessments and safety monitoring protocols",
+        suggestedActions: ["Complete drug interaction scenarios", "Practice safety protocols", "Study MOH guidelines"]
+      },
+      {
+        competency: "PA4 - Clinical Research",
+        therapeuticArea: "Endocrine",
+        currentScore: 43,
+        targetScore: 65,
+        priority: "medium",
+        recommendation: "Develop evidence-based practice skills and research methodology",
+        suggestedActions: ["Review clinical studies", "Practice data interpretation", "Learn research methods"]
+      }
+    ],
+    progressTrends: [
+      { date: "2024-01-15", score: 35 },
+      { date: "2024-01-22", score: 42 },
+      { date: "2024-01-29", score: 48 },
+      { date: "2024-02-05", score: 52 },
+      { date: "2024-02-12", score: 58 }
+    ],
     estimatedTimeToCompletion: { totalWeeks: 8, highPriorityWeeks: 4, mediumPriorityWeeks: 2, lowPriorityWeeks: 2 }
   });
 
@@ -301,12 +343,12 @@ export default function PerformPage() {
     ]
   });
 
-  // Use demo data when real data is not available
-  const displaySPCCompliance = spcCompliance || getDemoSPCCompliance();
-  const displayCompetencyProgress = competencyProgress || getDemoCompetencyProgress();
-  const displayDashboardData = dashboardData || getDemoDashboardData();
-  const displayGapAnalysis = gapAnalysis || getDemoGapAnalysis();
-  const displayRecommendations = recommendations || getDemoRecommendations();
+  // Use demo data when real data is not available (with proper type assertions)
+  const displaySPCCompliance: any = (spcCompliance && Object.keys(spcCompliance).length > 0) ? spcCompliance : getDemoSPCCompliance();
+  const displayCompetencyProgress: any = (competencyProgress && Object.keys(competencyProgress).length > 0) ? competencyProgress : getDemoCompetencyProgress();
+  const displayDashboardData: any = (dashboardData && Object.keys(dashboardData).length > 0) ? dashboardData : getDemoDashboardData();
+  const displayGapAnalysis: any = (gapAnalysis && Object.keys(gapAnalysis).length > 0) ? gapAnalysis : getDemoGapAnalysis();
+  const displayRecommendations: any = (recommendations && Object.keys(recommendations).length > 0) ? recommendations : getDemoRecommendations();
   
   // Additional mock data for portfolio and knowledge features
   const displayPortfolioProgress = {
@@ -373,6 +415,31 @@ export default function PerformPage() {
   });
 
   // Removed assessment handlers
+
+  // Submit scenario mutation for portfolio documentation
+  const submitScenarioMutation = useMutation({
+    mutationFn: async ({ scenarioId, responses }: { scenarioId: string; responses: ScenarioResponseData }) => {
+      const response = await fetch(`/api/perform/scenarios/${scenarioId}/responses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(responses)
+      });
+      if (!response.ok) throw new Error("Failed to submit scenario response");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/portfolio"] });
+      toast({ title: "Response submitted for portfolio documentation" });
+      setCurrentScenario(null); // Return to dashboard
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Submission failed", 
+        description: error?.message || "Please try again",
+        variant: "destructive" 
+      });
+    }
+  });
 
   const handleSubmitScenario = (data: ScenarioResponseData) => {
     if (currentScenario) {
@@ -530,7 +597,7 @@ export default function PerformPage() {
               </div>
               <h3 className="font-semibold text-gray-900 text-sm">Competency Tracking</h3>
             </div>
-            <p className="text-sm text-gray-600 mb-3">Track progress across PA1-PA4 professional activities</p>
+            <p className="text-sm text-gray-600 mb-3">Track progress across Professional Activities (Clinical Care, Supply & Safety, Patient Education, Drug Information)</p>
           </div>
           
           <div className="bg-gradient-to-br from-purple-50 to-violet-50 p-6 rounded-2xl border hover:shadow-md transition-shadow">
@@ -627,7 +694,9 @@ export default function PerformPage() {
                           {status.completed ? <CheckCircle className="h-8 w-8" /> : 
                            status.progressPercentage >= 70 ? <Clock className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
                         </div>
-                        <div className="text-sm font-medium">{pa}</div>
+                        <div className="mb-1">
+                          <ProfessionalActivityBadge code={pa as ProfessionalActivityCode} size="sm" showDescription />
+                        </div>
                         <div className="text-xs text-gray-500">{status.currentScore}% / {status.minScore}%</div>
                         <Progress value={status.progressPercentage} className="h-1 mt-2" />
                       </div>
@@ -695,10 +764,10 @@ export default function PerformPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <GraduationCap className="h-5 w-5 text-blue-600" />
-                  Professional Activities (PA1-PA4)
+                  Professional Activities Competency
                 </CardTitle>
                 <CardDescription>
-                  Your competency across Singapore's core pharmacy activities
+                  Your competency across Singapore's core pharmacy activities: Clinical Care, Supply & Safety, Patient Education, and Drug Information Services
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -884,7 +953,9 @@ export default function PerformPage() {
                           {status.evidenceCount >= status.requiredEvidence ? <CheckCircle className="h-8 w-8" /> : 
                            status.evidenceCount >= Math.ceil(status.requiredEvidence * 0.7) ? <Clock className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
                         </div>
-                        <div className="text-sm font-medium">{pa}</div>
+                        <div className="mb-1">
+                          <ProfessionalActivityBadge code={pa as ProfessionalActivityCode} size="sm" showDescription />
+                        </div>
                         <div className="text-xs text-gray-500">{status.evidenceCount} / {status.requiredEvidence}</div>
                         <Progress value={Math.min((status.evidenceCount / status.requiredEvidence) * 100, 100)} className="h-1 mt-2" />
                       </div>
@@ -982,6 +1053,30 @@ export default function PerformPage() {
         </TabsContent>
 
         <TabsContent value="resources" className="space-y-6">
+          {/* Professional Activities Guide */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-purple-600" />
+                Professional Activities (PA1-PA4) Guide
+              </CardTitle>
+              <CardDescription>
+                Understanding Singapore Pharmacy Council's core competency framework for pre-registration training
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProfessionalActivitiesGrid />
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2">About Singapore's Professional Activities Framework</h4>
+                <p className="text-sm text-blue-800">
+                  The Singapore Pharmacy Council requires pre-registration pharmacists to demonstrate competency across four core Professional Activities (PA1-PA4). 
+                  Each activity represents essential skills needed for safe, effective pharmaceutical care in Singapore's healthcare system. 
+                  Your progress in these activities determines your readiness for full registration as a practicing pharmacist.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Clinical Resources */}
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Singapore Guidelines */}
@@ -1096,6 +1191,50 @@ export default function PerformPage() {
 }
 
 function PerformAssessment() {
+  const [activeTab, setActiveTab] = useState("dashboard");
+  
+  // Use the same demo data as main component
+  const displaySPCCompliance = {
+    overallReadinessPercentage: 45,
+    requirementStatus: {
+      PA1: { minScore: 70, currentScore: 52, supervisionLevel: 2, minSupervisionLevel: 3, completed: false, progressPercentage: 74 },
+      PA2: { minScore: 75, currentScore: 38, supervisionLevel: 1, minSupervisionLevel: 4, completed: false, progressPercentage: 51 },
+      PA3: { minScore: 70, currentScore: 61, supervisionLevel: 2, minSupervisionLevel: 3, completed: false, progressPercentage: 87 },
+      PA4: { minScore: 65, currentScore: 43, supervisionLevel: 2, minSupervisionLevel: 3, completed: false, progressPercentage: 66 }
+    },
+    nextFocusAreas: [
+      "Improve PA2 medication safety competency",
+      "Expand neurological therapeutic area knowledge",
+      "Practice patient counseling techniques"
+    ],
+    readyForPreRegistration: false
+  };
+  
+  const displayDashboardData = {
+    totalSessions: 10,
+    recentActivity: {
+      sessionsThisWeek: 2,
+      averageScoreThisWeek: 58
+    }
+  };
+  
+  const displayRecommendations = {
+    nextSessionObjectives: [
+      "Improve PA2 competency",
+      "Practice Neurological therapeutic area scenarios",
+      "Maintain excellence in PA3"
+    ]
+  };
+  
+  const displayCompetencyProgress = {
+    competencyScores: {
+      PA1: { averageScore: 52, sessionCount: 3, supervisionLevel: 2, competencyLevel: 'Advanced Beginner' },
+      PA2: { averageScore: 38, sessionCount: 1, supervisionLevel: 1, competencyLevel: 'Novice' },
+      PA3: { averageScore: 61, sessionCount: 4, supervisionLevel: 2, competencyLevel: 'Advanced Beginner' },
+      PA4: { averageScore: 43, sessionCount: 2, supervisionLevel: 2, competencyLevel: 'Advanced Beginner' }
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Hero Section with Visual Elements */}
@@ -1119,7 +1258,13 @@ function PerformAssessment() {
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center space-x-2 bg-white/70 rounded-full px-4 py-2">
                 <GraduationCap className="w-5 h-5 text-purple-600" />
-                <span className="text-sm font-medium text-gray-700">PA1-PA4 Competency Framework</span>
+                <span className="text-sm font-medium text-gray-700">Professional Activities Framework</span>
+                <div className="flex gap-1">
+                  <ProfessionalActivityBadge code="PA1" size="sm" showTooltip={false} />
+                  <ProfessionalActivityBadge code="PA2" size="sm" showTooltip={false} />
+                  <ProfessionalActivityBadge code="PA3" size="sm" showTooltip={false} />
+                  <ProfessionalActivityBadge code="PA4" size="sm" showTooltip={false} />
+                </div>
               </div>
               <div className="flex items-center space-x-2 bg-white/70 rounded-full px-4 py-2">
                 <BarChart3 className="w-5 h-5 text-purple-600" />
@@ -1274,7 +1419,9 @@ function PerformAssessment() {
                           {status.completed ? <CheckCircle className="h-8 w-8" /> : 
                            status.progressPercentage >= 70 ? <Clock className="h-8 w-8" /> : <AlertTriangle className="h-8 w-8" />}
                         </div>
-                        <div className="text-sm font-medium">{pa}</div>
+                        <div className="mb-1">
+                          <ProfessionalActivityBadge code={pa as ProfessionalActivityCode} size="sm" showDescription />
+                        </div>
                         <div className="text-xs text-gray-500">{status.currentScore}% / {status.minScore}%</div>
                         <Progress value={status.progressPercentage} className="h-1 mt-2" />
                       </div>
@@ -1342,10 +1489,10 @@ function PerformAssessment() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <GraduationCap className="h-5 w-5 text-blue-600" />
-                  Professional Activities (PA1-PA4)
+                  Professional Activities Competency
                 </CardTitle>
                 <CardDescription>
-                  Your competency across Singapore's core pharmacy activities
+                  Your competency across Singapore's core pharmacy activities: Clinical Care, Supply & Safety, Patient Education, and Drug Information Services
                 </CardDescription>
               </CardHeader>
               <CardContent>

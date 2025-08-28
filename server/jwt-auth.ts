@@ -92,10 +92,11 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   const user = (req as any).user;
   
   if (!user) {
-    return res.status(401).json({
+    res.status(401).json({
       error: 'Authentication required',
       message: 'Please log in to access this resource'
     });
+    return;
   }
   
   next();
@@ -107,17 +108,19 @@ export function requireRole(roles: string[]) {
     const user = (req as any).user;
     
     if (!user) {
-      return res.status(401).json({
+      res.status(401).json({
         error: 'Authentication required',
         message: 'Please log in to access this resource'
       });
+      return;
     }
     
     if (!roles.includes(user.role)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'Insufficient permissions',
         message: 'You do not have permission to access this resource'
       });
+      return;
     }
     
     next();

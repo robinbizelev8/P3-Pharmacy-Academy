@@ -302,7 +302,7 @@ export function setupAuthRoutes(app: Express) {
           const emailSent = await emailService.sendPasswordResetEmail({
             email,
             token,
-            userName: user.firstName || user.email
+            userName: user.firstName || user.email || 'User'
           });
           
           if (emailSent) {

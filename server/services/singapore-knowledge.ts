@@ -14,7 +14,7 @@ export class SingaporeKnowledgeService {
    * Populate knowledge base with authentic Singapore MOH Clinical Guidelines
    */
   async populateMOHGuidelines(): Promise<number> {
-    const mohSources = [
+    const mohGuidelines = [
       {
         sourceType: 'moh',
         sourceName: 'MOH Diabetes Guidelines',
