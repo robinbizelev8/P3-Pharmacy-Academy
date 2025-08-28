@@ -555,6 +555,12 @@ export class DatabaseStorage implements IStorage {
     return assessment;
   }
 
+  async deleteCompetencyAssessment(id: string): Promise<void> {
+    await db
+      .delete(competencyAssessments)
+      .where(eq(competencyAssessments.id, id));
+  }
+
   // Learning resources operations
   async getLearningResources(therapeuticArea: string, practiceArea: string, professionalActivity?: string): Promise<LearningResourceWithProgress[]> {
     const conditions = [

@@ -361,15 +361,84 @@ export default function PreparePage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {userAssessments && userAssessments.length > 0 ? (
-                  userAssessments.slice(0, 4).map((assessment: any) => (
-                    <div key={assessment.id} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="capitalize">{assessment.therapeuticArea}</span>
-                        <Badge variant="outline">Level {assessment.currentLevel}/{assessment.targetLevel}</Badge>
+                  userAssessments.slice(0, 4).map((assessment: any) => {
+                    const isIncomplete = assessment.currentLevel < assessment.targetLevel;
+                    const progressPercentage = (assessment.currentLevel / assessment.targetLevel) * 100;
+                    
+                    return (
+                      <div key={assessment.id} className="space-y-3 p-3 border rounded-lg">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="capitalize font-medium">{assessment.therapeuticArea}</span>
+                          <Badge variant={isIncomplete ? "secondary" : "default"}>
+                            Level {assessment.currentLevel}/{assessment.targetLevel}
+                          </Badge>
+                        </div>
+                        <Progress value={progressPercentage} className="h-2" />
+                        
+                        {isIncomplete && (
+                          <div className="flex gap-2 pt-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="flex-1 text-xs"
+                              onClick={() => {
+                                // Continue from where left off
+                                setSelectedTherapeuticArea(assessment.therapeuticArea);
+                                setSelectedPracticeArea(assessment.practiceArea || 'hospital');
+                                setSelectedProfessionalActivity(assessment.professionalActivity || 'PA1');
+                                setShowAssessmentSimulation(true);
+                              }}
+                            >
+                              Continue
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs text-orange-600 hover:text-orange-700"
+                              onClick={async () => {
+                                if (confirm(`Restart ${assessment.therapeuticArea} learning session? Your current progress will be reset to Level 1.`)) {
+                                  try {
+                                    await apiRequest('POST', `/api/pharmacy/assessments/${assessment.id}/restart`);
+                                    queryClient.invalidateQueries({ queryKey: ["/api/pharmacy/assessments"] });
+                                  } catch (error) {
+                                    console.error("Failed to restart assessment:", error);
+                                    alert("Failed to restart session. Please try again.");
+                                  }
+                                }
+                              }}
+                            >
+                              Restart
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-xs text-red-600 hover:text-red-700"
+                              onClick={async () => {
+                                if (confirm(`Delete ${assessment.therapeuticArea} learning session? This action cannot be undone.`)) {
+                                  try {
+                                    await apiRequest('DELETE', `/api/pharmacy/assessments/${assessment.id}`);
+                                    queryClient.invalidateQueries({ queryKey: ["/api/pharmacy/assessments"] });
+                                  } catch (error) {
+                                    console.error("Failed to delete assessment:", error);
+                                    alert("Failed to delete session. Please try again.");
+                                  }
+                                }
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {!isIncomplete && (
+                          <div className="flex items-center gap-2 pt-2 text-green-600">
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="text-xs font-medium">Completed</span>
+                          </div>
+                        )}
                       </div>
-                      <Progress value={assessment.competencyScore} className="h-2" />
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-center py-4 text-gray-500">
                     <p>Begin your first guided learning session to see progress</p>

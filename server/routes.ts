@@ -463,6 +463,34 @@ Current module: ${session.module}`;
     }
   });
 
+  // Restart competency assessment (reset to Level 1)
+  app.post("/api/pharmacy/assessments/:id/restart", addMockUser, async (req: any, res) => {
+    try {
+      const resetData = {
+        currentLevel: 1,
+        competencyScore: 0,
+        status: 'in_progress',
+        completedAt: null
+      };
+      const assessment = await storage.updateCompetencyAssessment(req.params.id, resetData);
+      res.json(assessment);
+    } catch (error) {
+      console.error("Error restarting competency assessment:", error);
+      res.status(500).json({ message: "Failed to restart assessment" });
+    }
+  });
+
+  // Delete competency assessment
+  app.delete("/api/pharmacy/assessments/:id", addMockUser, async (req: any, res) => {
+    try {
+      await storage.deleteCompetencyAssessment(req.params.id);
+      res.json({ message: "Assessment deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting competency assessment:", error);
+      res.status(500).json({ message: "Failed to delete assessment" });
+    }
+  });
+
   // Get learning resources (path parameter version for frontend compatibility)
   app.get("/api/pharmacy/resources/:therapeuticArea/:practiceArea", async (req, res) => {
     try {
