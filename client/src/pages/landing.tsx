@@ -155,30 +155,54 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/30 to-purple-200/30 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-200/30 to-pink-200/30 rounded-full blur-3xl"></div>
+      </div>
+      
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-20 max-w-7xl">
+      <div className="container mx-auto px-4 py-16 max-w-7xl relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
           {/* Left Content */}
           <div className="space-y-8">
-            <div className="flex items-center space-x-4 mb-6">
-              <img src={logoImage} alt="P³ Pharmacy Academy" className="w-32 h-32 md:w-40 md:h-40 rounded-2xl shadow-xl" />
-              <div>
-                <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Pharmacy Academy
+            <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 mb-8">
+              <img src={logoImage} alt="P³ Pharmacy Academy" className="w-48 h-48 md:w-56 md:h-56 rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow duration-300" />
+              <div className="text-center md:text-left">
+                <h1 className="text-6xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
+                  P³ Pharmacy Academy
                 </h1>
-                <p className="text-xl text-gray-600 font-medium">Pre-registration Training Excellence</p>
+                <p className="text-2xl text-gray-600 font-medium mb-2">Pre-registration Training Excellence</p>
+                <div className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800">
+                  🇸🇬 Singapore's Premier Training Platform
+                </div>
               </div>
             </div>
             
-            <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 leading-tight">
+            <h2 className="text-3xl md:text-4xl font-semibold text-gray-800 leading-tight mb-6">
               Master clinical pharmacy through 
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"> AI-powered learning</span>
             </h2>
 
-            <p className="text-lg text-gray-600 leading-relaxed">
+            <p className="text-xl text-gray-600 leading-relaxed mb-6">
               Singapore's premier pre-registration training platform combining clinical excellence with cutting-edge technology.
             </p>
+            
+            <div className="flex flex-wrap gap-4 mb-8">
+              <div className="flex items-center space-x-2 bg-white/70 backdrop-blur-sm rounded-full px-4 py-2 shadow-sm">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm font-medium text-gray-700">AI-Powered Coaching</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-white/70 backdrop-blur-sm rounded-full px-4 py-2 shadow-sm">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm font-medium text-gray-700">Portfolio Development</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-white/70 backdrop-blur-sm rounded-full px-4 py-2 shadow-sm">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm font-medium text-gray-700">Real-time Feedback</span>
+              </div>
+            </div>
 
             {user ? (
               <div className="flex flex-col sm:flex-row gap-4">

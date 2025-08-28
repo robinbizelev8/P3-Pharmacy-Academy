@@ -31,35 +31,44 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-200/20 rounded-full blur-3xl"></div>
+      </div>
+      
       {/* Header */}
-      <div className="absolute top-6 left-6">
-        <Link href="/" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+      <div className="absolute top-6 left-6 z-20">
+        <Link href="/" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-sm hover:shadow-md">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to home
         </Link>
       </div>
 
       {/* Main Content */}
-      <div className="flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
+      <div className="flex items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-lg w-full space-y-8">
           {/* Logo and Header */}
           <div className="text-center">
             <img 
               src={logoImage} 
               alt="P³ Pharmacy Academy" 
-              className="mx-auto h-16 w-auto"
+              className="mx-auto h-32 w-32 rounded-2xl shadow-lg"
             />
-            <div className="mt-4">
-              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                Singapore Pre-registration Training Program
+            <div className="mt-6">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                P³ Pharmacy Academy
+              </h1>
+              <div className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800">
+                🇸🇬 Singapore Pre-registration Training Program
               </div>
             </div>
           </div>
 
           {/* Auth Card */}
-          <Card className="shadow-xl border-0">
-            <CardContent className="p-8">
+          <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-lg">
+            <CardContent className="p-10">
               {mode === 'login' ? (
                 <LoginForm
                   onSuccess={() => {
