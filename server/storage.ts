@@ -1947,37 +1947,95 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  private adaptiveSessions = new Map<string, any>();
+
   async getAdaptiveAssessmentSession(userId: string, sessionId: string): Promise<any> {
     try {
-      return {
-        id: sessionId,
-        title: "Adaptive Clinical Assessment",
-        currentQuestion: 0,
-        totalQuestions: 4,
-        timeRemaining: 3600,
-        status: 'active',
-        adaptiveLevel: 5,
-        competencyScores: { PA1: 72, PA2: 68, PA3: 85, PA4: 71 },
-        userAnswers: {},
-        questions: [
-          {
-            id: "q1",
-            questionText: "A 68-year-old patient with Type 2 diabetes presents with a new prescription for metformin 500mg twice daily. During consultation, they mention experiencing occasional episodes of loose stools since starting the medication 2 weeks ago. What would be your most appropriate recommendation according to Singapore MOH guidelines?",
-            questionType: "multiple_choice",
-            options: [
-              "Discontinue metformin immediately and refer to prescriber",
-              "Recommend taking metformin with meals and monitor symptoms for another week",
-              "Suggest over-the-counter anti-diarrheal medication",
-              "Advise patient that this is normal and will resolve naturally"
-            ],
-            competencyArea: "PA1",
-            therapeuticArea: "Endocrine",
-            difficulty: 5,
-            hints: ["Consider the common side effects of metformin and timing of administration"],
-            timeLimit: 300
-          }
-        ]
-      };
+      // Get existing session or create new one
+      let session = this.adaptiveSessions.get(sessionId);
+      
+      if (!session) {
+        session = {
+          id: sessionId,
+          title: "Adaptive Clinical Assessment",
+          currentQuestion: 0,
+          totalQuestions: 4,
+          timeRemaining: 3600,
+          status: 'active',
+          adaptiveLevel: 5,
+          competencyScores: { PA1: 72, PA2: 68, PA3: 85, PA4: 71 },
+          userAnswers: {},
+          questions: [
+            {
+              id: "q1",
+              questionText: "A 68-year-old patient with Type 2 diabetes presents with a new prescription for metformin 500mg twice daily. During consultation, they mention experiencing occasional episodes of loose stools since starting the medication 2 weeks ago. What would be your most appropriate recommendation according to Singapore MOH guidelines?",
+              questionType: "multiple_choice",
+              options: [
+                "Discontinue metformin immediately and refer to prescriber",
+                "Recommend taking metformin with meals and monitor symptoms for another week",
+                "Suggest over-the-counter anti-diarrheal medication",
+                "Advise patient that this is normal and will resolve naturally"
+              ],
+              competencyArea: "PA1",
+              therapeuticArea: "Endocrine",
+              difficulty: 5,
+              hints: ["Consider the common side effects of metformin and timing of administration"],
+              timeLimit: 300
+            },
+            {
+              id: "q2",
+              questionText: "A 45-year-old patient presents with a prescription for warfarin 5mg daily for atrial fibrillation. They are currently taking aspirin 100mg daily for cardiovascular protection. What is your primary concern and recommendation according to Singapore clinical guidelines?",
+              questionType: "multiple_choice",
+              options: [
+                "Continue both medications as prescribed",
+                "Recommend stopping aspirin due to bleeding risk",
+                "Reduce warfarin dose to 2.5mg daily",
+                "Schedule INR monitoring within 72 hours"
+              ],
+              competencyArea: "PA2",
+              therapeuticArea: "Cardiovascular",
+              difficulty: 6,
+              hints: ["Consider drug interactions and bleeding risk assessment"],
+              timeLimit: 300
+            },
+            {
+              id: "q3",
+              questionText: "A pregnant patient in her second trimester presents with a prescription for fluconazole 150mg for vaginal candidiasis. What is your most appropriate action according to Singapore pregnancy guidelines?",
+              questionType: "multiple_choice",
+              options: [
+                "Dispense as prescribed",
+                "Contact prescriber to discuss alternative treatment",
+                "Reduce dose to 100mg",
+                "Advise patient to use after delivery"
+              ],
+              competencyArea: "PA3",
+              therapeuticArea: "Infectious Diseases",
+              difficulty: 7,
+              hints: ["Consider pregnancy safety categories and alternatives"],
+              timeLimit: 300
+            },
+            {
+              id: "q4",
+              questionText: "An elderly patient (75 years) is discharged from hospital with multiple new medications including metoprolol, atorvastatin, and amlodipine. They express concern about managing multiple medications. What is your priority intervention according to Singapore discharge guidelines?",
+              questionType: "multiple_choice",
+              options: [
+                "Provide written medication list only",
+                "Conduct comprehensive medication review and counseling session",
+                "Arrange follow-up in 2 weeks",
+                "Suggest family member to manage medications"
+              ],
+              competencyArea: "PA4",
+              therapeuticArea: "Cardiovascular",
+              difficulty: 6,
+              hints: ["Consider medication reconciliation and patient education"],
+              timeLimit: 300
+            }
+          ]
+        };
+        this.adaptiveSessions.set(sessionId, session);
+      }
+      
+      return session;
     } catch (error) {
       console.error("Error fetching adaptive assessment session:", error);
       throw error;
@@ -1988,6 +2046,12 @@ export class DatabaseStorage implements IStorage {
     try {
       const { questionId, answer, confidenceLevel, timeSpent, hintsUsed } = answerData;
       
+      // Get current session
+      let session = this.adaptiveSessions.get(sessionId);
+      if (!session) {
+        throw new Error("Session not found");
+      }
+      
       const baseScore = this.calculateAnswerScore(answer, questionId);
       const confidenceAdjustment = (confidenceLevel - 3) * 2;
       const timeBonus = timeSpent < 120 ? 5 : timeSpent > 300 ? -5 : 0;
@@ -1997,11 +2061,33 @@ export class DatabaseStorage implements IStorage {
       
       const feedback = await this.generateAIFeedback(answer, questionId, totalScore);
       
+      // Store the answer
+      session.userAnswers[questionId] = {
+        answer,
+        confidenceLevel,
+        timeSpent,
+        hintsUsed,
+        score: totalScore
+      };
+      
+      // Advance to next question
+      session.currentQuestion = Math.min(session.currentQuestion + 1, session.totalQuestions - 1);
+      
+      // Check if assessment is completed
+      if (session.currentQuestion >= session.totalQuestions - 1 && Object.keys(session.userAnswers).length >= session.totalQuestions) {
+        session.status = 'completed';
+      }
+      
+      // Update session in memory
+      this.adaptiveSessions.set(sessionId, session);
+      
       return {
         success: true,
         score: totalScore,
         feedback,
-        nextQuestionReady: true
+        nextQuestionReady: session.currentQuestion < session.totalQuestions - 1,
+        currentQuestion: session.currentQuestion,
+        isCompleted: session.status === 'completed'
       };
     } catch (error) {
       console.error("Error submitting adaptive answer:", error);
