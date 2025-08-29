@@ -392,7 +392,7 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .from(pharmacySessions)
-      .innerJoin(pharmacyScenarios, eq(pharmacySessions.scenarioId, pharmacyScenarios.id))
+      .leftJoin(pharmacyScenarios, eq(pharmacySessions.scenarioId, pharmacyScenarios.id))
       .where(eq(pharmacySessions.id, id));
 
     if (!session) return undefined;

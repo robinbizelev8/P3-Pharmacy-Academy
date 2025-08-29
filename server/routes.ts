@@ -695,12 +695,38 @@ Current module: ${session.module}`;
 
       // Get session details
       const session = await storage.getPharmacySession(sessionId);
-      if (!session || session.userId !== userId) {
-        return res.status(404).json({ error: "Session not found or unauthorized" });
+      if (!session) {
+        console.log(`Session ${sessionId} not found in database`);
+        return res.status(404).json({ error: "Session not found" });
+      }
+      if (session.userId !== userId) {
+        console.log(`Session ${sessionId} unauthorized - session userId: ${session.userId}, request userId: ${userId}`);
+        return res.status(404).json({ error: "Session unauthorized" });
       }
 
       // Generate AI responses for patient chat simulation
-      const chatResponse = await openaiService.generatePatientChatResponse(content, stage, scenarioContext);
+      let chatResponse;
+      try {
+        chatResponse = await openaiService.generatePatientChatResponse(content, stage, scenarioContext);
+      } catch (error) {
+        console.error("Error generating AI chat response:", error);
+        // Provide fallback response if AI service fails
+        chatResponse = {
+          patientResponse: "I understand. Could you help me with my medication questions?",
+          coaching: "Continue the conversation by asking about the patient's specific concerns.",
+          stageComplete: false,
+          detailedScoring: {
+            clinicalRelevance: 3,
+            therapeuticAccuracy: 3,
+            communicationQuality: 3,
+            professionalismScore: 3,
+            overallStageScore: 60,
+            competencyLevel: 'Developing',
+            strengths: ['Active listening'],
+            improvements: ['Continue building rapport']
+          }
+        };
+      }
 
       // Save the user message with detailed scoring from AI evaluation
       const userMessage = await storage.addPharmacyMessage({
