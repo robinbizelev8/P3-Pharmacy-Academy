@@ -36,26 +36,25 @@ export function setAuthCookie(res: Response, token: string): void {
                       process.env.REPLIT_DEPLOYMENT === 'true' ||
                       process.env.REPL_SLUG !== undefined;
   
-  res.cookie('auth-token', token, {
+  console.log(`Setting auth cookie for user login`);
+  
+  // For Replit deployments, use secure: false even in production to ensure cookies work
+  const cookieOptions: any = {
     httpOnly: true,
-    secure: isProduction,
+    secure: false, // Set to false for Replit deployments
     sameSite: 'lax',
     maxAge,
     path: '/'
-  });
+  };
+  
+  res.cookie('auth-token', token, cookieOptions);
 }
 
 // Clear JWT cookie
 export function clearAuthCookie(res: Response): void {
-  // Detect production environment more reliably for Replit deployments
-  const isProduction = process.env.NODE_ENV === 'production' || 
-                      process.env.REPLIT_ENVIRONMENT === 'production' ||
-                      process.env.REPLIT_DEPLOYMENT === 'true' ||
-                      process.env.REPL_SLUG !== undefined;
-                      
   res.clearCookie('auth-token', {
     httpOnly: true,
-    secure: isProduction,
+    secure: false,
     sameSite: 'lax',
     path: '/'
   });
