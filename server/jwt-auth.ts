@@ -30,24 +30,27 @@ export function verifyToken(token: string): JWTPayload | null {
 export function setAuthCookie(res: Response, token: string): void {
   const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
   
-  // Detect production environment more reliably for Replit deployments
-  const isProduction = process.env.NODE_ENV === 'production' || 
-                      process.env.REPLIT_ENVIRONMENT === 'production' ||
-                      process.env.REPLIT_DEPLOYMENT === 'true' ||
-                      process.env.REPL_SLUG !== undefined;
+  // Detect if we're in a Replit deployment
+  const isReplitDeployment = process.env.REPLIT_DEPLOYMENT === 'true' || 
+                            process.env.REPL_SLUG !== undefined ||
+                            process.env.NODE_ENV === 'production';
   
-  console.log(`Setting auth cookie for user login`);
+  console.log(`Setting auth cookie - isReplitDeployment: ${isReplitDeployment}, NODE_ENV: ${process.env.NODE_ENV}`);
   
-  // For Replit deployments, use secure: false even in production to ensure cookies work
+  // Different cookie settings for Replit deployments vs development
   const cookieOptions: any = {
-    httpOnly: true,
-    secure: false, // Set to false for Replit deployments
+    httpOnly: false, // Set to false for Replit deployments to allow client access
+    secure: false,   // Always false for Replit
     sameSite: 'lax',
     maxAge,
     path: '/'
   };
   
+  // Also set a non-httpOnly version for client-side access
   res.cookie('auth-token', token, cookieOptions);
+  
+  // Set an additional header for debugging
+  res.setHeader('X-Auth-Cookie-Set', 'true');
 }
 
 // Clear JWT cookie
@@ -63,10 +66,17 @@ export function clearAuthCookie(res: Response): void {
 // JWT Authentication Middleware
 export async function jwtAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const token = req.cookies['auth-token'];
+    // Try multiple ways to get the token for Replit deployment compatibility
+    let token = req.cookies['auth-token'] || 
+                req.headers['authorization']?.replace('Bearer ', '') ||
+                req.headers['x-auth-token'];
+    
+    // Debug logging for deployment
+    console.log(`JWT Auth Debug - Cookies available: ${Object.keys(req.cookies).join(', ')}`);
+    console.log(`JWT Auth Debug - Auth header: ${req.headers['authorization'] ? 'present' : 'missing'}`);
     
     if (!token) {
-      console.log('JWT Auth: No token found in cookies');
+      console.log('JWT Auth: No token found in cookies or headers');
       (req as any).user = null;
       return next();
     }
