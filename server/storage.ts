@@ -2063,7 +2063,36 @@ export class DatabaseStorage implements IStorage {
       
       console.log('Test scenario created successfully');
       
-      // Skip all other complex logic for now
+      const scenarioId = testScenarioResult[0]?.id;
+      if (scenarioId) {
+        // Create test session using raw SQL to avoid type issues
+        console.log('Creating test pharmacy session with scenarioId:', scenarioId);
+        try {
+          await db.execute(sql`
+            INSERT INTO pharmacy_sessions (
+              user_id, scenario_id, module, status, current_stage, total_stages,
+              therapeutic_area, practice_area, started_at, completed_at, duration,
+              clinical_knowledge_score, therapeutic_reasoning_score, patient_communication_score,
+              professional_practice_score, overall_score, achieved_supervision_level,
+              target_supervision_level, strengths, improvements, recommendations
+            ) VALUES (
+              ${userId}, ${scenarioId}, 'practice', 'completed',
+              10, 10, 'Cardiovascular', 'Hospital',
+              ${new Date(Date.now() - 24 * 60 * 60 * 1000)}, ${new Date(Date.now() - 23 * 60 * 60 * 1000)}, 3600,
+              7.50, 7.20, 8.00, 7.80, 7.60, 3, 4,
+              ${JSON.stringify(['Good understanding of Cardiovascular', 'Strong PA1 application'])},
+              ${JSON.stringify(['Continue building clinical confidence', 'Expand therapeutic knowledge'])},
+              ${JSON.stringify(['Focus on Cardiovascular guidelines', 'Practice more clinical scenarios'])}
+            )
+          `);
+          console.log('Test pharmacy session created successfully via SQL');
+        } catch (sqlError) {
+          console.error('Error creating session via SQL:', sqlError);
+        }
+      } else {
+        console.log('No scenarioId found, testScenarioResult:', testScenarioResult);
+      }
+      
       console.log(`Successfully populated minimal demo data for user ${userId}`);
     } catch (error) {
       console.error('Error populating demo data:', error);

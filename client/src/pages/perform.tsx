@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { PlusCircle, Upload, ExternalLink, Database } from "lucide-react";
 import { 
   RadarChart, 
@@ -161,6 +163,7 @@ type ScenarioResponseData = z.infer<typeof scenarioResponseSchema>;
 
 export default function PerformPage() {
   const [currentScenario, setCurrentScenario] = useState<PerformScenario | null>(null);
+  const [demoMode, setDemoMode] = useState(false);
 
   // Scroll to top when scenario loads
   useEffect(() => {
@@ -353,12 +356,17 @@ export default function PerformPage() {
   const hasRealGapData = gapAnalysis && typeof gapAnalysis === 'object' && !gapLoading;
   const hasRealRecommendationData = recommendations && typeof recommendations === 'object' && !recommendationsLoading;
 
-  // Use real data only - no more demo fallbacks
-  const displaySPCCompliance: any = hasRealSPCData ? spcCompliance : null;
-  const displayCompetencyProgress: any = hasRealCompetencyData ? competencyProgress : null;
-  const displayDashboardData: any = hasRealDashboardData ? dashboardData : null;
-  const displayGapAnalysis: any = hasRealGapData ? gapAnalysis : null;
-  const displayRecommendations: any = hasRealRecommendationData ? recommendations : null;
+  // Use demo data when toggle is enabled or when no real data is available
+  const displaySPCCompliance: any = demoMode ? getDemoSPCCompliance() : 
+    (hasRealSPCData ? spcCompliance : getDemoSPCCompliance());
+  const displayCompetencyProgress: any = demoMode ? getDemoCompetencyProgress() : 
+    (hasRealCompetencyData ? competencyProgress : getDemoCompetencyProgress());
+  const displayDashboardData: any = demoMode ? getDemoDashboardData() : 
+    (hasRealDashboardData ? dashboardData : getDemoDashboardData());
+  const displayGapAnalysis: any = demoMode ? getDemoGapAnalysis() : 
+    (hasRealGapData ? gapAnalysis : getDemoGapAnalysis());
+  const displayRecommendations: any = demoMode ? getDemoRecommendations() : 
+    (hasRealRecommendationData ? recommendations : getDemoRecommendations());
   
   // Additional mock data for portfolio and knowledge features
   const displayPortfolioProgress = {
@@ -645,49 +653,58 @@ export default function PerformPage() {
             
             {/* Demo Data Controls for Presentations */}
             <div className="mt-4 space-y-2">
-              {(!displayDashboardData?.totalSessions || displayDashboardData.totalSessions === 0) ? (
-                <Button
-                  onClick={() => populateDemoDataMutation.mutate()}
-                  disabled={populateDemoDataMutation.isPending}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
-                >
-                  {populateDemoDataMutation.isPending ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Database className="h-4 w-4 mr-2" />
-                  )}
-                  Load Demo Data
-                </Button>
-              ) : (
-                <div className="space-y-2">
-                  <Button
-                    onClick={() => populateDemoDataMutation.mutate()}
-                    disabled={populateDemoDataMutation.isPending}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    {populateDemoDataMutation.isPending ? (
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                    )}
-                    Refresh Demo Data
-                  </Button>
-                  <Button
-                    onClick={() => clearDemoDataMutation.mutate()}
-                    disabled={clearDemoDataMutation.isPending}
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    {clearDemoDataMutation.isPending ? (
-                      <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3 w-3 mr-1" />
-                    )}
-                    Clear Demo Data
-                  </Button>
+              {demoMode ? (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                  <p className="text-sm text-blue-700 font-medium">Demo Mode Active</p>
+                  <p className="text-xs text-blue-600 mt-1">Using static demo data for display</p>
                 </div>
+              ) : (
+                <>
+                  {(!displayDashboardData?.totalSessions || displayDashboardData.totalSessions === 0) ? (
+                    <Button
+                      onClick={() => populateDemoDataMutation.mutate()}
+                      disabled={populateDemoDataMutation.isPending}
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                    >
+                      {populateDemoDataMutation.isPending ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Database className="h-4 w-4 mr-2" />
+                      )}
+                      Load Demo Data
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <Button
+                        onClick={() => populateDemoDataMutation.mutate()}
+                        disabled={populateDemoDataMutation.isPending}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        {populateDemoDataMutation.isPending ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                        )}
+                        Refresh Demo Data
+                      </Button>
+                      <Button
+                        onClick={() => clearDemoDataMutation.mutate()}
+                        disabled={clearDemoDataMutation.isPending}
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        {clearDemoDataMutation.isPending ? (
+                          <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3 w-3 mr-1" />
+                        )}
+                        Clear Demo Data
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -763,6 +780,28 @@ export default function PerformPage() {
         </div>
 
         <TabsContent value="dashboard" className="space-y-6">
+          {/* Demo Mode Toggle */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch 
+                  id="demo-mode"
+                  checked={demoMode} 
+                  onCheckedChange={setDemoMode}
+                />
+                <Label htmlFor="demo-mode" className="text-sm font-medium">
+                  Demo Mode
+                </Label>
+              </div>
+              {demoMode && (
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  <Database className="w-3 h-3 mr-1" />
+                  Demo Data Active
+                </Badge>
+              )}
+            </div>
+          </div>
+          
           {/* Training Progress Overview */}
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Overall Readiness */}
