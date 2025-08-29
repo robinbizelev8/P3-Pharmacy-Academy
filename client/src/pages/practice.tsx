@@ -352,7 +352,7 @@ export default function PracticePage() {
       ]
     };
     
-    const areaOpenings = naturalOpenings[scenario.therapeuticArea] || [
+    const areaOpenings = naturalOpenings[scenario.therapeuticArea as keyof typeof naturalOpenings] || [
       "I need help with my medication. The doctor said I should speak with you.",
       "I have some questions about my new prescription.",
       "Hello, I am here about my medication. Can you help me understand it?"
@@ -1265,7 +1265,14 @@ export default function PracticePage() {
                     <SelectContent>
                       <SelectItem value="all">All Areas</SelectItem>
                       {constants?.therapeuticAreas && Object.entries(constants.therapeuticAreas).map(([key, value]) => (
-                        <SelectItem key={key} value={key}>{Array.isArray(value) ? key : String(value)}</SelectItem>
+                        <SelectItem key={key} value={key}>
+                          {typeof value === 'object' && value !== null && 'title' in value 
+                            ? (value as any).title 
+                            : Array.isArray(value) 
+                              ? key 
+                              : String(value)
+                          }
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

@@ -403,12 +403,7 @@ export default function PerformPage() {
     }
   ];
   
-  const knowledgeStatus = {
-    mohGuidelines: 45,
-    ndfEntries: 1200,
-    spcResources: 89,
-    lastUpdated: "2023-12-15"
-  };
+  // Removed knowledgeStatus object - using visual source display instead of numbers
 
   // Removed assessment form
 
@@ -1468,39 +1463,60 @@ export default function PerformPage() {
             </Card>
           </div>
 
-          {/* Knowledge Status */}
+          {/* Singapore Healthcare Knowledge Sources */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-purple-600" />
-                Knowledge Base Status
+                <Shield className="h-5 w-5 text-red-600" />
+                Singapore Healthcare Knowledge Sources
               </CardTitle>
               <CardDescription>
-                Current status of Singapore healthcare knowledge integration
+                Authoritative clinical and professional guidance from Singapore healthcare authorities
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{knowledgeStatus?.mohGuidelines || 0}</div>
-                  <div className="text-sm text-gray-600">MOH Guidelines</div>
-                  <div className="text-xs text-green-600 mt-1">Active</div>
+              <div className="space-y-4">
+                {/* MOH Guidelines */}
+                <div className="flex items-center gap-4 p-4 border rounded-lg bg-gradient-to-r from-red-50 to-red-25">
+                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <Shield className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-red-900">Ministry of Health Clinical Guidelines</h4>
+                    <p className="text-sm text-red-700">Official Singapore clinical practice standards and protocols</p>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
                 </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{knowledgeStatus?.ndfEntries || 0}</div>
-                  <div className="text-sm text-gray-600">NDF Entries</div>
-                  <div className="text-xs text-blue-600 mt-1">Updated</div>
+                
+                {/* NDF */}
+                <div className="flex items-center gap-4 p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-blue-25">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Database className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-blue-900">National Drug Formulary</h4>
+                    <p className="text-sm text-blue-700">Comprehensive medication database and prescribing guidelines</p>
+                  </div>
+                  <Badge className="bg-blue-100 text-blue-800 border-blue-200">Updated</Badge>
                 </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">{knowledgeStatus?.spcResources || 0}</div>
-                  <div className="text-sm text-gray-600">SPC Resources</div>
-                  <div className="text-xs text-purple-600 mt-1">Current</div>
+                
+                {/* SPC Resources */}
+                <div className="flex items-center gap-4 p-4 border rounded-lg bg-gradient-to-r from-purple-50 to-purple-25">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <GraduationCap className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-purple-900">Singapore Pharmacy Council Resources</h4>
+                    <p className="text-sm text-purple-700">Professional standards and competency framework for pharmacists</p>
+                  </div>
+                  <Badge className="bg-purple-100 text-purple-800 border-purple-200">Current</Badge>
                 </div>
               </div>
-              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  Knowledge base last updated: {knowledgeStatus?.lastUpdated || 'Recently'}
-                </p>
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <Info className="w-4 h-4" />
+                  <span>Knowledge sources are continuously updated to reflect the latest Singapore healthcare standards and practices.</span>
+                </div>
               </div>
             </CardContent>
           </Card>
