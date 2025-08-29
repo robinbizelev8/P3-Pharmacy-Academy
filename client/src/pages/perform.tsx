@@ -250,11 +250,11 @@ export default function PerformPage() {
       PA4: { averageScore: 43, sessionCount: 2, supervisionLevel: 2, competencyLevel: 'Advanced Beginner' }
     },
     timelineData: [
-      { date: "2024-01-15", PA1: 30, PA2: 25, PA3: 35, PA4: 28, activityType: 'practice' },
-      { date: "2024-01-22", PA1: 42, PA2: 30, PA3: 45, PA4: 38, activityType: 'assessment' },
-      { date: "2024-01-29", PA1: 48, PA2: 35, PA3: 52, PA4: 41, activityType: 'practice' },
-      { date: "2024-02-05", PA1: 52, PA2: 38, PA3: 58, PA4: 43, activityType: 'practice' },
-      { date: "2024-02-12", PA1: 55, PA2: 40, PA3: 61, PA4: 47, activityType: 'assessment' }
+      { date: "2025-08-29", PA1: 30, PA2: 25, PA3: 35, PA4: 28, activityType: 'practice' },
+      { date: "2025-08-22", PA1: 42, PA2: 30, PA3: 45, PA4: 38, activityType: 'assessment' },
+      { date: "2025-08-15", PA1: 48, PA2: 35, PA3: 52, PA4: 41, activityType: 'practice' },
+      { date: "2025-08-08", PA1: 52, PA2: 38, PA3: 58, PA4: 43, activityType: 'practice' },
+      { date: "2025-08-01", PA1: 55, PA2: 40, PA3: 61, PA4: 47, activityType: 'assessment' }
     ],
     therapeuticAreaMastery: {
       'Cardiovascular': { averageScore: 58, sessionCount: 2, masteryLevel: 'Developing' },
@@ -313,11 +313,11 @@ export default function PerformPage() {
       }
     ],
     progressTrends: [
-      { date: "2024-01-15", score: 35 },
-      { date: "2024-01-22", score: 42 },
-      { date: "2024-01-29", score: 48 },
-      { date: "2024-02-05", score: 52 },
-      { date: "2024-02-12", score: 58 }
+      { date: "2025-08-29", score: 35 },
+      { date: "2025-08-22", score: 42 },
+      { date: "2025-08-15", score: 48 },
+      { date: "2025-08-08", score: 52 },
+      { date: "2025-08-01", score: 58 }
     ],
     estimatedTimeToCompletion: { totalWeeks: 8, highPriorityWeeks: 4, mediumPriorityWeeks: 2, lowPriorityWeeks: 2 }
   });
@@ -1185,7 +1185,7 @@ export default function PerformPage() {
                     </div>
                     <div>
                       <h4 className="font-medium text-gray-900">PA1-PA4 Competency Assessment</h4>
-                      <p className="text-sm text-gray-500">Comprehensive • 2024-01-15</p>
+                      <p className="text-sm text-gray-500">Comprehensive • 2025-08-29</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
@@ -1207,7 +1207,7 @@ export default function PerformPage() {
                     </div>
                     <div>
                       <h4 className="font-medium text-gray-900">Adaptive Clinical Scenarios</h4>
-                      <p className="text-sm text-gray-500">Adaptive • 2024-01-12</p>
+                      <p className="text-sm text-gray-500">Adaptive • 2025-08-26</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">

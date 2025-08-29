@@ -31,7 +31,7 @@ export default function AssessmentsPage() {
         type: "Comprehensive",
         score: 85,
         maxScore: 100,
-        completedAt: "2024-01-15",
+        completedAt: "2025-08-29",
         status: "completed"
       },
       {
@@ -40,7 +40,7 @@ export default function AssessmentsPage() {
         type: "Adaptive",
         score: 78,
         maxScore: 100,
-        completedAt: "2024-01-12",
+        completedAt: "2025-08-26",
         status: "completed"
       }
     ],
