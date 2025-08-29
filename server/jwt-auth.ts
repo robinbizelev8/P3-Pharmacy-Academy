@@ -30,9 +30,17 @@ export function verifyToken(token: string): JWTPayload | null {
 export function setAuthCookie(res: Response, token: string): void {
   const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
   
+  // Detect production environment more reliably for Replit deployments
+  const isProduction = process.env.NODE_ENV === 'production' || 
+                      process.env.REPLIT_ENVIRONMENT === 'production' ||
+                      process.env.REPLIT_DEPLOYMENT === 'true' ||
+                      process.env.REPL_SLUG !== undefined;
+  
+  console.log(`Setting auth cookie - Production detected: ${isProduction}, NODE_ENV: ${process.env.NODE_ENV}, REPLIT_ENVIRONMENT: ${process.env.REPLIT_ENVIRONMENT}`);
+  
   res.cookie('auth-token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     sameSite: 'lax',
     maxAge,
     path: '/'
@@ -41,9 +49,15 @@ export function setAuthCookie(res: Response, token: string): void {
 
 // Clear JWT cookie
 export function clearAuthCookie(res: Response): void {
+  // Detect production environment more reliably for Replit deployments
+  const isProduction = process.env.NODE_ENV === 'production' || 
+                      process.env.REPLIT_ENVIRONMENT === 'production' ||
+                      process.env.REPLIT_DEPLOYMENT === 'true' ||
+                      process.env.REPL_SLUG !== undefined;
+                      
   res.clearCookie('auth-token', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     sameSite: 'lax',
     path: '/'
   });
