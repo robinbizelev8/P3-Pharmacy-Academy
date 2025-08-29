@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import type { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev-jwt-secret-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET || "c61b4c5214731a4c62fa973623b5ab856983c380b75eb2fac8e408631e15a536d4b7597a482aaf6df061d09fccf69c3380e53b881fec288c313c9745ba3b39d2";
 const JWT_EXPIRES_IN = "7d"; // 7 days
 
 export interface JWTPayload {
@@ -36,8 +36,6 @@ export function setAuthCookie(res: Response, token: string): void {
                       process.env.REPLIT_DEPLOYMENT === 'true' ||
                       process.env.REPL_SLUG !== undefined;
   
-  console.log(`Setting auth cookie - Production detected: ${isProduction}, NODE_ENV: ${process.env.NODE_ENV}, REPLIT_ENVIRONMENT: ${process.env.REPLIT_ENVIRONMENT}`);
-  
   res.cookie('auth-token', token, {
     httpOnly: true,
     secure: isProduction,
@@ -69,12 +67,14 @@ export async function jwtAuth(req: Request, res: Response, next: NextFunction): 
     const token = req.cookies['auth-token'];
     
     if (!token) {
+      console.log('JWT Auth: No token found in cookies');
       (req as any).user = null;
       return next();
     }
 
     const payload = verifyToken(token);
     if (!payload) {
+      console.log('JWT Auth: Invalid or expired token');
       (req as any).user = null;
       return next();
     }
@@ -82,12 +82,14 @@ export async function jwtAuth(req: Request, res: Response, next: NextFunction): 
     // Get full user data from database
     const user = await storage.getUserById(payload.userId);
     if (!user) {
+      console.log('JWT Auth: User not found for token payload');
       (req as any).user = null;
       return next();
     }
 
     // Attach user to request
     (req as any).user = user;
+    console.log(`JWT Auth: Successfully authenticated user ${user.email}`);
     next();
   } catch (error) {
     console.error('JWT Auth error:', error);
