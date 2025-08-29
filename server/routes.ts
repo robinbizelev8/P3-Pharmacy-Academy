@@ -222,14 +222,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Temporary middleware to add mock user for development
+  let mockUser: any = null;
   const addMockUser = async (req: any, res: any, next: any) => {
-    const user = await storage.upsertUser({
-      email: "dev@example.com",
-      firstName: "Dev",
-      lastName: "User",
-      role: "admin"
-    });
-    req.user = user;
+    if (!mockUser) {
+      mockUser = await storage.upsertUser({
+        email: "dev@example.com",
+        firstName: "Dev",
+        lastName: "User", 
+        role: "admin"
+      });
+    }
+    req.user = mockUser;
     next();
   };
 
