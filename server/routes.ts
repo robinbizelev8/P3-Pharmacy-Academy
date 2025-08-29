@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { sealionService } from "./services/sealion";
 import { openaiService } from "./services/openai";
 import { setupJWTAuthRoutes } from "./auth-routes-jwt";
-import { requireAuth, requireRole, requireStudent, requireSupervisor, requireAdmin } from "./jwt-auth";
+import { jwtAuth, requireAuth, requireRole, requireStudent, requireSupervisor, requireAdmin } from "./jwt-auth";
 import { 
   insertPharmacyScenarioSchema, 
   insertPharmacySessionSchema, 
@@ -47,6 +47,9 @@ declare global {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT-based authentication routes
   setupJWTAuthRoutes(app);
+  
+  // Apply JWT middleware to all API routes
+  app.use('/api', jwtAuth);
 
   // Profile update route
   app.put('/api/auth/profile', requireAuth, async (req: any, res) => {
@@ -221,20 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Temporary middleware to add mock user for development
-  let mockUser: any = null;
-  const addMockUser = async (req: any, res: any, next: any) => {
-    if (!mockUser) {
-      mockUser = await storage.upsertUser({
-        email: "dev@example.com",
-        firstName: "Dev",
-        lastName: "User", 
-        role: "admin"
-      });
-    }
-    req.user = mockUser;
-    next();
-  };
+  // Use proper JWT authentication middleware
 
   // Pharmacy Scenarios API - Get scenarios by module and therapeutic area
   app.get("/api/pharmacy/scenarios", requireAuth, async (req, res) => {
@@ -319,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's pharmacy sessions
-  app.get("/api/pharmacy/sessions", addMockUser, async (req: any, res) => {
+  app.get("/api/pharmacy/sessions", requireAuth, async (req: any, res) => {
     try {
       const sessions = await storage.getUserPharmacySessions(req.user?.id);
       res.json(sessions);
@@ -330,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update pharmacy session
-  app.patch("/api/pharmacy/sessions/:id", addMockUser, async (req: any, res) => {
+  app.patch("/api/pharmacy/sessions/:id", requireAuth, async (req: any, res) => {
     try {
       // Validate that user owns the session
       const session = await storage.getPharmacySession(req.params.id);
@@ -351,7 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auto-save session data
-  app.post("/api/pharmacy/sessions/:id/autosave", addMockUser, async (req: any, res) => {
+  app.post("/api/pharmacy/sessions/:id/autosave", requireAuth, async (req: any, res) => {
     try {
       const session = await storage.getPharmacySession(req.params.id);
       if (!session || session.userId !== req.user?.id) {
@@ -367,7 +357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add message to pharmacy session
-  app.post("/api/pharmacy/sessions/:id/messages", addMockUser, async (req: any, res) => {
+  app.post("/api/pharmacy/sessions/:id/messages", requireAuth, async (req: any, res) => {
     try {
       const session = await storage.getPharmacySession(req.params.id);
       if (!session || session.userId !== req.user?.id) {
@@ -395,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Integration for Pharmacy Training
   
   // Generate AI response for pharmacy clinical scenario
-  app.post("/api/pharmacy/sessions/:id/ai-response", addMockUser, async (req: any, res) => {
+  app.post("/api/pharmacy/sessions/:id/ai-response", requireAuth, async (req: any, res) => {
     try {
       const session = await storage.getPharmacySession(req.params.id);
       if (!session || session.userId !== req.user?.id) {
@@ -476,7 +466,7 @@ Current module: ${session.module}`;
   // ===== PREPARE ROUTES =====
   
   // Create competency assessment with AI generation
-  app.post("/api/pharmacy/assessments", addMockUser, async (req: any, res) => {
+  app.post("/api/pharmacy/assessments", requireAuth, async (req: any, res) => {
     try {
       // First, use OpenAI to generate enhanced assessment data
       const aiAssessmentData = await openaiService.generateCompetencyAssessment(
@@ -511,7 +501,7 @@ Current module: ${session.module}`;
   });
 
   // Get user's competency assessments
-  app.get("/api/pharmacy/assessments", addMockUser, async (req: any, res) => {
+  app.get("/api/pharmacy/assessments", requireAuth, async (req: any, res) => {
     try {
       const therapeuticArea = req.query.therapeuticArea as string;
       const assessments = await storage.getUserCompetencyAssessments(req.user?.id, therapeuticArea);
@@ -537,7 +527,7 @@ Current module: ${session.module}`;
   });
 
   // Update competency assessment
-  app.patch("/api/pharmacy/assessments/:id", addMockUser, async (req: any, res) => {
+  app.patch("/api/pharmacy/assessments/:id", requireAuth, async (req: any, res) => {
     try {
       const assessment = await storage.updateCompetencyAssessment(req.params.id, req.body);
       res.json(assessment);
@@ -548,7 +538,7 @@ Current module: ${session.module}`;
   });
 
   // Restart competency assessment (reset to Level 1)
-  app.post("/api/pharmacy/assessments/:id/restart", addMockUser, async (req: any, res) => {
+  app.post("/api/pharmacy/assessments/:id/restart", requireAuth, async (req: any, res) => {
     try {
       const resetData = {
         currentLevel: 1,
@@ -565,7 +555,7 @@ Current module: ${session.module}`;
   });
 
   // Delete competency assessment
-  app.delete("/api/pharmacy/assessments/:id", addMockUser, async (req: any, res) => {
+  app.delete("/api/pharmacy/assessments/:id", requireAuth, async (req: any, res) => {
     try {
       await storage.deleteCompetencyAssessment(req.params.id);
       res.json({ message: "Assessment deleted successfully" });
@@ -655,7 +645,7 @@ Current module: ${session.module}`;
   });
 
   // Update learning progress
-  app.post("/api/pharmacy/progress", addMockUser, async (req: any, res) => {
+  app.post("/api/pharmacy/progress", requireAuth, async (req: any, res) => {
     try {
       const { resourceId, ...progressData } = req.body;
       
@@ -676,7 +666,7 @@ Current module: ${session.module}`;
   });
 
   // Get user's learning progress
-  app.get("/api/pharmacy/progress", addMockUser, async (req: any, res) => {
+  app.get("/api/pharmacy/progress", requireAuth, async (req: any, res) => {
     try {
       const resourceId = req.query.resourceId as string;
       const progress = await storage.getUserLearningProgress(req.user?.id, resourceId);
@@ -688,7 +678,7 @@ Current module: ${session.module}`;
   });
 
   // Send chat message in practice session simulation
-  app.post("/api/pharmacy/sessions/:sessionId/chat", addMockUser, async (req: any, res) => {
+  app.post("/api/pharmacy/sessions/:sessionId/chat", requireAuth, async (req: any, res) => {
     try {
       const { sessionId } = req.params;
       const { content, role, stage, scenarioContext } = req.body;
@@ -882,7 +872,7 @@ This format helps students learn from expert examples before progressing. Focus 
   // ===== PERFORM ROUTES =====
   
   // Create new performance assessment
-  app.post("/api/perform/assessments", addMockUser, async (req: any, res) => {
+  app.post("/api/perform/assessments", requireAuth, async (req: any, res) => {
     try {
       const assessmentData = {
         ...req.body,
@@ -902,7 +892,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Get user's performance assessments
-  app.get("/api/perform/assessments", addMockUser, async (req: any, res) => {
+  app.get("/api/perform/assessments", requireAuth, async (req: any, res) => {
     try {
       const assessments = await storage.getUserPerformAssessments(req.user?.id);
       res.json(assessments);
@@ -913,7 +903,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Get single performance assessment with scenarios, portfolio, and analytics
-  app.get("/api/perform/assessments/:id", addMockUser, async (req: any, res) => {
+  app.get("/api/perform/assessments/:id", requireAuth, async (req: any, res) => {
     try {
       const assessment = await storage.getPerformAssessment(req.params.id);
       if (!assessment) {
@@ -933,7 +923,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Update performance assessment
-  app.patch("/api/perform/assessments/:id", addMockUser, async (req: any, res) => {
+  app.patch("/api/perform/assessments/:id", requireAuth, async (req: any, res) => {
     try {
       // Verify ownership first
       const existing = await storage.getPerformAssessment(req.params.id);
@@ -950,7 +940,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Delete performance assessment
-  app.delete("/api/perform/assessments/:id", addMockUser, async (req: any, res) => {
+  app.delete("/api/perform/assessments/:id", requireAuth, async (req: any, res) => {
     try {
       // Verify ownership first
       const existing = await storage.getPerformAssessment(req.params.id);
@@ -974,7 +964,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Start assessment with AI-generated scenarios
-  app.post("/api/perform/assessments/:id/start", addMockUser, async (req: any, res) => {
+  app.post("/api/perform/assessments/:id/start", requireAuth, async (req: any, res) => {
     try {
       const assessment = await storage.getPerformAssessment(req.params.id);
       if (!assessment || assessment.userId !== req.user?.id) {
@@ -1043,7 +1033,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Submit scenario response for evaluation
-  app.post("/api/perform/scenarios/:id/submit", addMockUser, async (req: any, res) => {
+  app.post("/api/perform/scenarios/:id/submit", requireAuth, async (req: any, res) => {
     try {
       const scenario = await storage.getPerformScenario(req.params.id);
       if (!scenario) {
@@ -1095,7 +1085,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Complete assessment and generate final scores
-  app.post("/api/perform/assessments/:id/complete", addMockUser, async (req: any, res) => {
+  app.post("/api/perform/assessments/:id/complete", requireAuth, async (req: any, res) => {
     try {
       const assessment = await storage.getPerformAssessment(req.params.id);
       if (!assessment || assessment.userId !== req.user?.id) {
@@ -1157,7 +1147,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Portfolio management routes
-  app.get("/api/perform/portfolio", addMockUser, async (req: any, res) => {
+  app.get("/api/perform/portfolio", requireAuth, async (req: any, res) => {
     try {
       const portfolio = await storage.getUserPerformPortfolio(req.user?.id);
       res.json(portfolio);
@@ -1168,7 +1158,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Compile portfolio evidence from Practice sessions
-  app.post("/api/perform/portfolio/compile", addMockUser, async (req: any, res) => {
+  app.post("/api/perform/portfolio/compile", requireAuth, async (req: any, res) => {
     try {
       const portfolio = await storage.compilePortfolioEvidence(req.user?.id);
       res.json(portfolio);
@@ -1179,7 +1169,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Update portfolio
-  app.patch("/api/perform/portfolio/:id", addMockUser, async (req: any, res) => {
+  app.patch("/api/perform/portfolio/:id", requireAuth, async (req: any, res) => {
     try {
       const portfolio = await storage.updatePerformPortfolio(req.params.id, req.body);
       res.json(portfolio);
@@ -1190,7 +1180,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Analytics routes
-  app.get("/api/perform/analytics", addMockUser, async (req: any, res) => {
+  app.get("/api/perform/analytics", requireAuth, async (req: any, res) => {
     try {
       const { metricCategory } = req.query;
       const analytics = await storage.getUserPerformAnalytics(req.user?.id, metricCategory as string);
@@ -1202,7 +1192,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Enhanced competency analytics endpoints
-  app.get("/api/perform/competency-progress", addMockUser, async (req: any, res) => {
+  app.get("/api/perform/competency-progress", requireAuth, async (req: any, res) => {
     try {
       const analytics = await storage.getCompetencyProgressAnalytics(req.user?.id);
       res.json(analytics);
@@ -1212,7 +1202,7 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
-  app.get("/api/perform/spc-compliance", addMockUser, async (req: any, res) => {
+  app.get("/api/perform/spc-compliance", requireAuth, async (req: any, res) => {
     try {
       const compliance = await storage.getSPCComplianceStatus(req.user?.id);
       res.json(compliance);
@@ -1222,7 +1212,7 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
-  app.get("/api/perform/dashboard", addMockUser, async (req: any, res) => {
+  app.get("/api/perform/dashboard", requireAuth, async (req: any, res) => {
     try {
       const dashboard = await storage.getPerformanceAnalyticsDashboard(req.user?.id);
       res.json(dashboard);
@@ -1232,7 +1222,7 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
-  app.get("/api/perform/gap-analysis", addMockUser, async (req: any, res) => {
+  app.get("/api/perform/gap-analysis", requireAuth, async (req: any, res) => {
     try {
       const gapAnalysis = await storage.getCompetencyGapAnalysis(req.user?.id);
       res.json(gapAnalysis);
@@ -1242,7 +1232,7 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
-  app.get("/api/perform/recommendations", addMockUser, async (req: any, res) => {
+  app.get("/api/perform/recommendations", requireAuth, async (req: any, res) => {
     try {
       const recommendations = await storage.getRecommendedScenarios(req.user?.id);
       res.json(recommendations);
@@ -1253,7 +1243,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Assessment Report Route for detailed analysis
-  app.get("/api/perform/assessment-report/:assessmentId", addMockUser, async (req: any, res) => {
+  app.get("/api/perform/assessment-report/:assessmentId", requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.id;
       const assessmentId = req.params.assessmentId;
@@ -1274,7 +1264,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Enhanced Assessment API Routes for Phase 3
-  app.post("/api/assessments", addMockUser, async (req: any, res) => {
+  app.post("/api/assessments", requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -1292,7 +1282,7 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
-  app.get("/api/adaptive-assessment/:sessionId", addMockUser, async (req: any, res) => {
+  app.get("/api/adaptive-assessment/:sessionId", requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.id;
       const sessionId = req.params.sessionId;
@@ -1312,7 +1302,7 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
-  app.post("/api/adaptive-assessment/:sessionId/answer", addMockUser, async (req: any, res) => {
+  app.post("/api/adaptive-assessment/:sessionId/answer", requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.id;
       const sessionId = req.params.sessionId;
@@ -1332,7 +1322,7 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
-  app.get("/api/perform/supervisor-analytics/:supervisorId", addMockUser, async (req: any, res) => {
+  app.get("/api/perform/supervisor-analytics/:supervisorId", requireAuth, async (req: any, res) => {
     try {
       const { traineeIds } = req.query;
       const traineeIdArray = traineeIds ? (traineeIds as string).split(',') : undefined;
@@ -1357,7 +1347,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Demo data population endpoint for presentations
-  app.post("/api/perform/populate-demo-data", addMockUser, async (req: any, res) => {
+  app.post("/api/perform/populate-demo-data", requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -1376,7 +1366,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Clear demo data endpoint
-  app.delete("/api/perform/demo-data", addMockUser, async (req: any, res) => {
+  app.delete("/api/perform/demo-data", requireAuth, async (req: any, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
