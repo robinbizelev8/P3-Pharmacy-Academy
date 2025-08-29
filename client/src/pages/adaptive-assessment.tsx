@@ -60,7 +60,7 @@ export default function AdaptiveAssessmentPage() {
   const [confidenceLevel, setConfidenceLevel] = useState(3);
   const queryClient = useQueryClient();
 
-  const { data: session, isLoading } = useQuery({
+  const { data: session, isLoading } = useQuery<AdaptiveSession>({
     queryKey: ["/api/adaptive-assessment", sessionId],
     enabled: !!sessionId,
     refetchInterval: 30000 // Refetch every 30 seconds for real-time updates
@@ -73,10 +73,7 @@ export default function AdaptiveAssessmentPage() {
       confidenceLevel: number;
       timeSpent: number;
       hintsUsed: number;
-    }) => apiRequest(`/api/adaptive-assessment/${sessionId}/answer`, {
-      method: "POST",
-      body: JSON.stringify(answerData)
-    }),
+    }) => apiRequest("POST", `/api/adaptive-assessment/${sessionId}/answer`, answerData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/adaptive-assessment", sessionId] });
       setCurrentAnswer("");
@@ -126,7 +123,7 @@ export default function AdaptiveAssessmentPage() {
     );
   }
 
-  if (!session) {
+  if (!session || !session.questions || session.questions.length === 0) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center">
@@ -137,6 +134,16 @@ export default function AdaptiveAssessmentPage() {
   }
 
   const currentQuestion = session.questions[session.currentQuestion];
+  
+  if (!currentQuestion) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-600">Question not found...</h1>
+        </div>
+      </div>
+    );
+  }
   const progress = ((session.currentQuestion + 1) / session.totalQuestions) * 100;
 
   const formatTime = (seconds: number) => {
@@ -296,7 +303,7 @@ export default function AdaptiveAssessmentPage() {
             {currentQuestion.questionType === 'multiple_choice' && currentQuestion.options ? (
               <RadioGroup value={currentAnswer} onValueChange={setCurrentAnswer}>
                 <div className="space-y-3">
-                  {currentQuestion.options.map((option, index) => (
+                  {currentQuestion.options.map((option: string, index: number) => (
                     <div key={index} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
                       <RadioGroupItem value={option} id={`option-${index}`} />
                       <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">

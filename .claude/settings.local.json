@@ -11,7 +11,10 @@
       "Bash(PORT=3001 npm run dev)",
       "Bash(grep:*)",
       "Bash(npm run build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm run:*)",
+      "Bash(fuser:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

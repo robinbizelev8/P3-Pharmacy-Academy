@@ -57,7 +57,7 @@ import {
   type SupervisorScenarioWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, count, avg, sql, ne, gte, isNotNull } from "drizzle-orm";
+import { eq, desc, and, count, avg, sql, ne, gte, isNotNull, inArray } from "drizzle-orm";
 
 // Knowledge sources status types
 export interface KnowledgeSourceStatus {
@@ -167,6 +167,10 @@ export interface IStorage {
   // Enhanced Assessment System (Phase 3)
   createEnhancedAssessment(userId: string, assessmentData: any): Promise<any>;
   getAdaptiveAssessmentSession(userId: string, sessionId: string): Promise<any>;
+  
+  // Demo data management
+  populateDemoData(userId: string): Promise<void>;
+  clearDemoData(userId: string): Promise<void>;
   submitAdaptiveAnswer(userId: string, sessionId: string, answerData: any): Promise<any>;
 
   // Knowledge sources status
@@ -394,7 +398,7 @@ export class DatabaseStorage implements IStorage {
     if (!session) return undefined;
 
     const messages = await this.getSessionMessages(id);
-    return { ...session, messages };
+    return { ...session, messages } as PharmacySessionWithScenario;
   }
 
   async updatePharmacySession(id: string, session: Partial<InsertPharmacySession>): Promise<PharmacySession> {
@@ -475,7 +479,7 @@ export class DatabaseStorage implements IStorage {
     const sessionsWithMessages = await Promise.all(
       sessions.map(async (session) => {
         const messages = await this.getSessionMessages(session.id);
-        return { ...session, messages };
+        return { ...session, messages } as PharmacySessionWithScenario;
       })
     );
 
@@ -1398,7 +1402,7 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(pharmacySessions.userId, userId),
         isNotNull(pharmacySessions.completedAt),
-        gte(pharmacySessions.completedAt, oneWeekAgo.toISOString())
+        gte(pharmacySessions.completedAt, oneWeekAgo)
       ));
     
     return {
@@ -2026,6 +2030,223 @@ export class DatabaseStorage implements IStorage {
       return "Good response with solid clinical foundation. Consider expanding on safety monitoring aspects and referencing Singapore MOH guidelines more specifically.";
     } else {
       return "Your response shows understanding but needs more depth. Focus on systematic clinical assessment and patient safety considerations.";
+    }
+  }
+
+  // Demo data management methods
+  async populateDemoData(userId: string): Promise<void> {
+    try {
+      // Clear any existing demo data first
+      await this.clearDemoData(userId);
+
+      // Generate realistic practice sessions across therapeutic areas
+      const therapeuticAreas = ['Cardiovascular', 'Gastrointestinal', 'Endocrine', 'Respiratory', 'Renal', 'Neurological', 'Dermatological'];
+      const professionalActivities = ['PA1', 'PA2', 'PA3', 'PA4'];
+      const practiceAreas = ['Hospital', 'Community'];
+      
+      const sessions = [];
+      let sessionDate = new Date();
+      sessionDate.setDate(sessionDate.getDate() - 90); // Start 3 months ago
+
+      // Generate 20 practice sessions with realistic progression
+      for (let i = 0; i < 20; i++) {
+        const therapeuticArea = therapeuticAreas[Math.floor(Math.random() * therapeuticAreas.length)];
+        const professionalActivity = professionalActivities[Math.floor(Math.random() * professionalActivities.length)];
+        const practiceArea = practiceAreas[Math.floor(Math.random() * practiceAreas.length)];
+        
+        // Create realistic score progression (starting lower, improving over time)
+        const progressFactor = i / 20; // 0 to 1
+        const baseScore = 35 + (progressFactor * 45); // Range from 35-80
+        const variation = (Math.random() - 0.5) * 20; // ±10 variation
+        const overallScore = Math.max(25, Math.min(95, baseScore + variation));
+        
+        const clinicalKnowledge = Math.max(20, Math.min(100, overallScore + (Math.random() - 0.5) * 15));
+        const therapeuticReasoning = Math.max(20, Math.min(100, overallScore + (Math.random() - 0.5) * 15));
+        const patientCommunication = Math.max(20, Math.min(100, overallScore + (Math.random() - 0.5) * 15));
+        const professionalPractice = Math.max(20, Math.min(100, overallScore + (Math.random() - 0.5) * 15));
+
+        // Create a pharmacy scenario first
+        const scenarioResult = await db.insert(pharmacyScenarios).values({
+          title: `${therapeuticArea} ${professionalActivity} Clinical Case ${i + 1}`,
+          module: 'practice',
+          therapeuticArea,
+          practiceArea,
+          caseType: 'chronic',
+          professionalActivity,
+          supervisionLevel: Math.ceil(Math.random() * 3) + 1, // 2-4 supervision level
+          patientAge: 45 + Math.floor(Math.random() * 30),
+          patientGender: Math.random() > 0.5 ? 'Female' : 'Male',
+          patientBackground: `Patient with ${therapeuticArea.toLowerCase()} condition requiring comprehensive pharmaceutical care`,
+          clinicalPresentation: `Patient presents with ${therapeuticArea.toLowerCase()} symptoms requiring pharmaceutical care assessment`,
+          medicationHistory: `Standard medication history for ${therapeuticArea.toLowerCase()} therapeutic area`,
+          assessmentObjectives: `Assess ${professionalActivity} competency and apply clinical reasoning for ${therapeuticArea}`,
+          keyLearningOutcomes: [`Demonstrate competency in ${professionalActivity}`, 'Show clinical decision-making skills'],
+          difficulty: 'intermediate'
+        }).returning({ id: pharmacyScenarios.id });
+
+        const scenarioId = scenarioResult[0]?.id;
+        if (!scenarioId) continue;
+
+        // Create practice session
+        sessions.push({
+          userId,
+          scenarioId,
+          module: 'practice',
+          status: 'completed',
+          currentStage: 10,
+          totalStages: 10,
+          therapeuticArea,
+          practiceArea,
+          startedAt: new Date(sessionDate.getTime() - 3600000), // 1 hour before completion
+          completedAt: new Date(sessionDate),
+          duration: 3600, // 1 hour in seconds
+          clinicalKnowledgeScore: clinicalKnowledge.toString(),
+          therapeuticReasoningScore: therapeuticReasoning.toString(),
+          patientCommunicationScore: patientCommunication.toString(),
+          professionalPracticeScore: professionalPractice.toString(),
+          overallScore: overallScore.toString(),
+          achievedSupervisionLevel: Math.ceil(Math.random() * 3) + 1, // 2-4
+          targetSupervisionLevel: 4,
+          strengths: [`Good understanding of ${therapeuticArea}`, `Strong ${professionalActivity} application`],
+          improvements: ['Continue building clinical confidence', 'Expand therapeutic knowledge'],
+          recommendations: [`Focus on ${therapeuticArea} guidelines`, 'Practice more clinical scenarios']
+        });
+
+        // Increment date by 3-7 days
+        sessionDate.setDate(sessionDate.getDate() + 3 + Math.floor(Math.random() * 4));
+      }
+
+      // Insert all practice sessions
+      if (sessions.length > 0) {
+        await db.insert(pharmacySessions).values(sessions);
+      }
+
+      // Generate some perform assessment scenarios
+      const performAssessmentResult = await db.insert(performAssessments).values({
+        userId,
+        assessmentType: 'comprehensive',
+        therapeuticAreas: ['Cardiovascular', 'Endocrine', 'Respiratory'],
+        practiceAreas: ['Hospital', 'Community'],
+        status: 'completed',
+        startedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 2 weeks ago
+        completedAt: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000), // 13 days ago
+        timeLimitMinutes: 120,
+        actualDurationMinutes: 105,
+        overallCompetencyScore: '78',
+        supervisionLevelAchieved: '3',
+        readinessForPractice: false
+      }).returning({ id: performAssessments.id });
+
+      const assessmentId = performAssessmentResult[0]?.id;
+      if (assessmentId) {
+        // Add 3 perform scenarios to the assessment
+        const performScenariosData = [
+          {
+            assessmentId,
+            scenarioOrder: 1,
+            therapeuticArea: 'Cardiovascular',
+            practiceArea: 'Hospital',
+            complexityLevel: 'intermediate',
+            professionalActivity: 'PA1',
+            patientBackground: '65-year-old male with hypertension and diabetes',
+            clinicalPresentation: 'Patient presenting for medication review after recent hospitalization',
+            medicationHistory: 'Current medications include lisinopril, metformin, and atorvastatin',
+            assessmentObjectives: 'Assess medication appropriateness and identify potential issues',
+            responseQuality: 'good',
+            clinicalAccuracy: 'high',
+            communicationEffectiveness: 'excellent',
+            professionalismScore: 'high',
+            completedAt: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000)
+          },
+          {
+            assessmentId,
+            scenarioOrder: 2,
+            therapeuticArea: 'Endocrine',
+            practiceArea: 'Community',
+            complexityLevel: 'advanced',
+            professionalActivity: 'PA2',
+            patientBackground: '45-year-old female with type 2 diabetes',
+            clinicalPresentation: 'Patient asking about insulin storage and administration',
+            medicationHistory: 'Recently started on insulin therapy',
+            assessmentObjectives: 'Provide patient education on insulin safety and storage',
+            responseQuality: 'excellent',
+            clinicalAccuracy: 'high',
+            communicationEffectiveness: 'good',
+            professionalismScore: 'excellent',
+            completedAt: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000)
+          },
+          {
+            assessmentId,
+            scenarioOrder: 3,
+            therapeuticArea: 'Respiratory',
+            practiceArea: 'Hospital',
+            complexityLevel: 'intermediate',
+            professionalActivity: 'PA3',
+            patientBackground: '28-year-old male with asthma',
+            clinicalPresentation: 'Patient experiencing increased asthma symptoms',
+            medicationHistory: 'Using salbutamol inhaler and fluticasone',
+            assessmentObjectives: 'Assess inhaler technique and medication optimization',
+            responseQuality: 'good',
+            clinicalAccuracy: 'good',
+            communicationEffectiveness: 'good',
+            professionalismScore: 'good',
+            completedAt: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000)
+          }
+        ];
+
+        await db.insert(performScenarios).values(performScenariosData);
+      }
+
+      console.log(`Successfully populated demo data for user ${userId}`);
+    } catch (error) {
+      console.error('Error populating demo data:', error);
+      throw error;
+    }
+  }
+
+  async clearDemoData(userId: string): Promise<void> {
+    try {
+      // For simplicity, clear all user data - this is for demo purposes
+      // Get all user's pharmacy sessions
+      const userSessions = await db
+        .select({ scenarioId: pharmacySessions.scenarioId })
+        .from(pharmacySessions)
+        .where(eq(pharmacySessions.userId, userId));
+
+      const scenarioIds = userSessions.map(s => s.scenarioId).filter(Boolean);
+
+      // Delete pharmacy sessions
+      await db.delete(pharmacySessions)
+        .where(eq(pharmacySessions.userId, userId));
+
+      // Delete associated pharmacy scenarios
+      if (scenarioIds.length > 0) {
+        await db.delete(pharmacyScenarios)
+          .where(inArray(pharmacyScenarios.id, scenarioIds));
+      }
+
+      // Delete perform assessments and scenarios
+      const userAssessments = await db
+        .select({ id: performAssessments.id })
+        .from(performAssessments)
+        .where(eq(performAssessments.userId, userId));
+
+      const assessmentIds = userAssessments.map(a => a.id);
+
+      if (assessmentIds.length > 0) {
+        // Delete perform scenarios first
+        await db.delete(performScenarios)
+          .where(inArray(performScenarios.assessmentId, assessmentIds));
+
+        // Delete perform assessments
+        await db.delete(performAssessments)
+          .where(eq(performAssessments.userId, userId));
+      }
+
+      console.log(`Successfully cleared all data for user ${userId}`);
+    } catch (error) {
+      console.error('Error clearing demo data:', error);
+      throw error;
     }
   }
 }

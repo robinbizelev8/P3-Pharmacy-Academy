@@ -8,6 +8,19 @@ import { sql } from "drizzle-orm";
  * including MOH Guidelines, NDF, HSA alerts, and SPC standards
  */
 
+interface SingaporeKnowledgeEntry {
+  id: string;
+  source: string;
+  category: string;
+  title: string;
+  content: string;
+  lastUpdated: string;
+  url: string;
+  priority: number;
+  therapeuticArea: string;
+  practiceArea: string;
+}
+
 export class SingaporeKnowledgeService {
   
   /**
@@ -141,24 +154,13 @@ REPORTING REQUIREMENTS:
 
     // Store in knowledge sources table
     for (const guideline of mohGuidelines) {
-      await db.execute(`
+      await db.execute(sql`
         INSERT INTO knowledge_sources (id, source_type, title, content, last_updated, url, category, priority, therapeutic_area, practice_area)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES (${guideline.id}, ${guideline.source}, ${guideline.title}, ${guideline.content}, ${guideline.lastUpdated}, ${guideline.url}, ${guideline.category}, ${guideline.priority}, ${guideline.therapeuticArea}, ${guideline.practiceArea})
         ON CONFLICT (id) DO UPDATE SET
         content = EXCLUDED.content,
         last_updated = EXCLUDED.last_updated
-      `, [
-        guideline.id,
-        guideline.source,
-        guideline.title,
-        guideline.content,
-        guideline.lastUpdated,
-        guideline.url,
-        guideline.category,
-        guideline.priority,
-        guideline.therapeuticArea,
-        guideline.practiceArea
-      ]);
+      `);
     }
 
     return mohGuidelines.length;
@@ -327,24 +329,13 @@ SINGAPORE PRICING (Median):
     ];
 
     for (const medication of ndfMedications) {
-      await db.execute(`
+      await db.execute(sql`
         INSERT INTO knowledge_sources (id, source_type, title, content, last_updated, url, category, priority, therapeutic_area, practice_area)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES (${medication.id}, ${medication.source}, ${medication.title}, ${medication.content}, ${medication.lastUpdated}, ${medication.url}, ${medication.category}, ${medication.priority}, ${medication.therapeuticArea}, ${medication.practiceArea})
         ON CONFLICT (id) DO UPDATE SET
         content = EXCLUDED.content,
         last_updated = EXCLUDED.last_updated
-      `, [
-        medication.id,
-        medication.source,
-        medication.title,
-        medication.content,
-        medication.lastUpdated,
-        medication.url,
-        medication.category,
-        medication.priority,
-        medication.therapeuticArea,
-        medication.practiceArea
-      ]);
+      `);
     }
 
     return ndfMedications.length;
@@ -450,23 +441,13 @@ SINGAPORE CASE DATA:
     ];
 
     for (const alert of hsaAlerts) {
-      await db.execute(`
+      await db.execute(sql`
         INSERT INTO drug_safety_alerts (id, alert_type, severity, title, description, affected_drugs, recommendations, issue_date, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES (${alert.id}, ${'safety_alert'}, ${alert.priority}, ${alert.title}, ${alert.content}, ${JSON.stringify([alert.title.includes('Modafinil') ? 'modafinil' : 'warfarin'])}, ${'See full alert for detailed recommendations'}, ${alert.lastUpdated}, ${'active'})
         ON CONFLICT (id) DO UPDATE SET
         description = EXCLUDED.description,
         recommendations = EXCLUDED.recommendations
-      `, [
-        alert.id,
-        'safety_alert',
-        alert.priority,
-        alert.title,
-        alert.content,
-        [alert.title.includes('Modafinil') ? 'modafinil' : 'warfarin'],
-        'See full alert for detailed recommendations',
-        alert.lastUpdated,
-        'active'
-      ]);
+      `);
     }
 
     return hsaAlerts.length;
@@ -513,7 +494,7 @@ SINGAPORE CASE DATA:
     spcProtocols: number;
     lastUpdate: Date;
   }> {
-    const stats = await db.execute(`
+    const stats = await db.execute(sql`
       SELECT 
         COUNT(CASE WHEN source_type = 'moh' THEN 1 END) as moh_count,
         COUNT(CASE WHEN source_type = 'ndf' THEN 1 END) as ndf_count,

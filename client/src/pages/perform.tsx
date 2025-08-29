@@ -408,6 +408,63 @@ export default function PerformPage() {
 
   // Removed assessment-related mutations
 
+  // Demo data population mutation
+  const populateDemoDataMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/perform/populate-demo-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) throw new Error("Failed to populate demo data");
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate all analytics queries to refresh the dashboard
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/competency-progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/spc-compliance"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/gap-analysis"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/recommendations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/portfolio"] });
+      toast({ 
+        title: "Demo Data Loaded Successfully!", 
+        description: "Your dashboard now shows realistic training progress and analytics."
+      });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Failed to load demo data", 
+        description: error?.message || "Please try again",
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Clear demo data mutation (optional - for cleanup)
+  const clearDemoDataMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/perform/demo-data", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" }
+      });
+      if (!response.ok) throw new Error("Failed to clear demo data");
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate all analytics queries to refresh the dashboard
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/competency-progress"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/spc-compliance"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/gap-analysis"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/recommendations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/perform/portfolio"] });
+      toast({ 
+        title: "Demo Data Cleared", 
+        description: "Dashboard has been reset to show your actual progress."
+      });
+    }
+  });
+
   // Compile portfolio mutation
   const compilePortfolioMutation = useMutation({
     mutationFn: async () => {
@@ -584,6 +641,54 @@ export default function PerformPage() {
             <div className="space-y-2">
               <div className="text-4xl font-bold text-gray-900">{displayDashboardData?.totalSessions || 0}</div>
               <div className="text-sm text-gray-600">Portfolio Entries</div>
+            </div>
+            
+            {/* Demo Data Controls for Presentations */}
+            <div className="mt-4 space-y-2">
+              {(!displayDashboardData?.totalSessions || displayDashboardData.totalSessions === 0) ? (
+                <Button
+                  onClick={() => populateDemoDataMutation.mutate()}
+                  disabled={populateDemoDataMutation.isPending}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                >
+                  {populateDemoDataMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Database className="h-4 w-4 mr-2" />
+                  )}
+                  Load Demo Data
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => populateDemoDataMutation.mutate()}
+                    disabled={populateDemoDataMutation.isPending}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {populateDemoDataMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    Refresh Demo Data
+                  </Button>
+                  <Button
+                    onClick={() => clearDemoDataMutation.mutate()}
+                    disabled={clearDemoDataMutation.isPending}
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    {clearDemoDataMutation.isPending ? (
+                      <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3 w-3 mr-1" />
+                    )}
+                    Clear Demo Data
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

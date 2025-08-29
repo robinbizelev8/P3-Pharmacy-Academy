@@ -62,7 +62,7 @@ export default function AssessmentReportPage() {
   const [match, params] = useRoute("/perform/assessment-report/:assessmentId");
   const assessmentId = params?.assessmentId;
 
-  const { data: report, isLoading } = useQuery({
+  const { data: report, isLoading } = useQuery<AssessmentReport>({
     queryKey: ["/api/perform/assessment-report", assessmentId],
     enabled: !!assessmentId
   });
@@ -208,7 +208,7 @@ export default function AssessmentReportPage() {
                 <CardTitle>Competency Area Performance</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {Object.entries(report.competencyBreakdown).map(([pa, data]) => (
+                {Object.entries(report.competencyBreakdown).map(([pa, data]: [string, { score: number; maxScore: number; questions: number }]) => (
                   <div key={pa} className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="font-medium">{pa}</span>
@@ -234,7 +234,7 @@ export default function AssessmentReportPage() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {report.strengths.map((strength, index) => (
+                    {report.strengths.map((strength: string, index: number) => (
                       <li key={index} className="flex items-start gap-2">
                         <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{strength}</span>
@@ -253,7 +253,7 @@ export default function AssessmentReportPage() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {report.areasForImprovement.map((area, index) => (
+                    {report.areasForImprovement.map((area: string, index: number) => (
                       <li key={index} className="flex items-start gap-2">
                         <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{area}</span>
@@ -269,7 +269,7 @@ export default function AssessmentReportPage() {
         {/* Competency Analysis Tab */}
         <TabsContent value="competency" className="space-y-6">
           <div className="grid lg:grid-cols-2 gap-6">
-            {Object.entries(report.competencyBreakdown).map(([pa, data]) => (
+            {Object.entries(report.competencyBreakdown).map(([pa, data]: [string, { score: number; maxScore: number; questions: number }]) => (
               <Card key={pa}>
                 <CardHeader>
                   <CardTitle>{pa} - Professional Activity</CardTitle>
@@ -296,8 +296,8 @@ export default function AssessmentReportPage() {
                     <div className="space-y-2">
                       <h4 className="font-medium text-sm">Questions in this area:</h4>
                       {report.questions
-                        .filter(q => q.competencyArea === pa)
-                        .map((question, index) => (
+                        .filter((q: AssessmentQuestion) => q.competencyArea === pa)
+                        .map((question: AssessmentQuestion, index: number) => (
                           <div key={question.id} className="flex items-center gap-2 text-xs">
                             {question.isCorrect ? (
                               <CheckCircle className="h-4 w-4 text-green-600" />
@@ -323,7 +323,7 @@ export default function AssessmentReportPage() {
 
         {/* Question Review Tab */}
         <TabsContent value="questions" className="space-y-6">
-          {report.questions.map((question, index) => (
+          {report.questions.map((question: AssessmentQuestion, index: number) => (
             <Card key={question.id}>
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -412,7 +412,7 @@ export default function AssessmentReportPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {report.nextSteps.map((step, index) => (
+                {report.nextSteps.map((step: string, index: number) => (
                   <div key={index} className="flex items-start gap-3 p-3 bg-green-50 rounded border border-green-200">
                     <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
                       {index + 1}

@@ -71,10 +71,7 @@ export default function AssessmentCreatorPage() {
   });
 
   const createAssessmentMutation = useMutation({
-    mutationFn: (data: AssessmentFormData) => apiRequest("/api/assessments", {
-      method: "POST",
-      body: JSON.stringify(data)
-    }),
+    mutationFn: (data: AssessmentFormData) => apiRequest("POST", "/api/assessments", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
     }

@@ -744,8 +744,9 @@ Current module: ${session.module}`;
 
       // If stage is complete, update cumulative session scoring
       if (chatResponse.stageComplete) {
-        // Get all messages for this session to calculate cumulative scores
-        const allMessages = await storage.getPharmacyMessages(sessionId);
+        // Get the session with messages to calculate cumulative scores
+        const session = await storage.getPharmacySession(sessionId);
+        const allMessages = session?.messages || [];
         const scoredMessages = allMessages.filter((msg: any) => msg.messageType === 'user' && msg.clinicalRelevance);
         
         if (scoredMessages.length > 0) {
@@ -775,8 +776,8 @@ Current module: ${session.module}`;
             ...chatResponse.detailedScoring.improvements
           ];
           
-          sessionUpdates.strengths = [...new Set(allStrengths)]; // Remove duplicates
-          sessionUpdates.improvements = [...new Set(allImprovements)];
+          sessionUpdates.strengths = Array.from(new Set(allStrengths)); // Remove duplicates
+          sessionUpdates.improvements = Array.from(new Set(allImprovements));
           
           // Update qualitative feedback
           sessionUpdates.qualitativeFeedback = `Latest assessment - ${chatResponse.detailedScoring.competencyLevel} level competency demonstrated`;
@@ -1326,6 +1327,44 @@ This format helps students learn from expert examples before progressing. Focus 
     });
   });
 
+  // Demo data population endpoint for presentations
+  app.post("/api/perform/populate-demo-data", addMockUser, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      await storage.populateDemoData(userId);
+      res.json({ success: true, message: "Demo data populated successfully" });
+    } catch (error) {
+      console.error("Error populating demo data:", error);
+      res.status(500).json({ 
+        message: "Failed to populate demo data",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Clear demo data endpoint
+  app.delete("/api/perform/demo-data", addMockUser, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      await storage.clearDemoData(userId);
+      res.json({ success: true, message: "Demo data cleared successfully" });
+    } catch (error) {
+      console.error("Error clearing demo data:", error);
+      res.status(500).json({ 
+        message: "Failed to clear demo data",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // ============================================================================
   // STUDENT DASHBOARD PROGRESS TRACKING API - Singapore Pharmacy Pre-Registration Training
   // ============================================================================
@@ -1355,7 +1394,7 @@ This format helps students learn from expert examples before progressing. Focus 
           module: session.module,
           therapeuticArea: session.therapeuticArea,
           practiceArea: session.practiceArea,
-          progress: Math.round((session.currentStage / session.totalStages) * 100),
+          progress: Math.round(((session.currentStage || 1) / (session.totalStages || 10)) * 100),
           lastAccessed: session.startedAt,
           professionalActivity: session.scenario.professionalActivity
         }));
@@ -1434,12 +1473,12 @@ This format helps students learn from expert examples before progressing. Focus 
           therapeuticArea: session.therapeuticArea,
           practiceArea: session.practiceArea,
           professionalActivity: session.scenario.professionalActivity,
-          progress: Math.round((session.currentStage / session.totalStages) * 100),
+          progress: Math.round(((session.currentStage || 1) / (session.totalStages || 10)) * 100),
           lastAccessed: session.startedAt,
-          estimatedTimeRemaining: Math.max(0, (session.totalStages - session.currentStage) * 3), // 3 min per stage
+          estimatedTimeRemaining: Math.max(0, ((session.totalStages || 10) - (session.currentStage || 1)) * 3), // 3 min per stage
           supervisionLevel: session.scenario.supervisionLevel
         }))
-        .sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime());
+        .sort((a, b) => new Date(b.lastAccessed || 0).getTime() - new Date(a.lastAccessed || 0).getTime());
       
       res.json(resumableSessions);
     } catch (error) {
@@ -1954,7 +1993,7 @@ async function generateUpcomingMilestones(userId: string, storage: any, competen
   
   for (const pa of paKeys) {
     const progression = competencyProgression[pa];
-    const existingAssessment = assessments.find(a => a.professionalActivity === pa);
+    const existingAssessment = assessments.find((a: any) => a.professionalActivity === pa);
     
     if (!existingAssessment && progression.competencyLevel < 3) {
       // Need to start PA assessment

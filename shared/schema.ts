@@ -132,6 +132,9 @@ export const pharmacySessions = pgTable("pharmacy_sessions", {
   autoSavedAt: timestamp("auto_saved_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  
+  // Demo data flag for presentation purposes
+  demoData: boolean("demo_data").default(false),
 });
 
 // Pharmacy session messages table for clinical interactions
@@ -615,7 +618,10 @@ export const performAssessments = pgTable('perform_assessments', {
   developmentRecommendations: text('development_recommendations').array().default([]),
   
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull()
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  
+  // Demo data flag for presentation purposes  
+  demoData: boolean('demo_data').default(false)
 });
 
 export const performScenarios = pgTable('perform_scenarios', {
@@ -655,7 +661,10 @@ export const performScenarios = pgTable('perform_scenarios', {
   learningTips: text('learning_tips'),
   
   completedAt: timestamp('completed_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull()
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  
+  // Demo data flag for presentation purposes
+  demoData: boolean('demo_data').default(false)
 });
 
 export const performPortfolios = pgTable('perform_portfolios', {
