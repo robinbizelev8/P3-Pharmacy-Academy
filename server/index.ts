@@ -50,6 +50,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Use port 5000 which maps to external port 80 in Replit
+  // The PORT is already set to 5000 in .replit configuration
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -70,10 +73,10 @@ app.use((req, res, next) => {
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
+  // Other ports are firewalled. Default to 5000 which maps to port 80 externally.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5001', 10);
+  const port = parseInt(process.env.PORT || '5000', 10);
   server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
