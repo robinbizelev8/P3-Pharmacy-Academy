@@ -796,7 +796,6 @@ export default function PracticePage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      <div className="px-6">
       {/* Hero Section with Visual Elements */}
       <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-blue-50 rounded-3xl">
         <div className="grid lg:grid-cols-2 gap-8 items-center p-8 lg:p-12">
@@ -884,7 +883,7 @@ export default function PracticePage() {
         </div>
       </div>
 
-
+      <div className="px-6">{/* Content wrapper for remaining sections */}
 
       {/* Show assessment scenario interface if active */}
       {currentAssessmentScenario ? (
@@ -1785,66 +1784,9 @@ export default function PracticePage() {
         </Tabs>
       ) : (
         // Interactive Chat Simulation Interface
-        <div className="space-y-6">
-          {/* Session Notes - Moved to top for better accessibility */}
-          {showSessionNotes && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center space-x-2">
-                  <FileText className="w-4 h-4" />
-                  <span>Session Notes</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-sm text-blue-900 mb-2">Scenario Information</h4>
-                  <div className="text-xs text-blue-800 space-y-1">
-                    <p><strong>Patient:</strong> {selectedScenario?.patientGender} {selectedScenario?.patientAge} years old</p>
-                    <p><strong>Setting:</strong> {selectedScenario?.practiceArea === 'hospital' ? 'Hospital' : 'Community Pharmacy'}</p>
-                    <p><strong>Therapeutic Area:</strong> {selectedScenario?.therapeuticArea}</p>
-                    <p><strong>Background:</strong> {selectedScenario?.patientBackground}</p>
-                    <p><strong>Presentation:</strong> {selectedScenario?.clinicalPresentation}</p>
-                    {selectedScenario?.medicationHistory && (
-                      <p><strong>Medication History:</strong> {selectedScenario.medicationHistory}</p>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-sm text-green-900 mb-2">Learning Objectives</h4>
-                  <div className="text-xs text-green-800">
-                    {selectedScenario?.keyLearningOutcomes ? (
-                      <ul className="list-disc list-inside space-y-1">
-                        {selectedScenario.keyLearningOutcomes.map((outcome: string, index: number) => (
-                          <li key={index}>{outcome}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Identify nephrotoxic medications</li>
-                        <li>Adjust doses for renal function</li>
-                        <li>Monitor kidney recovery</li>
-                        <li>Prevent further nephrotoxicity</li>
-                      </ul>
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-amber-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-sm text-amber-900 mb-2">Session Progress</h4>
-                  <div className="text-xs text-amber-800 space-y-1">
-                    <p><strong>Current Stage:</strong> {getCurrentStageTitle()}</p>
-                    <p><strong>Messages Exchanged:</strong> {messages.length}</p>
-                    <p><strong>Coaching Tips Received:</strong> {messages.filter(m => m.isCoachingTip).length}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Patient Chat Interface - Main Area */}
-            <div className="lg:col-span-3 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Patient Chat Interface - Main Area */}
+          <div className="lg:col-span-3 space-y-4">
             {/* Session Progress & Objectives */}
             <Card>
               <CardHeader className="pb-3">
@@ -2084,12 +2026,66 @@ export default function PracticePage() {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Session Notes - Conditional Display */}
+            {showSessionNotes && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center space-x-2">
+                    <FileText className="w-4 h-4" />
+                    <span>Session Notes</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-sm text-blue-900 mb-2">Scenario Information</h4>
+                    <div className="text-xs text-blue-800 space-y-1">
+                      <p><strong>Patient:</strong> {selectedScenario?.patientGender} {selectedScenario?.patientAge} years old</p>
+                      <p><strong>Setting:</strong> {selectedScenario?.practiceArea === 'hospital' ? 'Hospital' : 'Community Pharmacy'}</p>
+                      <p><strong>Therapeutic Area:</strong> {selectedScenario?.therapeuticArea}</p>
+                      <p><strong>Background:</strong> {selectedScenario?.patientBackground}</p>
+                      <p><strong>Presentation:</strong> {selectedScenario?.clinicalPresentation}</p>
+                      {selectedScenario?.medicationHistory && (
+                        <p><strong>Medication History:</strong> {selectedScenario.medicationHistory}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-sm text-green-900 mb-2">Learning Objectives</h4>
+                    <div className="text-xs text-green-800">
+                      {selectedScenario?.keyLearningOutcomes ? (
+                        <ul className="list-disc list-inside space-y-1">
+                          {selectedScenario.keyLearningOutcomes.map((outcome: string, index: number) => (
+                            <li key={index}>{outcome}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <ul className="list-disc list-inside space-y-1">
+                          <li>Conduct thorough patient history taking</li>
+                          <li>Perform clinical assessment and therapeutic planning</li>
+                          <li>Demonstrate effective patient counseling</li>
+                          <li>Apply clinical knowledge to real-world scenarios</li>
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-sm text-amber-900 mb-2">Session Progress</h4>
+                    <div className="text-xs text-amber-800 space-y-1">
+                      <p><strong>Current Stage:</strong> {getCurrentStageTitle()}</p>
+                      <p><strong>Messages Exchanged:</strong> {messages.length}</p>
+                      <p><strong>Coaching Tips Received:</strong> {messages.filter(m => m.isCoachingTip).length}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       )}
-      </div>
-      </div>
-      </div>
+      </div> {/* Close px-6 wrapper */}
     </div>
   );
 }
