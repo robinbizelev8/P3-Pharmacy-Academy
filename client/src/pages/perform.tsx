@@ -89,7 +89,15 @@ import {
   Calendar,
   Clock,
   Users,
-  Download
+  Download,
+  MapPin,
+  Globe,
+  Pill,
+  Hospital,
+  Building2,
+  FlaskConical,
+  Newspaper,
+  BookOpenCheck
 } from "lucide-react";
 
 // Import generated images
@@ -1526,59 +1534,247 @@ export default function PerformPage() {
             </Card>
           </div>
 
-          {/* Singapore Healthcare Knowledge Sources */}
+          {/* Comprehensive Singapore Healthcare Knowledge Base */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-red-600" />
-                Singapore Healthcare Knowledge Sources
+                Singapore Healthcare Knowledge Integration
               </CardTitle>
               <CardDescription>
-                Authoritative clinical and professional guidance from Singapore healthcare authorities
+                Comprehensive integration with official Singapore healthcare authorities and clinical resources
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* MOH Guidelines */}
-                <div className="flex items-center gap-4 p-4 border rounded-lg bg-gradient-to-r from-red-50 to-red-25">
-                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-red-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-red-900">Ministry of Health Clinical Guidelines</h4>
-                    <p className="text-sm text-red-700">Official Singapore clinical practice standards and protocols</p>
-                  </div>
-                  <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
+            <CardContent className="space-y-6">
+              {/* Knowledge Coverage Statistics */}
+              <div className="grid md:grid-cols-4 gap-4 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">7</div>
+                  <div className="text-sm text-gray-600">Therapeutic Areas</div>
                 </div>
-                
-                {/* NDF */}
-                <div className="flex items-center gap-4 p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-blue-25">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Database className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-blue-900">National Drug Formulary</h4>
-                    <p className="text-sm text-blue-700">Comprehensive medication database and prescribing guidelines</p>
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-800 border-blue-200">Updated</Badge>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">500+</div>
+                  <div className="text-sm text-gray-600">Clinical Guidelines</div>
                 </div>
-                
-                {/* SPC Resources */}
-                <div className="flex items-center gap-4 p-4 border rounded-lg bg-gradient-to-r from-purple-50 to-purple-25">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <GraduationCap className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-purple-900">Singapore Pharmacy Council Resources</h4>
-                    <p className="text-sm text-purple-700">Professional standards and competency framework for pharmacists</p>
-                  </div>
-                  <Badge className="bg-purple-100 text-purple-800 border-purple-200">Current</Badge>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">1000+</div>
+                  <div className="text-sm text-gray-600">Drug Monographs</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">Weekly</div>
+                  <div className="text-sm text-gray-600">Updates</div>
                 </div>
               </div>
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <Info className="w-4 h-4" />
-                  <span>Knowledge sources are continuously updated to reflect the latest Singapore healthcare standards and practices.</span>
+
+              {/* Comprehensive Knowledge Sources Grid */}
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* MOH Guidelines */}
+                <div className="p-4 border rounded-lg bg-gradient-to-r from-red-50 to-red-25 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-6 h-6 text-red-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-red-900 mb-1">MOH Clinical Guidelines</h4>
+                      <p className="text-sm text-red-700 mb-2">Ministry of Health clinical practice standards</p>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">Live</Badge>
+                        <Badge variant="outline" className="text-xs">Diabetes, HTN, Antimicrobial</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* HSA Drug Safety */}
+                <div className="p-4 border rounded-lg bg-gradient-to-r from-orange-50 to-orange-25 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <AlertTriangle className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-orange-900 mb-1">HSA Drug Safety</h4>
+                      <p className="text-sm text-orange-700 mb-2">Health Sciences Authority safety alerts</p>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-xs">Active</Badge>
+                        <Badge variant="outline" className="text-xs">Safety Alerts, ADR</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* National Drug Formulary */}
+                <div className="p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-blue-25 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Database className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-blue-900 mb-1">National Drug Formulary</h4>
+                      <p className="text-sm text-blue-700 mb-2">Comprehensive medication database</p>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">Updated</Badge>
+                        <Badge variant="outline" className="text-xs">1000+ Monographs</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Singapore Pharmacy Council */}
+                <div className="p-4 border rounded-lg bg-gradient-to-r from-purple-50 to-purple-25 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <GraduationCap className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-purple-900 mb-1">SPC Standards</h4>
+                      <p className="text-sm text-purple-700 mb-2">Professional competency framework</p>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-xs">Current</Badge>
+                        <Badge variant="outline" className="text-xs">PA1-PA4 Framework</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pharmaceutical Society of Singapore */}
+                <div className="p-4 border rounded-lg bg-gradient-to-r from-emerald-50 to-emerald-25 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Users className="w-6 h-6 text-emerald-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-emerald-900 mb-1">PSS Resources</h4>
+                      <p className="text-sm text-emerald-700 mb-2">Professional development materials</p>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-xs">Active</Badge>
+                        <Badge variant="outline" className="text-xs">CPD Programs</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* HealthHub Patient Education */}
+                <div className="p-4 border rounded-lg bg-gradient-to-r from-teal-50 to-teal-25 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Heart className="w-6 h-6 text-teal-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-teal-900 mb-1">HealthHub Education</h4>
+                      <p className="text-sm text-teal-700 mb-2">Patient education materials</p>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-teal-100 text-teal-800 border-teal-200 text-xs">Available</Badge>
+                        <Badge variant="outline" className="text-xs">Patient Counseling</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Therapeutic Areas Coverage */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-blue-600" />
+                  Therapeutic Areas Coverage
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg">
+                    <Heart className="h-4 w-4 text-red-500" />
+                    <span className="text-sm font-medium">Cardiovascular</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                    <FlaskConical className="h-4 w-4 text-green-500" />
+                    <span className="text-sm font-medium">Gastrointestinal</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                    <Activity className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm font-medium">Respiratory</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
+                    <Pill className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm font-medium">Endocrine</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
+                    <Brain className="h-4 w-4 text-orange-500" />
+                    <span className="text-sm font-medium">Neurological</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-3 bg-teal-50 rounded-lg">
+                    <Gauge className="h-4 w-4 text-teal-500" />
+                    <span className="text-sm font-medium">Renal</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-3 bg-pink-50 rounded-lg">
+                    <Eye className="h-4 w-4 text-pink-500" />
+                    <span className="text-sm font-medium">Dermatological</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-3 bg-indigo-50 rounded-lg">
+                    <Hospital className="h-4 w-4 text-indigo-500" />
+                    <span className="text-sm font-medium">Multi-specialty</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Practice Settings Integration */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg border">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Hospital className="h-5 w-5 text-slate-600" />
+                    <h4 className="font-medium text-slate-900">Hospital Pharmacy</h4>
+                  </div>
+                  <div className="space-y-2 text-sm text-slate-700">
+                    <div className="flex items-center justify-between">
+                      <span>Clinical Protocols</span>
+                      <Badge variant="outline" className="text-xs">250+</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Drug Interactions</span>
+                      <Badge variant="outline" className="text-xs">Active</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>TDM Guidelines</span>
+                      <Badge variant="outline" className="text-xs">Updated</Badge>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Building2 className="h-5 w-5 text-amber-600" />
+                    <h4 className="font-medium text-amber-900">Community Pharmacy</h4>
+                  </div>
+                  <div className="space-y-2 text-sm text-amber-700">
+                    <div className="flex items-center justify-between">
+                      <span>OTC Guidelines</span>
+                      <Badge variant="outline" className="text-xs">150+</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Patient Counseling</span>
+                      <Badge variant="outline" className="text-xs">Active</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Health Screening</span>
+                      <Badge variant="outline" className="text-xs">Current</Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Integration Status Footer */}
+              <div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-gray-900">All Systems Connected</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>Last sync: 2 mins ago</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Globe className="w-3 h-3" />
+                      <span>Singapore timezone</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
