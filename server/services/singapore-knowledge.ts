@@ -69,7 +69,7 @@ SINGAPORE-SPECIFIC CONSIDERATIONS:
 - Cultural dietary patterns in management`,
           lastUpdated: '2024-03-15',
           url: 'https://www.moh.gov.sg/hpp/doctors/guidelines/GuidelineDetails/diabetes-mellitus',
-          priority: 'high',
+          priority: 1,
           therapeuticArea: 'endocrine',
           practiceArea: 'community_pharmacy'
         }
@@ -106,9 +106,9 @@ SINGAPORE POPULATION CONSIDERATIONS:
 - Higher salt sensitivity in Asian populations
 - Consider genetic polymorphisms affecting drug response
 - Monitor for angioedema risk with ACE inhibitors in Asian patients`,
-        lastUpdated: new Date('2024-02-20'),
+        lastUpdated: '2024-02-20',
         url: 'https://www.moh.gov.sg/hpp/doctors/guidelines/GuidelineDetails/hypertension',
-        priority: 'high',
+        priority: 1,
         therapeuticArea: 'cardiovascular',
         practiceArea: 'community_pharmacy'
       },
@@ -144,9 +144,9 @@ SINGAPORE-SPECIFIC RESISTANCE PATTERNS:
 REPORTING REQUIREMENTS:
 - Mandatory reporting of multidrug-resistant organisms
 - Participation in national surveillance programs`,
-        lastUpdated: new Date('2024-01-10'),
+        lastUpdated: '2024-01-10',
         url: 'https://www.moh.gov.sg/hpp/doctors/guidelines/GuidelineDetails/antimicrobial-stewardship',
-        priority: 'high',
+        priority: 1,
         therapeuticArea: 'infectious_diseases',
         practiceArea: 'hospital_pharmacy'
       }
@@ -217,9 +217,9 @@ AVAILABLE BRANDS:
 - Glucophage (Merck)
 - Diabex (Alphapharm)
 - Generic formulations`,
-        lastUpdated: new Date('2024-03-01'),
+        lastUpdated: '2024-03-01',
         url: 'https://www.ndf.gov.sg/drug/metformin',
-        priority: 'high',
+        priority: 1,
         therapeuticArea: 'endocrine',
         practiceArea: 'community_pharmacy'
       },
@@ -268,9 +268,9 @@ MONITORING:
 - Blood pressure response
 - Ankle swelling
 - Heart rate`,
-        lastUpdated: new Date('2024-02-28'),
+        lastUpdated: '2024-02-28',
         url: 'https://www.ndf.gov.sg/drug/amlodipine',
-        priority: 'high',
+        priority: 1,
         therapeuticArea: 'cardiovascular',
         practiceArea: 'community_pharmacy'
       },
@@ -320,9 +320,9 @@ DRUG INTERACTIONS:
 SINGAPORE PRICING (Median):
 - Omeprazole 20mg: $0.15 per capsule
 - Omeprazole 40mg: $0.25 per capsule`,
-        lastUpdated: new Date('2024-02-25'),
+        lastUpdated: '2024-02-25',
         url: 'https://www.ndf.gov.sg/drug/omeprazole',
-        priority: 'medium',
+        priority: 2,
         therapeuticArea: 'gastrointestinal',
         practiceArea: 'community_pharmacy'
       }
@@ -386,9 +386,9 @@ PATIENT COUNSELING POINTS:
 
 REPORTING:
 Healthcare professionals should report suspected adverse reactions to HSA via www.hsa.gov.sg/adverse-events`,
-        lastUpdated: new Date('2024-03-10'),
+        lastUpdated: '2024-03-10',
         url: 'https://www.hsa.gov.sg/announcements/safety-alert/modafinil-armodafinil-skin-reactions',
-        priority: 'high',
+        priority: 1,
         therapeuticArea: 'neurology',
         practiceArea: 'hospital_pharmacy'
       },
@@ -432,9 +432,9 @@ SINGAPORE CASE DATA:
 - 15 cases of major bleeding reported (2023)
 - Most common: GI bleeding and epistaxis
 - Average INR elevation: 2-fold increase`,
-        lastUpdated: new Date('2024-02-15'),
+        lastUpdated: '2024-02-15',
         url: 'https://www.hsa.gov.sg/announcements/drug-interaction-alert/warfarin-antibiotics',
-        priority: 'high',
+        priority: 1,
         therapeuticArea: 'hematology',
         practiceArea: 'community_pharmacy'
       }

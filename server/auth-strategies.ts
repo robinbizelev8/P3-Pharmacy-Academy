@@ -35,7 +35,7 @@ export function setupLocalStrategy() {
         lastLoginAt: new Date()
       });
 
-      return done(null, user);
+      return done(null, user as any);
     } catch (error) {
       console.error('Local strategy error:', error);
       return done(error, undefined);
@@ -56,7 +56,7 @@ export function setupPassportSerialization() {
       const user = await storage.getUserById(id);
       if (user) {
         console.log(`User deserialized successfully: ${user.email}`);
-        done(null, user);
+        done(null, user as any);
       } else {
         console.log(`User not found for ID: ${id}`);
         done(null, false);

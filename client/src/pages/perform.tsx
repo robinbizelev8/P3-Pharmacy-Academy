@@ -957,11 +957,11 @@ export default function PerformPage() {
                       Demo Data
                     </Badge>
                   )}
-                  {hasRealCompetencyData && (
+                  {hasRealCompetencyData ? (
                     <Badge variant="outline" className="text-xs text-green-600 border-green-300">
                       Live Data
                     </Badge>
-                  )}
+                  ) : null}
                 </CardTitle>
                 <CardDescription>
                   Your competency across Singapore's core pharmacy activities: Clinical Care, Supply & Safety, Patient Education, and Drug Information Services

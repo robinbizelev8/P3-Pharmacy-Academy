@@ -38,6 +38,8 @@ interface DashboardData {
   assignedScenarios: any[];
   recentFeedback: any[];
   nextMilestones: string[];
+  recentActivity?: any[];
+  upcomingMilestones?: any[];
 }
 
 export default function StudentDashboard() {

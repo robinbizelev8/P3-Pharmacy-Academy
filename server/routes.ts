@@ -787,11 +787,11 @@ Current module: ${session.module}`;
 
           // Accumulate strengths and improvements
           const allStrengths = [
-            ...(session.strengths as string[] || []),
+            ...(session?.strengths as string[] || []),
             ...chatResponse.detailedScoring.strengths
           ];
           const allImprovements = [
-            ...(session.improvements as string[] || []),
+            ...(session?.improvements as string[] || []),
             ...chatResponse.detailedScoring.improvements
           ];
           

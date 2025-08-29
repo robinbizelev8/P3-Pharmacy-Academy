@@ -372,7 +372,7 @@ export default function PreparePage() {
                         }}
                         className="justify-start"
                       >
-                        {value}
+                        {String(value)}
                       </Button>
                     ))}
                   </div>
@@ -693,7 +693,7 @@ export default function PreparePage() {
                                     }
                                   };
                                   
-                                  return scenarios[therapeutic]?.[practice] || scenarios.gastrointestinal.community;
+                                  return scenarios[therapeutic as keyof typeof scenarios]?.[practice as keyof (typeof scenarios)[keyof typeof scenarios]] || scenarios.gastrointestinal.community;
                                 };
                                 
                                 return getScenario(selectedTherapeuticArea, selectedPracticeArea);

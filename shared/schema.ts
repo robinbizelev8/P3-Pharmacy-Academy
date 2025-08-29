@@ -201,6 +201,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
   licenseNumber: true,
   yearsExperience: true,
   specializations: true,
+  hashedPassword: true,
+  lastLoginAt: true,
 });
 
 export const insertPharmacyScenarioSchema = createInsertSchema(pharmacyScenarios).omit({
