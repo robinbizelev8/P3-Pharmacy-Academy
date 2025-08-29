@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -175,11 +175,41 @@ export default function PerformPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch recent assessments
-  const { data: recentAssessments } = useQuery({
+  // Fetch recent assessments from both Perform and Practice modules
+  const { data: performAssessments } = useQuery({
     queryKey: ["/api/perform/assessments"],
     staleTime: 5 * 60 * 1000
   });
+
+  const { data: practiceAssessments } = useQuery({
+    queryKey: ["/api/pharmacy/assessments"],
+    staleTime: 5 * 60 * 1000
+  });
+
+  // Combine and sort assessments by completion date
+  const recentAssessments = useMemo(() => {
+    const performArray = Array.isArray(performAssessments) ? performAssessments : [];
+    const practiceArray = Array.isArray(practiceAssessments) ? practiceAssessments : [];
+    
+    const combined = [
+      ...performArray.map((a: any) => ({
+        ...a,
+        source: 'perform',
+        completedAt: a.completedAt || a.createdAt
+      })),
+      ...practiceArray.map((a: any) => ({
+        ...a,
+        source: 'practice',
+        completedAt: a.completedAt || a.createdAt,
+        title: a.title || `${a.therapeuticArea} Practice Assessment`,
+        assessmentType: 'Practice Simulation'
+      }))
+    ];
+    
+    return combined
+      .filter((a: any) => a.completedAt && a.status === 'completed')
+      .sort((a: any, b: any) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+  }, [performAssessments, practiceAssessments]);
 
   // Fetch portfolio
   const { data: portfolio } = useQuery({
