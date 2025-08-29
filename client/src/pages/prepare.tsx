@@ -350,7 +350,10 @@ export default function PreparePage() {
                   <SelectContent>
                     {constants?.therapeuticAreas && Object.entries(constants.therapeuticAreas).map(([key, value]) => (
                       <SelectItem key={key} value={key}>
-                        {value}
+                        {typeof value === 'object' && value !== null && 'title' in value 
+                          ? (value as any).title 
+                          : String(value)
+                        }
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -384,7 +387,10 @@ export default function PreparePage() {
                       <SelectContent>
                         {constants?.professionalActivities && Object.entries(constants.professionalActivities).map(([key, value]) => (
                           <SelectItem key={key} value={key}>
-                            {key}: {value}
+                            {key}: {typeof value === 'object' && value !== null && 'title' in value 
+                              ? (value as any).title 
+                              : String(value)
+                            }
                           </SelectItem>
                         ))}
                       </SelectContent>
