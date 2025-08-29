@@ -175,7 +175,11 @@ export default function PerformPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Removed assessments query
+  // Fetch recent assessments
+  const { data: recentAssessments } = useQuery({
+    queryKey: ["/api/perform/assessments"],
+    staleTime: 5 * 60 * 1000
+  });
 
   // Fetch portfolio
   const { data: portfolio } = useQuery({
@@ -1178,50 +1182,79 @@ export default function PerformPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">PA1-PA4 Competency Assessment</h4>
-                      <p className="text-sm text-gray-500">Comprehensive • 2025-08-29</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="font-medium text-gray-900">85/100</p>
-                      <Badge className="text-xs bg-green-100 text-green-800">Excellent</Badge>
-                    </div>
-                    <Link to="/perform/assessment-report/demo-assessment-id">
-                      <Button variant="ghost" size="sm">
-                        <ChevronRight className="h-4 w-4" />
+                {recentAssessments && recentAssessments.length > 0 ? (
+                  recentAssessments.slice(0, 3).map((assessment: any) => {
+                    const getAssessmentIcon = (type: string) => {
+                      if (type?.toLowerCase().includes('adaptive')) return Brain;
+                      if (type?.toLowerCase().includes('comprehensive')) return FileText;
+                      return Target;
+                    };
+                    
+                    const getAssessmentBadge = (score: number) => {
+                      if (score >= 85) return { text: 'Excellent', className: 'bg-green-100 text-green-800' };
+                      if (score >= 75) return { text: 'Good', className: 'bg-blue-100 text-blue-800' };
+                      if (score >= 65) return { text: 'Satisfactory', className: 'bg-yellow-100 text-yellow-800' };
+                      return { text: 'Needs Improvement', className: 'bg-red-100 text-red-800' };
+                    };
+                    
+                    const Icon = getAssessmentIcon(assessment.assessmentType);
+                    const badge = getAssessmentBadge(assessment.completionScore || 0);
+                    const formattedDate = assessment.completedAt ? 
+                      new Date(assessment.completedAt).toLocaleDateString('en-SG', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                      }) : 
+                      new Date().toLocaleDateString('en-SG', {
+                        year: 'numeric',
+                        month: '2-digit', 
+                        day: '2-digit'
+                      });
+                    
+                    return (
+                      <div key={assessment.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <Icon className="h-6 w-6 text-blue-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900">{assessment.title}</h4>
+                            <p className="text-sm text-gray-500">
+                              {assessment.assessmentType} • {formattedDate}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <p className="font-medium text-gray-900">
+                              {assessment.completionScore || 0}/{assessment.maxScore || 100}
+                            </p>
+                            <Badge className={`text-xs ${badge.className}`}>
+                              {badge.text}
+                            </Badge>
+                          </div>
+                          <Link to={`/perform/assessment-report/${assessment.id}`}>
+                            <Button variant="ghost" size="sm">
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8">
+                    <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-sm font-medium text-gray-900 mb-1">No assessments yet</h3>
+                    <p className="text-sm text-gray-500 mb-4">Create your first assessment to get started</p>
+                    <Link to="/perform?tab=assessments">
+                      <Button size="sm">
+                        <PlusCircle className="h-4 w-4 mr-2" />
+                        Create Assessment
                       </Button>
                     </Link>
                   </div>
-                </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <Brain className="h-6 w-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Adaptive Clinical Scenarios</h4>
-                      <p className="text-sm text-gray-500">Adaptive • 2025-08-26</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="font-medium text-gray-900">78/100</p>
-                      <Badge variant="secondary" className="text-xs">Good</Badge>
-                    </div>
-                    <Link to="/perform/adaptive-assessment/demo-session-123">
-                      <Button variant="ghost" size="sm">
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
