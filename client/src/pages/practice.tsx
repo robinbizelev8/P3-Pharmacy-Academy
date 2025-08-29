@@ -1264,16 +1264,23 @@ export default function PracticePage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Areas</SelectItem>
-                      {constants?.therapeuticAreas && Object.entries(constants.therapeuticAreas).map(([key, value]) => (
-                        <SelectItem key={key} value={key}>
-                          {typeof value === 'object' && value !== null && 'title' in value 
-                            ? (value as any).title 
-                            : Array.isArray(value) 
-                              ? key 
-                              : String(value)
-                          }
-                        </SelectItem>
-                      ))}
+                      {constants?.therapeuticAreas && Object.entries(constants.therapeuticAreas).map(([key, value]) => {
+                        let displayText = key;
+                        if (typeof value === 'object' && value !== null && 'title' in value) {
+                          displayText = (value as any).title;
+                        } else if (typeof value === 'string') {
+                          displayText = value;
+                        } else if (Array.isArray(value)) {
+                          displayText = key;
+                        } else {
+                          displayText = String(value);
+                        }
+                        return (
+                          <SelectItem key={key} value={key}>
+                            {displayText}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
