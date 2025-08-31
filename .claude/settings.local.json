@@ -11,7 +11,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(fuser:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

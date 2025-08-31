@@ -2387,85 +2387,90 @@ export class DatabaseStorage implements IStorage {
   // Supervisor-specific operations implementation
   async getAssignedTrainees(supervisorId: string): Promise<TraineeAssignmentWithDetails[]> {
     try {
+      // First get the trainee assignments
       const assignments = await db
-        .select({
-          id: traineeAssignments.id,
-          supervisorId: traineeAssignments.supervisorId,
-          traineeId: traineeAssignments.traineeId,
-          institution: traineeAssignments.institution,
-          assignedAt: traineeAssignments.assignedAt,
-          status: traineeAssignments.status,
-          notes: traineeAssignments.notes,
-          createdAt: traineeAssignments.createdAt,
-          updatedAt: traineeAssignments.updatedAt,
-          // Include supervisor details
-          supervisorEmail: users.email,
-          supervisorFirstName: users.firstName,
-          supervisorLastName: users.lastName,
-          // Include trainee details
-          traineeEmail: sql`trainee.email`.as('traineeEmail'),
-          traineeFirstName: sql`trainee.first_name`.as('traineeFirstName'),
-          traineeLastName: sql`trainee.last_name`.as('traineeLastName'),
-          traineeRole: sql`trainee.role`.as('traineeRole'),
-          traineeInstitution: sql`trainee.institution`.as('traineeInstitution')
-        })
+        .select()
         .from(traineeAssignments)
-        .innerJoin(users, eq(users.id, traineeAssignments.supervisorId))
-        .innerJoin(sql`users as trainee`, sql`trainee.id = ${traineeAssignments.traineeId}`)
         .where(and(
           eq(traineeAssignments.supervisorId, supervisorId),
           eq(traineeAssignments.status, 'active')
         ));
 
-      return assignments.map(assignment => ({
-        id: assignment.id,
-        supervisorId: assignment.supervisorId,
-        traineeId: assignment.traineeId,
-        institution: assignment.institution,
-        assignedAt: assignment.assignedAt,
-        status: assignment.status,
-        notes: assignment.notes,
-        createdAt: assignment.createdAt,
-        updatedAt: assignment.updatedAt,
-        supervisor: {
-          id: assignment.supervisorId,
-          email: assignment.supervisorEmail as string | null,
-          firstName: assignment.supervisorFirstName as string | null,
-          lastName: assignment.supervisorLastName as string | null,
-          profileImageUrl: null,
-          role: 'supervisor',
-          provider: null,
-          hashedPassword: null,
-          emailVerified: false,
-          institution: null,
-          licenseNumber: null,
-          specializations: [],
-          yearsExperience: null,
-          supervisorCertified: false,
-          lastLoginAt: null,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        trainee: {
-          id: assignment.traineeId,
-          email: assignment.traineeEmail as string | null,
-          firstName: assignment.traineeFirstName as string | null,
-          lastName: assignment.traineeLastName as string | null,
-          profileImageUrl: null,
-          role: assignment.traineeRole as string | null,
-          provider: null,
-          hashedPassword: null,
-          emailVerified: false,
-          institution: assignment.traineeInstitution as string | null,
-          licenseNumber: null,
-          specializations: [],
-          yearsExperience: null,
-          supervisorCertified: false,
-          lastLoginAt: null,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      }));
+      if (assignments.length === 0) {
+        return [];
+      }
+
+      // Get supervisor details
+      const supervisorData = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, supervisorId));
+
+      const supervisor = supervisorData[0];
+
+      // Get trainee details for all assigned trainees
+      const traineeIds = assignments.map(a => a.traineeId);
+      const traineesData = await db
+        .select()
+        .from(users)
+        .where(inArray(users.id, traineeIds));
+
+      // Create a map of trainee data for quick lookup
+      const traineeMap = new Map(traineesData.map(trainee => [trainee.id, trainee]));
+
+      return assignments.map(assignment => {
+        const trainee = traineeMap.get(assignment.traineeId);
+        
+        return {
+          id: assignment.id,
+          supervisorId: assignment.supervisorId,
+          traineeId: assignment.traineeId,
+          institution: assignment.institution,
+          assignedAt: assignment.assignedAt,
+          status: assignment.status,
+          notes: assignment.notes,
+          createdAt: assignment.createdAt,
+          updatedAt: assignment.updatedAt,
+          supervisor: supervisor || {
+            id: assignment.supervisorId,
+            email: null,
+            firstName: null,
+            lastName: null,
+            profileImageUrl: null,
+            role: 'supervisor' as const,
+            provider: null,
+            hashedPassword: null,
+            emailVerified: false,
+            institution: null,
+            licenseNumber: null,
+            specializations: [],
+            yearsExperience: null,
+            supervisorCertified: false,
+            lastLoginAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          trainee: trainee || {
+            id: assignment.traineeId,
+            email: null,
+            firstName: null,
+            lastName: null,
+            profileImageUrl: null,
+            role: 'student' as const,
+            provider: null,
+            hashedPassword: null,
+            emailVerified: false,
+            institution: null,
+            licenseNumber: null,
+            specializations: [],
+            yearsExperience: null,
+            supervisorCertified: false,
+            lastLoginAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        };
+      });
     } catch (error) {
       console.error('Error getting assigned trainees:', error);
       return [];

@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 
-// API call functions
+// API call functions using session-based authentication
 async function fetchWithAuth(url: string) {
   const response = await fetch(url, {
+    credentials: "include", // Use session cookies instead of Bearer tokens
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('token')}`,
       'Content-Type': 'application/json',
     },
   });
@@ -37,7 +37,7 @@ export function useAssignedTrainees(supervisorId: string | undefined) {
 export function useTraineeProgress(traineeId: string | undefined) {
   return useQuery({
     queryKey: ["supervisor", "trainee-progress", traineeId],
-    queryFn: () => fetchWithAuth(`/api/supervisor/trainees/${traineeId}/progress`),
+    queryFn: () => fetchWithAuth(`/api/supervisor/trainee/${traineeId}/progress`),
     enabled: !!traineeId,
     staleTime: 1 * 60 * 1000, // 1 minute
     retry: 2,

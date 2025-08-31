@@ -123,10 +123,10 @@ export default function SupervisorDashboard() {
   }
 
   const { data: dashboardData, isLoading: isDashboardLoading, error: dashboardError } = useSupervisorDashboard(user?.id);
-  const { data: assignedTrainees, isLoading: isTraineesLoading } = useAssignedTrainees(user?.id);
+  const { data: assignedTrainees, isLoading: isTraineesLoading, error: traineesError } = useAssignedTrainees(user?.id);
 
   // Show error state if dashboard fails to load
-  if (dashboardError) {
+  if (dashboardError || traineesError) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -137,6 +137,11 @@ export default function SupervisorDashboard() {
               <p className="text-gray-600 mb-4">
                 We're having trouble loading your dashboard data. Please try refreshing the page.
               </p>
+              {(dashboardError || traineesError) && (
+                <div className="text-sm text-red-600 mb-4 p-3 bg-red-50 rounded border border-red-200">
+                  Error: {dashboardError?.message || traineesError?.message || 'Unknown error occurred'}
+                </div>
+              )}
               <Button onClick={() => window.location.reload()}>
                 Refresh Page
               </Button>
@@ -555,7 +560,7 @@ interface TraineePerformanceItemProps {
 
 function TraineePerformanceItem({ trainee }: TraineePerformanceItemProps) {
   // Always call hooks at the top level
-  const { data: traineeProgress } = useTraineeProgress(trainee?.traineeId);
+  const { data: traineeProgress, isLoading: progressLoading, error: progressError } = useTraineeProgress(trainee?.traineeId);
 
   const name = `${trainee?.trainee?.firstName || ''} ${trainee?.trainee?.lastName || ''}`.trim() || 'Unknown Trainee';
   const progress = traineeProgress?.overallProgress || 0;
@@ -583,11 +588,23 @@ function TraineePerformanceItem({ trainee }: TraineePerformanceItemProps) {
             {statusLabels[status]}
           </span>
         </div>
-        <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-          <span>Module: {currentModule}</span>
-          <span>{progress}% complete</span>
-        </div>
-        <Progress value={progress} className="h-2 mb-2" />
+        {progressLoading ? (
+          <div className="text-sm text-gray-500 mb-2">
+            Loading progress data...
+          </div>
+        ) : progressError ? (
+          <div className="text-sm text-red-500 mb-2">
+            Failed to load progress data
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+              <span>Module: {currentModule}</span>
+              <span>{progress}% complete</span>
+            </div>
+            <Progress value={progress} className="h-2 mb-2" />
+          </>
+        )}
         <p className="text-xs text-gray-500">Last active: {formatTimeAgo(lastActivity)}</p>
         {trainee.trainee.institution && (
           <p className="text-xs text-gray-500">Institution: {trainee.trainee.institution}</p>
@@ -610,7 +627,7 @@ interface TraineeDetailCardProps {
 
 function TraineeDetailCard({ trainee }: TraineeDetailCardProps) {
   // Always call hooks at the top level
-  const { data: traineeProgress } = useTraineeProgress(trainee?.traineeId);
+  const { data: traineeProgress, isLoading: progressLoading, error: progressError } = useTraineeProgress(trainee?.traineeId);
 
   const name = `${trainee?.trainee?.firstName || ''} ${trainee?.trainee?.lastName || ''}`.trim() || 'Unknown Trainee';
   const progress = traineeProgress?.overallProgress || 0;
