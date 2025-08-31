@@ -211,11 +211,11 @@ export default function SupervisorDashboard() {
               </div>
             </div>
             <div className="flex space-x-3">
-              <Button>
+              <Button onClick={() => setActiveTab('scenarios')}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Scenario
               </Button>
-              <Button variant="outline">
+              <Button variant="outline" onClick={() => alert('Generate Report functionality coming soon!')}>
                 <FileText className="w-4 h-4 mr-2" />
                 Generate Report
               </Button>
@@ -319,7 +319,7 @@ export default function SupervisorDashboard() {
                     {assignedTrainees && assignedTrainees.length > 0 ? (
                       assignedTrainees.slice(0, 3).map((trainee: TraineeAssignment) => (
                         <div key={trainee.id}>
-                          <TraineePerformanceItem trainee={trainee} />
+                          <TraineePerformanceItem trainee={trainee} onViewClick={() => setActiveTab('trainees')} />
                         </div>
                       ))
                     ) : (
@@ -388,7 +388,7 @@ export default function SupervisorDashboard() {
                     <Users className="w-5 h-5 mr-2" />
                     My Trainees ({assignedTrainees?.length || 0})
                   </div>
-                  <Button>
+                  <Button onClick={() => alert('Assign New Trainee functionality coming soon!')}>
                     <Plus className="w-4 h-4 mr-2" />
                     Assign New Trainee
                   </Button>
@@ -410,7 +410,7 @@ export default function SupervisorDashboard() {
                     <p className="text-gray-600 mb-4">
                       Trainees will appear here once they are assigned to your supervision
                     </p>
-                    <Button>
+                    <Button onClick={() => alert('Request Trainee Assignment functionality coming soon!')}>
                       Request Trainee Assignment
                     </Button>
                   </div>
@@ -449,7 +449,7 @@ export default function SupervisorDashboard() {
                     <BookOpen className="w-5 h-5 mr-2" />
                     My Scenarios
                   </div>
-                  <Button>
+                  <Button onClick={() => setActiveTab('scenarios')}>
                     <Plus className="w-4 h-4 mr-2" />
                     Create Scenario
                   </Button>
@@ -462,7 +462,7 @@ export default function SupervisorDashboard() {
                   <p className="text-gray-600 mb-4">
                     Create custom scenarios for your trainees to practice specific competencies
                   </p>
-                  <Button>
+                  <Button onClick={() => setActiveTab('scenarios')}>
                     Create Your First Scenario
                   </Button>
                 </div>
@@ -545,7 +545,7 @@ function ActivityItem({ icon: Icon, color, title, description, time, action }: A
         <p className="text-xs text-gray-500 mt-1">{time}</p>
       </div>
       {action && (
-        <Button size="sm" variant="outline">
+        <Button size="sm" variant="outline" onClick={() => alert(`${action} - functionality coming soon!`)}>
           {action}
         </Button>
       )}
@@ -556,9 +556,10 @@ function ActivityItem({ icon: Icon, color, title, description, time, action }: A
 // Trainee Performance Item Component
 interface TraineePerformanceItemProps {
   trainee: TraineeAssignment;
+  onViewClick?: () => void;
 }
 
-function TraineePerformanceItem({ trainee }: TraineePerformanceItemProps) {
+function TraineePerformanceItem({ trainee, onViewClick }: TraineePerformanceItemProps) {
   // Always call hooks at the top level
   const { data: traineeProgress, isLoading: progressLoading, error: progressError } = useTraineeProgress(trainee?.traineeId);
 
@@ -611,7 +612,7 @@ function TraineePerformanceItem({ trainee }: TraineePerformanceItemProps) {
         )}
       </div>
       <div className="ml-4">
-        <Button size="sm" variant="outline">
+        <Button size="sm" variant="outline" onClick={onViewClick || (() => alert('View trainee details - functionality coming soon!'))}>
           <Eye className="w-4 h-4 mr-1" />
           View
         </Button>
@@ -683,15 +684,15 @@ function TraineeDetailCard({ trainee }: TraineeDetailCardProps) {
         )}
 
         <div className="flex space-x-2">
-          <Button size="sm" variant="outline" className="flex-1">
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => alert(`View progress for ${name} - functionality coming soon!`)}>
             <Eye className="w-4 h-4 mr-2" />
             View Progress
           </Button>
-          <Button size="sm" variant="outline" className="flex-1">
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => alert(`Send feedback to ${name} - functionality coming soon!`)}>
             <MessageSquare className="w-4 h-4 mr-2" />
             Send Feedback
           </Button>
-          <Button size="sm" variant="outline" className="flex-1">
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => alert(`Assign scenario to ${name} - functionality coming soon!`)}>
             <Target className="w-4 h-4 mr-2" />
             Assign Scenario
           </Button>
@@ -735,7 +736,7 @@ function PendingReviewItem({ trainee, scenario, module, priority, dueDate, sessi
         </div>
       </div>
       <div className="ml-4">
-        <Button size="sm">
+        <Button size="sm" onClick={() => alert('Review functionality coming soon!')}>
           Review
         </Button>
       </div>
