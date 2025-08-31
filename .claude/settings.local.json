@@ -1,27 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pkill:*)",
-      "Bash(npm run dev:*)",
-      "Bash(npx drizzle-kit:*)",
-      "Bash(node:*)",
-      "WebSearch",
       "Bash(npm run check:*)",
-      "Bash(curl:*)",
-      "Bash(PORT=3001 npm run dev)",
-      "Bash(grep:*)",
-      "Bash(npm run build:*)",
-      "Bash(git add:*)",
-      "Bash(npm run:*)",
-      "Bash(fuser:*)",
-      "Bash(npx tsc:*)",
-      "Read(/home/runner/**)",
-      "Read(/home/runner/**)",
-      "Read(/home/runner/**)",
-      "Read(/home/runner/**)",
-      "Read(/home/runner/**)"
+      "Bash(npm run dev:*)",
+      "Bash(pkill:*)",
+      "Bash(PORT=5001 npm run dev)",
+      "Bash(node:*)",
+      "Bash(cat:*)",
+      "Bash(bash:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash /home/runner/workspace/.claude/statusline-git.sh"
   }
 }
