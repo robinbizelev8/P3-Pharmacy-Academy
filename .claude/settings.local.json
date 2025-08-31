@@ -13,7 +13,10 @@
       "Bash(git push:*)",
       "Bash(psql:*)",
       "Bash(fuser:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm install dotenv bcryptjs)",
+      "Bash(npm run lint)",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "ask": []

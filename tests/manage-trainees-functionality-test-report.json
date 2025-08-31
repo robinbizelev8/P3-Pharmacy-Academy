@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-08-31T12:42:19.537Z",
+  "totalTests": 6,
+  "passed": 6,
+  "failed": 0,
+  "tests": [
+    {
+      "name": "ManageTraineesModal Component Structure",
+      "status": "passed",
+      "error": null,
+      "duration": 1,
+      "details": {
+        "fileSize": 16479,
+        "hasAllRequiredFeatures": true,
+        "componentCount": 0
+      }
+    },
+    {
+      "name": "Dashboard Integration",
+      "status": "passed",
+      "error": null,
+      "duration": 0,
+      "details": {
+        "hasProperImport": true,
+        "hasStateManagement": true,
+        "hasModalHandler": true,
+        "hasModalRendering": true,
+        "buttonConnected": true
+      }
+    },
+    {
+      "name": "API Endpoints Definition",
+      "status": "passed",
+      "error": null,
+      "duration": 0,
+      "details": {
+        "hasGetAllTrainees": true,
+        "hasDeleteTrainee": false,
+        "hasProperErrorHandling": true
+      }
+    },
+    {
+      "name": "Database Functions Implementation",
+      "status": "passed",
+      "error": null,
+      "duration": 0,
+      "details": {
+        "hasAllDatabaseFunctions": true,
+        "hasInterfaceDeclarations": true,
+        "hasErrorHandling": true
+      }
+    },
+    {
+      "name": "API Hooks Implementation",
+      "status": "passed",
+      "error": null,
+      "duration": 0,
+      "details": {
+        "hasAllHooks": true,
+        "hasMutations": true,
+        "hasQueryInvalidation": true
+      }
+    },
+    {
+      "name": "TypeScript Compilation",
+      "status": "passed",
+      "error": null,
+      "duration": 4113,
+      "details": {
+        "compilationSuccessful": true
+      }
+    }
+  ]
+}
