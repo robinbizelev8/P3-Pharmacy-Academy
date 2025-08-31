@@ -1750,6 +1750,67 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
+  // Get all trainees with assignment status
+  app.get("/api/supervisor/all-trainees", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.user.id;
+      
+      // Get all trainees
+      const allTrainees = await storage.getAllTrainees();
+      
+      // Get assignments for each trainee to show status
+      const traineesWithStatus = await Promise.all(
+        allTrainees.map(async (trainee) => {
+          const assignment = await storage.getTraineeAssignmentStatus(trainee.id);
+          return {
+            ...trainee,
+            assignmentStatus: assignment ? {
+              supervisorId: assignment.supervisorId,
+              assignedAt: assignment.assignedAt,
+              institution: assignment.institution,
+              isAssignedToMe: assignment.supervisorId === supervisorId
+            } : null
+          };
+        })
+      );
+      
+      res.json(traineesWithStatus);
+    } catch (error) {
+      console.error("Error fetching all trainees:", error);
+      res.status(500).json({ message: "Failed to fetch trainees" });
+    }
+  });
+
+  // Unassign trainee from supervisor
+  app.delete("/api/supervisor/trainees/:traineeId", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.user.id;
+      const { traineeId } = req.params;
+      
+      if (!traineeId) {
+        return res.status(400).json({ message: "Trainee ID is required" });
+      }
+
+      // Verify the trainee is currently assigned to this supervisor
+      const assignment = await storage.getTraineeAssignmentStatus(traineeId);
+      if (!assignment || assignment.supervisorId !== supervisorId) {
+        return res.status(400).json({ 
+          message: "Trainee is not assigned to you or does not exist" 
+        });
+      }
+
+      await storage.unassignTraineeFromSupervisor(supervisorId, traineeId);
+      
+      res.json({
+        success: true,
+        message: "Trainee unassigned successfully"
+      });
+    } catch (error) {
+      console.error("Error unassigning trainee:", error);
+      res.status(500).json({ message: "Failed to unassign trainee" });
+    }
+  });
+
   // Create supervisor scenario
   app.post("/api/supervisor/scenarios", requireSupervisor, async (req: any, res) => {
     try {

@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { TraineeProgressModal } from "@/components/supervisor/TraineeProgressModal";
+import { FeedbackModal } from "@/components/supervisor/FeedbackModal";
+import { AssignScenarioModal } from "@/components/supervisor/AssignScenarioModal";
+import { ManageTraineesModal } from "@/components/supervisor/ManageTraineesModal";
 import { 
   useSupervisorDashboard, 
   useAssignedTrainees, 
@@ -28,6 +32,7 @@ import {
   Target
 } from "lucide-react";
 import { Link } from "wouter";
+import type { TraineeAssignmentWithDetails } from "@shared/schema";
 
 // Helper functions
 function formatTimeAgo(dateString: string): string {
@@ -59,23 +64,10 @@ function getTraineeStatus(lastActivity: string): 'on-track' | 'needs-attention' 
   return 'behind';
 }
 
-interface TraineeAssignment {
-  id: string;
-  traineeId: string;
-  supervisorId: string;
-  status: string;
-  assignedAt: string;
-  trainee: {
-    id: string;
-    firstName: string | null;
-    lastName: string | null;
-    email: string | null;
-    institution: string | null;
-  };
-}
+// Using TraineeAssignmentWithDetails from shared schema instead
 
 interface SupervisorDashboardData {
-  assignedTrainees: TraineeAssignment[];
+  assignedTrainees: TraineeAssignmentWithDetails[];
   pendingReviews: any[];
   recentActivity: any[];
   performanceMetrics: {
@@ -95,6 +87,47 @@ interface SupervisorDashboardData {
 export default function SupervisorDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Modal state management
+  const [progressModal, setProgressModal] = useState<{ isOpen: boolean; trainee: TraineeAssignmentWithDetails | null }>({
+    isOpen: false,
+    trainee: null,
+  });
+  const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean; trainee: TraineeAssignmentWithDetails | null }>({
+    isOpen: false,
+    trainee: null,
+  });
+  const [scenarioModal, setScenarioModal] = useState<{ isOpen: boolean; trainee: TraineeAssignmentWithDetails | null }>({
+    isOpen: false,
+    trainee: null,
+  });
+  const [manageTraineesModal, setManageTraineesModal] = useState<{ isOpen: boolean }>({
+    isOpen: false,
+  });
+
+  // Modal handlers
+  const openProgressModal = (trainee: TraineeAssignmentWithDetails) => {
+    setProgressModal({ isOpen: true, trainee });
+  };
+  
+  const openFeedbackModal = (trainee: TraineeAssignmentWithDetails) => {
+    setFeedbackModal({ isOpen: true, trainee });
+  };
+  
+  const openScenarioModal = (trainee: TraineeAssignmentWithDetails) => {
+    setScenarioModal({ isOpen: true, trainee });
+  };
+
+  const openManageTraineesModal = () => {
+    setManageTraineesModal({ isOpen: true });
+  };
+
+  const closeModals = () => {
+    setProgressModal({ isOpen: false, trainee: null });
+    setFeedbackModal({ isOpen: false, trainee: null });
+    setScenarioModal({ isOpen: false, trainee: null });
+    setManageTraineesModal({ isOpen: false });
+  };
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -317,7 +350,7 @@ export default function SupervisorDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     {assignedTrainees && assignedTrainees.length > 0 ? (
-                      assignedTrainees.slice(0, 3).map((trainee: TraineeAssignment) => (
+                      assignedTrainees.slice(0, 3).map((trainee: TraineeAssignmentWithDetails) => (
                         <div key={trainee.id}>
                           <TraineePerformanceItem trainee={trainee} onViewClick={() => setActiveTab('trainees')} />
                         </div>
@@ -388,7 +421,7 @@ export default function SupervisorDashboard() {
                     <Users className="w-5 h-5 mr-2" />
                     My Trainees ({assignedTrainees?.length || 0})
                   </div>
-                  <Button onClick={() => alert('Assign New Trainee functionality coming soon!')}>
+                  <Button onClick={openManageTraineesModal}>
                     <Plus className="w-4 h-4 mr-2" />
                     Assign New Trainee
                   </Button>
@@ -397,9 +430,14 @@ export default function SupervisorDashboard() {
               <CardContent>
                 {assignedTrainees && assignedTrainees.length > 0 ? (
                   <div className="space-y-4">
-                    {assignedTrainees.map((trainee: TraineeAssignment) => (
+                    {assignedTrainees.map((trainee: TraineeAssignmentWithDetails) => (
                       <div key={trainee.id}>
-                        <TraineeDetailCard trainee={trainee} />
+                        <TraineeDetailCard 
+                          trainee={trainee} 
+                          onViewProgress={openProgressModal}
+                          onSendFeedback={openFeedbackModal}
+                          onAssignScenario={openScenarioModal}
+                        />
                       </div>
                     ))}
                   </div>
@@ -471,6 +509,48 @@ export default function SupervisorDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modals */}
+      {progressModal.trainee && (
+        <TraineeProgressModal
+          trainee={progressModal.trainee}
+          isOpen={progressModal.isOpen}
+          onClose={closeModals}
+        />
+      )}
+
+      {feedbackModal.trainee && (
+        <FeedbackModal
+          trainee={feedbackModal.trainee}
+          isOpen={feedbackModal.isOpen}
+          onClose={closeModals}
+          onSubmitSuccess={() => {
+            // Refresh dashboard data after successful feedback submission
+            window.location.reload();
+          }}
+        />
+      )}
+
+      {scenarioModal.trainee && (
+        <AssignScenarioModal
+          trainee={scenarioModal.trainee}
+          isOpen={scenarioModal.isOpen}
+          onClose={closeModals}
+          onAssignSuccess={() => {
+            // Refresh dashboard data after successful scenario assignment
+            window.location.reload();
+          }}
+        />
+      )}
+
+      <ManageTraineesModal
+        isOpen={manageTraineesModal.isOpen}
+        onClose={closeModals}
+        onAssignmentChange={() => {
+          // Refresh dashboard data after trainee assignments change
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }
@@ -555,7 +635,7 @@ function ActivityItem({ icon: Icon, color, title, description, time, action }: A
 
 // Trainee Performance Item Component
 interface TraineePerformanceItemProps {
-  trainee: TraineeAssignment;
+  trainee: TraineeAssignmentWithDetails;
   onViewClick?: () => void;
 }
 
@@ -623,10 +703,13 @@ function TraineePerformanceItem({ trainee, onViewClick }: TraineePerformanceItem
 
 // Trainee Detail Card Component
 interface TraineeDetailCardProps {
-  trainee: TraineeAssignment;
+  trainee: TraineeAssignmentWithDetails;
+  onViewProgress?: (trainee: TraineeAssignmentWithDetails) => void;
+  onSendFeedback?: (trainee: TraineeAssignmentWithDetails) => void;
+  onAssignScenario?: (trainee: TraineeAssignmentWithDetails) => void;
 }
 
-function TraineeDetailCard({ trainee }: TraineeDetailCardProps) {
+function TraineeDetailCard({ trainee, onViewProgress, onSendFeedback, onAssignScenario }: TraineeDetailCardProps) {
   // Always call hooks at the top level
   const { data: traineeProgress, isLoading: progressLoading, error: progressError } = useTraineeProgress(trainee?.traineeId);
 
@@ -654,7 +737,7 @@ function TraineeDetailCard({ trainee }: TraineeDetailCardProps) {
             <Badge variant={status === 'on-track' ? 'default' : status === 'needs-attention' ? 'secondary' : 'destructive'}>
               {status === 'on-track' ? 'On Track' : status === 'needs-attention' ? 'Needs Attention' : 'Behind Schedule'}
             </Badge>
-            <p className="text-sm text-gray-500 mt-1">Assigned: {formatTimeAgo(trainee.assignedAt)}</p>
+            <p className="text-sm text-gray-500 mt-1">Assigned: {formatTimeAgo(trainee.assignedAt.toString())}</p>
           </div>
         </div>
         
@@ -684,15 +767,15 @@ function TraineeDetailCard({ trainee }: TraineeDetailCardProps) {
         )}
 
         <div className="flex space-x-2">
-          <Button size="sm" variant="outline" className="flex-1" onClick={() => alert(`View progress for ${name} - functionality coming soon!`)}>
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onViewProgress?.(trainee)}>
             <Eye className="w-4 h-4 mr-2" />
             View Progress
           </Button>
-          <Button size="sm" variant="outline" className="flex-1" onClick={() => alert(`Send feedback to ${name} - functionality coming soon!`)}>
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onSendFeedback?.(trainee)}>
             <MessageSquare className="w-4 h-4 mr-2" />
             Send Feedback
           </Button>
-          <Button size="sm" variant="outline" className="flex-1" onClick={() => alert(`Assign scenario to ${name} - functionality coming soon!`)}>
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onAssignScenario?.(trainee)}>
             <Target className="w-4 h-4 mr-2" />
             Assign Scenario
           </Button>

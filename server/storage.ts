@@ -173,6 +173,11 @@ export interface IStorage {
   assignScenarioToTrainee(scenarioId: string, traineeId: string): Promise<SupervisorScenario>;
   getSupervisorDashboard(supervisorId: string): Promise<any>;
   
+  // Trainee management operations
+  getAllTrainees(): Promise<User[]>;
+  unassignTraineeFromSupervisor(supervisorId: string, traineeId: string): Promise<void>;
+  getTraineeAssignmentStatus(traineeId: string): Promise<TraineeAssignment | null>;
+  
   // Assessment Analysis System
   getAssessmentReport(userId: string, assessmentId: string): Promise<any>;
   
@@ -2948,6 +2953,58 @@ export class DatabaseStorage implements IStorage {
           pendingFeedback: 0
         }
       };
+    }
+  }
+
+  // Trainee management operations implementation
+  async getAllTrainees(): Promise<User[]> {
+    try {
+      const trainees = await db
+        .select()
+        .from(users)
+        .where(eq(users.role, 'student'));
+      
+      return trainees;
+    } catch (error) {
+      console.error('Error getting all trainees:', error);
+      throw new Error('Failed to fetch trainees');
+    }
+  }
+
+  async unassignTraineeFromSupervisor(supervisorId: string, traineeId: string): Promise<void> {
+    try {
+      await db
+        .update(traineeAssignments)
+        .set({ 
+          status: 'inactive',
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(traineeAssignments.supervisorId, supervisorId),
+          eq(traineeAssignments.traineeId, traineeId),
+          eq(traineeAssignments.status, 'active')
+        ));
+    } catch (error) {
+      console.error('Error unassigning trainee:', error);
+      throw new Error('Failed to unassign trainee');
+    }
+  }
+
+  async getTraineeAssignmentStatus(traineeId: string): Promise<TraineeAssignment | null> {
+    try {
+      const [assignment] = await db
+        .select()
+        .from(traineeAssignments)
+        .where(and(
+          eq(traineeAssignments.traineeId, traineeId),
+          eq(traineeAssignments.status, 'active')
+        ))
+        .limit(1);
+      
+      return assignment || null;
+    } catch (error) {
+      console.error('Error getting trainee assignment status:', error);
+      return null;
     }
   }
 
