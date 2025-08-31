@@ -52,4 +52,3 @@ localPort = 5001
 externalPort = 3002
 
 [agent]
-integrations = ["javascript_openai==1.0.0"]

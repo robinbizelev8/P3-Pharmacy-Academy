@@ -1,6 +1,10 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { 
+  useSupervisorDashboard, 
+  useAssignedTrainees, 
+  useTraineeProgress 
+} from "@/hooks/use-supervisor-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,8 +29,53 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 
+// Helper functions
+function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+  
+  if (diffInMinutes < 1) return 'Just now';
+  if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hours ago`;
+  return `${Math.floor(diffInMinutes / 1440)} days ago`;
+}
+
+function formatDueDate(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInDays = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (diffInDays === 0) return 'Today';
+  if (diffInDays === 1) return 'Tomorrow';
+  if (diffInDays < 7) return `${diffInDays} days`;
+  return date.toLocaleDateString();
+}
+
+function getTraineeStatus(lastActivity: string): 'on-track' | 'needs-attention' | 'behind' {
+  const daysSinceActivity = Math.floor((Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24));
+  if (daysSinceActivity <= 1) return 'on-track';
+  if (daysSinceActivity <= 3) return 'needs-attention';
+  return 'behind';
+}
+
+interface TraineeAssignment {
+  id: string;
+  traineeId: string;
+  supervisorId: string;
+  status: string;
+  assignedAt: string;
+  trainee: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+    institution: string | null;
+  };
+}
+
 interface SupervisorDashboardData {
-  assignedTrainees: any[];
+  assignedTrainees: TraineeAssignment[];
   pendingReviews: any[];
   recentActivity: any[];
   performanceMetrics: {
@@ -34,6 +83,12 @@ interface SupervisorDashboardData {
     averageProgress: number;
     completedSessions: number;
     pendingFeedback: number;
+    averageTraineeProgress: number;
+  };
+  analytics: {
+    competencyBreakdown: Record<string, { sessions: number; averageScore: number }>;
+    moduleProgress: Record<string, { completedSessions: number; totalSessions: number }>;
+    improvementTrends: Array<{ month: string; averageScore: number }>;
   };
 }
 
@@ -67,12 +122,32 @@ export default function SupervisorDashboard() {
     return null;
   }
 
-  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery<SupervisorDashboardData>({
-    queryKey: ["/api/supervisor/dashboard"],
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  const { data: dashboardData, isLoading: isDashboardLoading, error: dashboardError } = useSupervisorDashboard(user?.id);
+  const { data: assignedTrainees, isLoading: isTraineesLoading } = useAssignedTrainees(user?.id);
 
-  if (isDashboardLoading) {
+  // Show error state if dashboard fails to load
+  if (dashboardError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Dashboard</h2>
+              <p className="text-gray-600 mb-4">
+                We're having trouble loading your dashboard data. Please try refreshing the page.
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (isDashboardLoading || isTraineesLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -95,11 +170,15 @@ export default function SupervisorDashboard() {
   }
 
   const metrics = dashboardData?.performanceMetrics || {
-    totalTrainees: 0,
+    totalTrainees: assignedTrainees?.length || 0,
     averageProgress: 0,
     completedSessions: 0,
-    pendingFeedback: 0
+    pendingFeedback: 0,
+    averageTraineeProgress: 0
   };
+
+  const recentActivity = dashboardData?.recentActivity || [];
+  const pendingReviews = dashboardData?.pendingReviews || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -197,30 +276,27 @@ export default function SupervisorDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <ActivityItem
-                      icon={CheckCircle}
-                      color="green"
-                      title="Sarah Chen completed Cardiovascular Module"
-                      description="Module 2: Practice - Clinical scenario review pending"
-                      time="2 hours ago"
-                      action="Review"
-                    />
-                    <ActivityItem
-                      icon={MessageSquare}
-                      color="blue"
-                      title="Feedback requested by David Kumar"
-                      description="Module 1: PA3 competency assessment needs review"
-                      time="4 hours ago"
-                      action="Provide Feedback"
-                    />
-                    <ActivityItem
-                      icon={AlertTriangle}
-                      color="orange"
-                      title="Portfolio submission overdue"
-                      description="Jennifer Wong - Module 2 evidence compilation"
-                      time="1 day ago"
-                      action="Follow Up"
-                    />
+                    {recentActivity.length > 0 ? (
+                      recentActivity.slice(0, 5).map((activity: any, index: number) => (
+                        <ActivityItem
+                          key={index}
+                          icon={activity.type === 'completed' ? CheckCircle : 
+                                activity.type === 'feedback_request' ? MessageSquare : AlertTriangle}
+                          color={activity.type === 'completed' ? 'green' : 
+                                 activity.type === 'feedback_request' ? 'blue' : 'orange'}
+                          title={activity.title}
+                          description={activity.description}
+                          time={formatTimeAgo(activity.date)}
+                          action={activity.action}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500">No recent activity</p>
+                        <p className="text-sm text-gray-400">Activity from your trainees will appear here</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -235,32 +311,26 @@ export default function SupervisorDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <TraineePerformanceItem
-                      name="Sarah Chen"
-                      progress={78}
-                      currentModule="Practice"
-                      status="on-track"
-                      lastActivity="2 hours ago"
-                    />
-                    <TraineePerformanceItem
-                      name="David Kumar"
-                      progress={65}
-                      currentModule="Prepare"
-                      status="needs-attention"
-                      lastActivity="1 day ago"
-                    />
-                    <TraineePerformanceItem
-                      name="Jennifer Wong"
-                      progress={45}
-                      currentModule="Practice"
-                      status="behind"
-                      lastActivity="3 days ago"
-                    />
+                    {assignedTrainees && assignedTrainees.length > 0 ? (
+                      assignedTrainees.slice(0, 3).map((trainee: TraineeAssignment) => (
+                        <div key={trainee.id}>
+                          <TraineePerformanceItem trainee={trainee} />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500">No trainees assigned</p>
+                        <p className="text-sm text-gray-400">Trainee performance will appear here once assigned</p>
+                      </div>
+                    )}
                   </div>
-                  <Button variant="outline" className="w-full mt-4">
-                    <Users className="w-4 h-4 mr-2" />
-                    View All Trainees
-                  </Button>
+                  {assignedTrainees && assignedTrainees.length > 3 && (
+                    <Button variant="outline" className="w-full mt-4" onClick={() => setActiveTab('trainees')}>
+                      <Users className="w-4 h-4 mr-2" />
+                      View All {assignedTrainees.length} Trainees
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -280,30 +350,25 @@ export default function SupervisorDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <PendingReviewItem
-                    trainee="Sarah Chen"
-                    scenario="Cardiovascular Emergency Management"
-                    module="Practice"
-                    priority="high"
-                    dueDate="Today"
-                    sessionId="session-123"
-                  />
-                  <PendingReviewItem
-                    trainee="David Kumar"
-                    scenario="PA3 Competency Assessment"
-                    module="Prepare"
-                    priority="medium"
-                    dueDate="Tomorrow"
-                    sessionId="session-124"
-                  />
-                  <PendingReviewItem
-                    trainee="Jennifer Wong"
-                    scenario="Portfolio Evidence Review"
-                    module="Perform"
-                    priority="low"
-                    dueDate="Next week"
-                    sessionId="session-125"
-                  />
+                  {pendingReviews.length > 0 ? (
+                    pendingReviews.map((review: any, index: number) => (
+                      <PendingReviewItem
+                        key={review.sessionId || index}
+                        trainee={review.traineeName}
+                        scenario={review.scenarioTitle}
+                        module={review.module}
+                        priority={review.priority || 'medium'}
+                        dueDate={formatDueDate(review.dueDate)}
+                        sessionId={review.sessionId}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500">No pending reviews</p>
+                      <p className="text-sm text-gray-400">Reviews will appear here when trainees complete scenarios</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -316,7 +381,7 @@ export default function SupervisorDashboard() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center">
                     <Users className="w-5 h-5 mr-2" />
-                    My Trainees
+                    My Trainees ({assignedTrainees?.length || 0})
                   </div>
                   <Button>
                     <Plus className="w-4 h-4 mr-2" />
@@ -325,16 +390,26 @@ export default function SupervisorDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No trainees assigned yet</h3>
-                  <p className="text-gray-600 mb-4">
-                    Trainees will appear here once they are assigned to your supervision
-                  </p>
-                  <Button>
-                    Request Trainee Assignment
-                  </Button>
-                </div>
+                {assignedTrainees && assignedTrainees.length > 0 ? (
+                  <div className="space-y-4">
+                    {assignedTrainees.map((trainee: TraineeAssignment) => (
+                      <div key={trainee.id}>
+                        <TraineeDetailCard trainee={trainee} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No trainees assigned yet</h3>
+                    <p className="text-gray-600 mb-4">
+                      Trainees will appear here once they are assigned to your supervision
+                    </p>
+                    <Button>
+                      Request Trainee Assignment
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -475,14 +550,18 @@ function ActivityItem({ icon: Icon, color, title, description, time, action }: A
 
 // Trainee Performance Item Component
 interface TraineePerformanceItemProps {
-  name: string;
-  progress: number;
-  currentModule: string;
-  status: 'on-track' | 'needs-attention' | 'behind';
-  lastActivity: string;
+  trainee: TraineeAssignment;
 }
 
-function TraineePerformanceItem({ name, progress, currentModule, status, lastActivity }: TraineePerformanceItemProps) {
+function TraineePerformanceItem({ trainee }: TraineePerformanceItemProps) {
+  // Always call hooks at the top level
+  const { data: traineeProgress } = useTraineeProgress(trainee?.traineeId);
+
+  const name = `${trainee?.trainee?.firstName || ''} ${trainee?.trainee?.lastName || ''}`.trim() || 'Unknown Trainee';
+  const progress = traineeProgress?.overallProgress || 0;
+  const currentModule = traineeProgress?.currentModule || 'Not Started';
+  const lastActivity = traineeProgress?.lastActivityAt || trainee?.assignedAt;
+  const status = getTraineeStatus(lastActivity);
   const statusColors = {
     'on-track': 'text-green-600 bg-green-100',
     'needs-attention': 'text-yellow-600 bg-yellow-100',
@@ -509,7 +588,10 @@ function TraineePerformanceItem({ name, progress, currentModule, status, lastAct
           <span>{progress}% complete</span>
         </div>
         <Progress value={progress} className="h-2 mb-2" />
-        <p className="text-xs text-gray-500">Last active: {lastActivity}</p>
+        <p className="text-xs text-gray-500">Last active: {formatTimeAgo(lastActivity)}</p>
+        {trainee.trainee.institution && (
+          <p className="text-xs text-gray-500">Institution: {trainee.trainee.institution}</p>
+        )}
       </div>
       <div className="ml-4">
         <Button size="sm" variant="outline">
@@ -518,6 +600,87 @@ function TraineePerformanceItem({ name, progress, currentModule, status, lastAct
         </Button>
       </div>
     </div>
+  );
+}
+
+// Trainee Detail Card Component
+interface TraineeDetailCardProps {
+  trainee: TraineeAssignment;
+}
+
+function TraineeDetailCard({ trainee }: TraineeDetailCardProps) {
+  // Always call hooks at the top level
+  const { data: traineeProgress } = useTraineeProgress(trainee?.traineeId);
+
+  const name = `${trainee?.trainee?.firstName || ''} ${trainee?.trainee?.lastName || ''}`.trim() || 'Unknown Trainee';
+  const progress = traineeProgress?.overallProgress || 0;
+  const status = getTraineeStatus(traineeProgress?.lastActivityAt || trainee?.assignedAt);
+
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <Users className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">{name}</h3>
+              <p className="text-sm text-gray-500">{trainee.trainee.email}</p>
+              {trainee.trainee.institution && (
+                <p className="text-xs text-gray-400">{trainee.trainee.institution}</p>
+              )}
+            </div>
+          </div>
+          <div className="text-right">
+            <Badge variant={status === 'on-track' ? 'default' : status === 'needs-attention' ? 'secondary' : 'destructive'}>
+              {status === 'on-track' ? 'On Track' : status === 'needs-attention' ? 'Needs Attention' : 'Behind Schedule'}
+            </Badge>
+            <p className="text-sm text-gray-500 mt-1">Assigned: {formatTimeAgo(trainee.assignedAt)}</p>
+          </div>
+        </div>
+        
+        <div className="mb-4">
+          <div className="flex justify-between text-sm mb-1">
+            <span>Overall Progress</span>
+            <span>{progress}%</span>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
+
+        {traineeProgress && (
+          <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
+            <div className="text-center p-2 bg-gray-50 rounded">
+              <p className="font-medium text-gray-900">{traineeProgress.completedSessions || 0}</p>
+              <p className="text-gray-600">Completed</p>
+            </div>
+            <div className="text-center p-2 bg-gray-50 rounded">
+              <p className="font-medium text-gray-900">{traineeProgress.averageScore || 0}%</p>
+              <p className="text-gray-600">Avg Score</p>
+            </div>
+            <div className="text-center p-2 bg-gray-50 rounded">
+              <p className="font-medium text-gray-900">{traineeProgress.pendingReviews || 0}</p>
+              <p className="text-gray-600">Pending</p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex space-x-2">
+          <Button size="sm" variant="outline" className="flex-1">
+            <Eye className="w-4 h-4 mr-2" />
+            View Progress
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1">
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Send Feedback
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1">
+            <Target className="w-4 h-4 mr-2" />
+            Assign Scenario
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

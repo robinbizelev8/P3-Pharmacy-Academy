@@ -1,0 +1,67 @@
+{
+  "timestamp": "2025-08-31T01:24:38.015Z",
+  "duration": 0,
+  "summary": {
+    "total": 11,
+    "passed": 0,
+    "failed": 11,
+    "successRate": 0
+  },
+  "results": [
+    {
+      "description": "Supervisor Dashboard Components",
+      "status": "FAIL",
+      "error": "Supervisor dashboard component not found"
+    },
+    {
+      "description": "UI Library Integration",
+      "status": "FAIL",
+      "error": "UI library integration test failed: ENOENT: no such file or directory, open '/home/runner/workspace/tests/client/src/pages/supervisor/dashboard.tsx'"
+    },
+    {
+      "description": "Authentication Integration",
+      "status": "FAIL",
+      "error": "Authentication integration test failed: ENOENT: no such file or directory, open '/home/runner/workspace/tests/client/src/pages/supervisor/dashboard.tsx'"
+    },
+    {
+      "description": "Data Integration",
+      "status": "FAIL",
+      "error": "Data integration test failed: ENOENT: no such file or directory, open '/home/runner/workspace/tests/client/src/pages/supervisor/dashboard.tsx'"
+    },
+    {
+      "description": "Responsive Design",
+      "status": "FAIL",
+      "error": "Responsive design test failed: ENOENT: no such file or directory, open '/home/runner/workspace/tests/client/src/pages/supervisor/dashboard.tsx'"
+    },
+    {
+      "description": "Accessibility Features",
+      "status": "FAIL",
+      "error": "Accessibility test failed: ENOENT: no such file or directory, open '/home/runner/workspace/tests/client/src/pages/supervisor/dashboard.tsx'"
+    },
+    {
+      "description": "Metrics Display",
+      "status": "FAIL",
+      "error": "Metrics display test failed: ENOENT: no such file or directory, open '/home/runner/workspace/tests/client/src/pages/supervisor/dashboard.tsx'"
+    },
+    {
+      "description": "Tab Navigation",
+      "status": "FAIL",
+      "error": "Tab navigation test failed: ENOENT: no such file or directory, open '/home/runner/workspace/tests/client/src/pages/supervisor/dashboard.tsx'"
+    },
+    {
+      "description": "Error Handling",
+      "status": "FAIL",
+      "error": "Error handling test failed: ENOENT: no such file or directory, open '/home/runner/workspace/tests/client/src/pages/supervisor/dashboard.tsx'"
+    },
+    {
+      "description": "Component Structure",
+      "status": "FAIL",
+      "error": "Component structure test failed: ENOENT: no such file or directory, open '/home/runner/workspace/tests/client/src/pages/supervisor/dashboard.tsx'"
+    },
+    {
+      "description": "Styling Consistency",
+      "status": "FAIL",
+      "error": "Styling consistency test failed: ENOENT: no such file or directory, open '/home/runner/workspace/tests/client/src/pages/supervisor/dashboard.tsx'"
+    }
+  ]
+}

@@ -1,6 +1,10 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { 
+  useStudentDashboard, 
+  useAssignedScenarios, 
+  useStudentFeedback 
+} from "@/hooks/use-student-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,12 +47,10 @@ interface DashboardData {
 export default function StudentDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  // Always call useQuery hook to maintain consistent hook order
-  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery<DashboardData>({
-    queryKey: ["/api/student/dashboard"],
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: isAuthenticated && user?.role === 'student', // Only run query when conditions are met
-  });
+  // Use custom hooks for real API data
+  const { data: dashboardData, isLoading: isDashboardLoading } = useStudentDashboard(user?.id);
+  const { data: assignedScenarios, isLoading: isScenariosLoading } = useAssignedScenarios(user?.id);
+  const { data: supervisorFeedback, isLoading: isFeedbackLoading } = useStudentFeedback(user?.id);
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -89,7 +91,7 @@ export default function StudentDashboard() {
     return null;
   }
 
-  if (isDashboardLoading) {
+  if (isDashboardLoading || isScenariosLoading || isFeedbackLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -215,28 +217,33 @@ export default function StudentDashboard() {
                     <Target className="w-5 h-5 mr-2 text-orange-600" />
                     Supervisor Assignments
                   </div>
-                  {(dashboardData?.assignedScenarios?.length ?? 0) > 0 && (
+                  {(assignedScenarios?.length ?? 0) > 0 && (
                     <Badge variant="secondary">
-                      {dashboardData?.assignedScenarios?.length ?? 0} pending
+                      {assignedScenarios?.length ?? 0} pending
                     </Badge>
                   )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {(dashboardData?.assignedScenarios?.length ?? 0) > 0 ? (
+                {(assignedScenarios?.length ?? 0) > 0 ? (
                   <div className="space-y-3">
-                    {(dashboardData?.assignedScenarios ?? []).slice(0, 3).map((scenario, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    {(assignedScenarios ?? []).slice(0, 3).map((scenario: any) => (
+                      <div key={scenario.id} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
                         <div className="flex items-center">
                           <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
                           <div>
-                            <h4 className="font-medium text-gray-900">Cardiovascular Case Study</h4>
-                            <p className="text-sm text-gray-600">Due in 3 days</p>
+                            <h4 className="font-medium text-gray-900">{scenario.title}</h4>
+                            <p className="text-sm text-gray-600">
+                              {scenario.therapeuticArea} • Due: {scenario.dueDate ? new Date(scenario.dueDate).toLocaleDateString() : 'No due date'}
+                            </p>
+                            <p className="text-xs text-gray-500">Assigned by: {scenario.supervisorName}</p>
                           </div>
                         </div>
-                        <Button size="sm">
-                          Start
-                          <ArrowRight className="w-4 h-4 ml-1" />
+                        <Button size="sm" asChild>
+                          <Link href={`/practice/scenario/${scenario.id}`}>
+                            Start
+                            <ArrowRight className="w-4 h-4 ml-1" />
+                          </Link>
                         </Button>
                       </div>
                     ))}
@@ -294,6 +301,116 @@ export default function StudentDashboard() {
 
           {/* Sidebar - Right Column */}
           <div className="space-y-6">
+            {/* Supervisor's View of Progress */}
+            {dashboardData?.supervisor && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
+                    Supervisor's Assessment
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Overall Performance Rating */}
+                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-green-900">Overall Performance</span>
+                        <div className="flex items-center space-x-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star 
+                              key={i} 
+                              className={`w-4 h-4 ${i < 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-xs text-green-700">
+                        "Showing excellent progress in clinical reasoning and patient care"
+                      </p>
+                    </div>
+                    
+                    {/* Competency Breakdown */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-gray-900">Competency Assessment</h4>
+                      {['PA1: Clinical Knowledge', 'PA2: Health Products', 'PA3: Patient Education', 'PA4: Professional Practice'].map((competency, index) => {
+                        const levels = [3, 4, 2, 3]; // Mock supervisor assessment levels
+                        return (
+                          <div key={competency} className="flex items-center justify-between text-sm">
+                            <span className="text-gray-700">{competency}</span>
+                            <div className="flex items-center space-x-1">
+                              <span className="text-xs text-gray-500">Level {levels[index]}/5</span>
+                              <div className="w-16 h-2 bg-gray-200 rounded-full">
+                                <div 
+                                  className="h-full bg-green-500 rounded-full" 
+                                  style={{ width: `${(levels[index] / 5) * 100}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Next Review Date */}
+                    <div className="pt-3 border-t border-gray-200">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-700">Next Review:</span>
+                        <span className="font-medium text-gray-900">Dec 15, 2024</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Action Items from Supervisor */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <CheckCircle className="w-5 h-5 mr-2 text-orange-600" />
+                    Action Items
+                  </div>
+                  <Badge variant="secondary">
+                    {supervisorFeedback?.reduce((count: number, feedback: any) => 
+                      count + (feedback.actionItems?.length || 0), 0) || 0}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {supervisorFeedback && supervisorFeedback.some((f: any) => f.actionItems?.length > 0) ? (
+                  <div className="space-y-3">
+                    {supervisorFeedback
+                      .filter((feedback: any) => feedback.actionItems?.length > 0)
+                      .slice(0, 2)
+                      .map((feedback: any) => 
+                        feedback.actionItems.slice(0, 2).map((item: string, index: number) => (
+                          <ActionItemComponent
+                            key={`${feedback.id}-${index}`}
+                            title={item}
+                            source={`From: ${feedback.scenarioTitle || 'General Feedback'}`}
+                            priority={feedback.priority || 'medium'}
+                            completed={false}
+                          />
+                        ))
+                      )}
+                    <Button variant="outline" className="w-full mt-3" asChild>
+                      <Link href="/action-items">
+                        View All Action Items
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <CheckCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">No action items</p>
+                    <p className="text-xs text-gray-500">Complete scenarios to receive targeted recommendations</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
             {/* Next Milestones */}
             <Card>
               <CardHeader>
@@ -326,34 +443,91 @@ export default function StudentDashboard() {
               </CardContent>
             </Card>
 
-            {/* Recent Feedback */}
+            {/* Supervisor Feedback */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <MessageSquare className="w-5 h-5 mr-2 text-blue-600" />
-                  Recent Feedback
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <MessageSquare className="w-5 h-5 mr-2 text-blue-600" />
+                    Supervisor Feedback
+                  </div>
+                  {(supervisorFeedback?.length ?? 0) > 0 && (
+                    <Badge variant="outline">
+                      {supervisorFeedback?.length ?? 0} items
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {(dashboardData?.recentFeedback?.length ?? 0) > 0 ? (
-                  <div className="space-y-3">
-                    {(dashboardData?.recentFeedback ?? []).map((feedback, index) => (
-                      <div key={index} className="p-3 bg-blue-50 rounded-lg">
+                {(supervisorFeedback?.length ?? 0) > 0 ? (
+                  <div className="space-y-4">
+                    {(supervisorFeedback ?? []).slice(0, 3).map((feedback: any) => (
+                      <div key={feedback.id} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium">Supervisor Feedback</span>
-                          <span className="text-xs text-gray-500">2 days ago</span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium text-blue-900">
+                              {feedback.supervisorName || 'Supervisor'}
+                            </span>
+                            <div className="flex items-center space-x-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star 
+                                  key={i} 
+                                  className={`w-3 h-3 ${i < (feedback.overallRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {feedback.createdAt ? new Date(feedback.createdAt).toLocaleDateString() : 'Recently'}
+                          </span>
                         </div>
-                        <p className="text-sm text-gray-700">
-                          "Excellent progress on clinical reasoning. Focus more on patient communication skills."
+                        
+                        {feedback.scenarioTitle && (
+                          <p className="text-xs text-blue-700 mb-2 font-medium">
+                            Re: {feedback.scenarioTitle}
+                          </p>
+                        )}
+                        
+                        <p className="text-sm text-gray-700 mb-3">
+                          {feedback.feedbackText || feedback.strengths || 'General feedback provided'}
                         </p>
+                        
+                        {feedback.recommendations && (
+                          <div className="mt-3 p-2 bg-yellow-50 rounded border border-yellow-200">
+                            <p className="text-xs font-medium text-yellow-800 mb-1">Recommendations:</p>
+                            <p className="text-xs text-yellow-700">{feedback.recommendations}</p>
+                          </div>
+                        )}
+                        
+                        {feedback.actionItems && feedback.actionItems.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-xs font-medium text-gray-700 mb-1">Action Items:</p>
+                            <ul className="text-xs text-gray-600 space-y-1">
+                              {feedback.actionItems.slice(0, 2).map((item: string, index: number) => (
+                                <li key={index} className="flex items-center">
+                                  <div className="w-1 h-1 bg-gray-400 rounded-full mr-2"></div>
+                                  {item}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     ))}
+                    
+                    {(supervisorFeedback?.length ?? 0) > 3 && (
+                      <Button variant="outline" className="w-full mt-3" asChild>
+                        <Link href="/feedback">
+                          View All Feedback ({supervisorFeedback?.length ?? 0})
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 ) : (
-                  <div className="text-center py-4">
-                    <MessageSquare className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600">No recent feedback</p>
-                    <p className="text-xs text-gray-500">Complete more scenarios to receive feedback</p>
+                  <div className="text-center py-6">
+                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-600">No supervisor feedback yet</p>
+                    <p className="text-sm text-gray-500">Complete scenarios and assessments to receive personalized feedback</p>
                   </div>
                 )}
               </CardContent>
@@ -485,6 +659,41 @@ function MilestoneItem({ title, description, dueDate, priority }: MilestoneItemP
         <span className="text-xs text-gray-500">{dueDate}</span>
       </div>
       <p className="text-sm text-gray-600">{description}</p>
+    </div>
+  );
+}
+
+// Component for action items
+interface ActionItemComponentProps {
+  title: string;
+  source: string;
+  priority: 'high' | 'medium' | 'low';
+  completed: boolean;
+}
+
+function ActionItemComponent({ title, source, priority, completed }: ActionItemComponentProps) {
+  const priorityColors = {
+    high: "border-red-200 bg-red-50 text-red-700",
+    medium: "border-yellow-200 bg-yellow-50 text-yellow-700",
+    low: "border-green-200 bg-green-50 text-green-700"
+  };
+
+  return (
+    <div className={`p-3 rounded-lg border ${priorityColors[priority]} ${completed ? 'opacity-50' : ''}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex items-start space-x-2 flex-1">
+          <div className={`mt-1.5 w-2 h-2 rounded-full ${completed ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+          <div className="flex-1">
+            <h4 className={`font-medium text-sm ${completed ? 'line-through' : ''}`}>
+              {title}
+            </h4>
+            <p className="text-xs text-gray-600 mt-1">{source}</p>
+          </div>
+        </div>
+        <Badge variant="outline" className="text-xs">
+          {priority}
+        </Badge>
+      </div>
     </div>
   );
 }

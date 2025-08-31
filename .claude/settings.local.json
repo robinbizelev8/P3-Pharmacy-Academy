@@ -8,7 +8,10 @@
       "Bash(node:*)",
       "Bash(cat:*)",
       "Bash(bash:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(psql:*)"
     ],
     "deny": [],
     "ask": []

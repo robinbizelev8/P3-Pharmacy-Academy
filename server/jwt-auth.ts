@@ -71,10 +71,6 @@ export async function jwtAuth(req: Request, res: Response, next: NextFunction): 
                 req.headers['authorization']?.replace('Bearer ', '') ||
                 req.headers['x-auth-token'];
     
-    // Debug logging for deployment
-    console.log(`JWT Auth Debug - Cookies available: ${Object.keys(req.cookies).join(', ')}`);
-    console.log(`JWT Auth Debug - Auth header: ${req.headers['authorization'] ? 'present' : 'missing'}`);
-    
     if (!token) {
       console.log('JWT Auth: No token found in cookies or headers');
       (req as any).user = null;

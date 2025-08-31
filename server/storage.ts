@@ -161,6 +161,18 @@ export interface IStorage {
   getRecommendedScenarios(userId: string): Promise<any>;
   getSupervisorAnalytics(supervisorId: string, traineeIds?: string[]): Promise<any>;
   
+  // Supervisor-specific operations
+  getAssignedTrainees(supervisorId: string): Promise<TraineeAssignmentWithDetails[]>;
+  assignTraineeToSupervisor(supervisorId: string, traineeId: string, institution?: string): Promise<TraineeAssignment>;
+  getTraineeProgress(traineeId: string): Promise<any>;
+  createSupervisorFeedback(feedbackData: InsertSupervisorFeedback): Promise<SupervisorFeedback>;
+  getSupervisorFeedback(supervisorId: string, traineeId?: string): Promise<SupervisorFeedbackWithDetails[]>;
+  getTraineeFeedback(traineeId: string): Promise<SupervisorFeedbackWithDetails[]>;
+  createSupervisorScenario(scenarioData: InsertSupervisorScenario): Promise<SupervisorScenario>;
+  getSupervisorScenarios(supervisorId: string): Promise<SupervisorScenarioWithDetails[]>;
+  assignScenarioToTrainee(scenarioId: string, traineeId: string): Promise<SupervisorScenario>;
+  getSupervisorDashboard(supervisorId: string): Promise<any>;
+  
   // Assessment Analysis System
   getAssessmentReport(userId: string, assessmentId: string): Promise<any>;
   
@@ -1180,9 +1192,95 @@ export class DatabaseStorage implements IStorage {
 
   async getSupervisorAnalytics(supervisorId: string, traineeIds?: string[]): Promise<any> {
     try {
-      // For now, return placeholder data - this would require supervisor-trainee relationships
-      // to be properly implemented in the database schema
-      
+      // Get assigned trainees if not provided
+      let targetTraineeIds = traineeIds;
+      if (!targetTraineeIds) {
+        const assignedTrainees = await this.getAssignedTrainees(supervisorId);
+        targetTraineeIds = assignedTrainees.map(t => t.traineeId);
+      }
+
+      if (targetTraineeIds.length === 0) {
+        return {
+          totalTrainees: 0,
+          activeTrainees: 0,
+          averageProgress: 0,
+          traineeComparison: [],
+          recentAssessments: [],
+          alertsAndNotifications: [],
+          supervisorUpdatedAt: new Date()
+        };
+      }
+
+      // Calculate analytics for assigned trainees
+      const traineeComparison: any[] = [];
+      let totalProgress = 0;
+      let activeTrainees = 0;
+      const recentAssessments: any[] = [];
+
+      for (const traineeId of targetTraineeIds) {
+        const traineeProgress = await this.getTraineeProgress(traineeId);
+        const user = await this.getUserById(traineeId);
+        
+        if (user) {
+          const overallProgress = (traineeProgress.moduleProgress.prepare.progressPercentage + 
+                                  traineeProgress.moduleProgress.practice.progressPercentage + 
+                                  traineeProgress.moduleProgress.perform.progressPercentage) / 3;
+          
+          totalProgress += overallProgress;
+          if (overallProgress > 0) activeTrainees++;
+
+          traineeComparison.push({
+            traineeId,
+            name: `${user.firstName} ${user.lastName}`,
+            overallProgress: Math.round(overallProgress),
+            moduleProgress: traineeProgress.moduleProgress,
+            competencyProgression: traineeProgress.competencyProgression,
+            totalSessions: traineeProgress.totalSessionsCompleted + traineeProgress.totalSessionsInProgress,
+            completedSessions: traineeProgress.totalSessionsCompleted,
+            averageScore: traineeProgress.averageScore,
+            strengths: traineeProgress.strengths,
+            improvementAreas: traineeProgress.improvementAreas,
+            lastActivity: traineeProgress.recentSessions.length > 0 ? 
+              traineeProgress.recentSessions[0].completedAt || traineeProgress.recentSessions[0].startedAt : null
+          });
+
+          // Add recent assessments
+          traineeProgress.recentSessions.forEach((session: any) => {
+            if (session.status === 'completed') {
+              recentAssessments.push({
+                traineeId,
+                traineeName: `${user.firstName} ${user.lastName}`,
+                sessionId: session.id,
+                scenarioTitle: session.scenario.title,
+                module: session.module,
+                therapeuticArea: session.therapeuticArea,
+                completedAt: session.completedAt,
+                score: session.overallScore,
+                needsReview: true // Supervisor can review
+              });
+            }
+          });
+        }
+      }
+
+      const averageProgress = targetTraineeIds.length > 0 ? Math.round(totalProgress / targetTraineeIds.length) : 0;
+
+      // Generate alerts and notifications
+      const alertsAndNotifications = await this.generateSupervisorAlerts(supervisorId, targetTraineeIds, traineeComparison);
+
+      return {
+        totalTrainees: targetTraineeIds.length,
+        activeTrainees,
+        averageProgress,
+        traineeComparison: traineeComparison.sort((a, b) => b.overallProgress - a.overallProgress),
+        recentAssessments: recentAssessments
+          .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
+          .slice(0, 10), // Latest 10 assessments
+        alertsAndNotifications,
+        supervisorUpdatedAt: new Date()
+      };
+    } catch (error) {
+      console.error("Error getting supervisor analytics:", error);
       return {
         totalTrainees: 0,
         activeTrainees: 0,
@@ -1192,11 +1290,65 @@ export class DatabaseStorage implements IStorage {
         alertsAndNotifications: [],
         supervisorUpdatedAt: new Date()
       };
+    }
+  }
+
+  private async generateSupervisorAlerts(supervisorId: string, traineeIds: string[], traineeComparison: any[]): Promise<any[]> {
+    const alerts = [];
+    
+    try {
+      // Alert for trainees with low progress
+      const lowProgressTrainees = traineeComparison.filter(t => t.overallProgress < 30);
+      if (lowProgressTrainees.length > 0) {
+        alerts.push({
+          type: 'low_progress',
+          severity: 'high',
+          title: 'Trainees with Low Progress',
+          message: `${lowProgressTrainees.length} trainee(s) have progress below 30%`,
+          trainees: lowProgressTrainees.map(t => ({ id: t.traineeId, name: t.name, progress: t.overallProgress })),
+          actionRequired: true,
+          createdAt: new Date()
+        });
+      }
+
+      // Alert for trainees who haven't been active recently
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const inactiveTrainees = traineeComparison.filter(t => 
+        !t.lastActivity || new Date(t.lastActivity) < oneWeekAgo
+      );
+      
+      if (inactiveTrainees.length > 0) {
+        alerts.push({
+          type: 'inactive_trainees',
+          severity: 'medium',
+          title: 'Inactive Trainees',
+          message: `${inactiveTrainees.length} trainee(s) haven't been active in the last week`,
+          trainees: inactiveTrainees.map(t => ({ id: t.traineeId, name: t.name, lastActivity: t.lastActivity })),
+          actionRequired: true,
+          createdAt: new Date()
+        });
+      }
+
+      // Alert for pending reviews
+      const pendingReviews = await this.getPendingReviews(supervisorId);
+      if (pendingReviews.length > 0) {
+        alerts.push({
+          type: 'pending_reviews',
+          severity: pendingReviews.some(r => r.priority === 'high') ? 'high' : 'medium',
+          title: 'Pending Reviews',
+          message: `${pendingReviews.length} session(s) need your review`,
+          reviews: pendingReviews,
+          actionRequired: true,
+          createdAt: new Date()
+        });
+      }
 
     } catch (error) {
-      console.error("Error getting supervisor analytics:", error);
-      throw error;
+      console.error('Error generating supervisor alerts:', error);
     }
+
+    return alerts;
   }
 
   // Helper methods for competency calculations
@@ -2230,6 +2382,809 @@ export class DatabaseStorage implements IStorage {
       console.error('Error clearing demo data:', error);
       throw error;
     }
+  }
+
+  // Supervisor-specific operations implementation
+  async getAssignedTrainees(supervisorId: string): Promise<TraineeAssignmentWithDetails[]> {
+    try {
+      const assignments = await db
+        .select({
+          id: traineeAssignments.id,
+          supervisorId: traineeAssignments.supervisorId,
+          traineeId: traineeAssignments.traineeId,
+          institution: traineeAssignments.institution,
+          assignedAt: traineeAssignments.assignedAt,
+          status: traineeAssignments.status,
+          notes: traineeAssignments.notes,
+          createdAt: traineeAssignments.createdAt,
+          updatedAt: traineeAssignments.updatedAt,
+          // Include supervisor details
+          supervisorEmail: users.email,
+          supervisorFirstName: users.firstName,
+          supervisorLastName: users.lastName,
+          // Include trainee details
+          traineeEmail: sql`trainee.email`.as('traineeEmail'),
+          traineeFirstName: sql`trainee.first_name`.as('traineeFirstName'),
+          traineeLastName: sql`trainee.last_name`.as('traineeLastName'),
+          traineeRole: sql`trainee.role`.as('traineeRole'),
+          traineeInstitution: sql`trainee.institution`.as('traineeInstitution')
+        })
+        .from(traineeAssignments)
+        .innerJoin(users, eq(users.id, traineeAssignments.supervisorId))
+        .innerJoin(sql`users as trainee`, sql`trainee.id = ${traineeAssignments.traineeId}`)
+        .where(and(
+          eq(traineeAssignments.supervisorId, supervisorId),
+          eq(traineeAssignments.status, 'active')
+        ));
+
+      return assignments.map(assignment => ({
+        id: assignment.id,
+        supervisorId: assignment.supervisorId,
+        traineeId: assignment.traineeId,
+        institution: assignment.institution,
+        assignedAt: assignment.assignedAt,
+        status: assignment.status,
+        notes: assignment.notes,
+        createdAt: assignment.createdAt,
+        updatedAt: assignment.updatedAt,
+        supervisor: {
+          id: assignment.supervisorId,
+          email: assignment.supervisorEmail as string | null,
+          firstName: assignment.supervisorFirstName as string | null,
+          lastName: assignment.supervisorLastName as string | null,
+          profileImageUrl: null,
+          role: 'supervisor',
+          provider: null,
+          hashedPassword: null,
+          emailVerified: false,
+          institution: null,
+          licenseNumber: null,
+          specializations: [],
+          yearsExperience: null,
+          supervisorCertified: false,
+          lastLoginAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        trainee: {
+          id: assignment.traineeId,
+          email: assignment.traineeEmail as string | null,
+          firstName: assignment.traineeFirstName as string | null,
+          lastName: assignment.traineeLastName as string | null,
+          profileImageUrl: null,
+          role: assignment.traineeRole as string | null,
+          provider: null,
+          hashedPassword: null,
+          emailVerified: false,
+          institution: assignment.traineeInstitution as string | null,
+          licenseNumber: null,
+          specializations: [],
+          yearsExperience: null,
+          supervisorCertified: false,
+          lastLoginAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      }));
+    } catch (error) {
+      console.error('Error getting assigned trainees:', error);
+      return [];
+    }
+  }
+
+  async assignTraineeToSupervisor(supervisorId: string, traineeId: string, institution?: string): Promise<TraineeAssignment> {
+    try {
+      const [assignment] = await db
+        .insert(traineeAssignments)
+        .values({
+          supervisorId,
+          traineeId,
+          institution,
+          assignedAt: new Date(),
+          status: 'active'
+        })
+        .returning();
+
+      return assignment;
+    } catch (error) {
+      console.error('Error assigning trainee to supervisor:', error);
+      throw error;
+    }
+  }
+
+  async getTraineeProgress(traineeId: string): Promise<any> {
+    try {
+      // Get all trainee's pharmacy sessions
+      const sessions = await this.getUserPharmacySessions(traineeId);
+      
+      // Get competency assessments
+      const assessments = await this.getUserCompetencyAssessments(traineeId);
+      
+      // Get perform assessments
+      const performAssessments = await this.getUserPerformAssessments(traineeId);
+      
+      // Calculate progress by module
+      const moduleProgress = {
+        prepare: this.calculateModuleProgress(sessions.filter(s => s.module === 'prepare')),
+        practice: this.calculateModuleProgress(sessions.filter(s => s.module === 'practice')),
+        perform: this.calculateModuleProgress(sessions.filter(s => s.module === 'perform'))
+      };
+
+      // Calculate overall competency progression
+      const competencyProgression = this.calculateCompetencyProgression(sessions);
+
+      // Get recent activity
+      const recentSessions = sessions
+        .sort((a, b) => {
+          const dateA = new Date(a.completedAt || a.startedAt || a.createdAt || new Date()).getTime();
+          const dateB = new Date(b.completedAt || b.startedAt || b.createdAt || new Date()).getTime();
+          return dateB - dateA;
+        })
+        .slice(0, 5);
+
+      return {
+        traineeId,
+        moduleProgress,
+        competencyProgression,
+        recentSessions,
+        assessments,
+        performAssessments,
+        totalSessionsCompleted: sessions.filter(s => s.status === 'completed').length,
+        totalSessionsInProgress: sessions.filter(s => s.status === 'in_progress').length,
+        averageScore: this.calculateAverageScore(sessions),
+        strengths: this.extractStrengths(sessions),
+        improvementAreas: this.extractImprovementAreas(sessions)
+      };
+    } catch (error) {
+      console.error('Error getting trainee progress:', error);
+      throw error;
+    }
+  }
+
+  async createSupervisorFeedback(feedbackData: InsertSupervisorFeedback): Promise<SupervisorFeedback> {
+    try {
+      const [feedback] = await db
+        .insert(supervisorFeedback)
+        .values({
+          ...feedbackData,
+          createdAt: new Date()
+        })
+        .returning();
+
+      return feedback;
+    } catch (error) {
+      console.error('Error creating supervisor feedback:', error);
+      throw error;
+    }
+  }
+
+  async getSupervisorFeedback(supervisorId: string, traineeId?: string): Promise<SupervisorFeedbackWithDetails[]> {
+    try {
+      const conditions = [eq(supervisorFeedback.supervisorId, supervisorId)];
+      if (traineeId) {
+        conditions.push(eq(supervisorFeedback.traineeId, traineeId));
+      }
+
+      const feedbackList = await db
+        .select({
+          id: supervisorFeedback.id,
+          supervisorId: supervisorFeedback.supervisorId,
+          traineeId: supervisorFeedback.traineeId,
+          sessionId: supervisorFeedback.sessionId,
+          feedbackType: supervisorFeedback.feedbackType,
+          overallRating: supervisorFeedback.overallRating,
+          clinicalKnowledgeRating: supervisorFeedback.clinicalKnowledgeRating,
+          communicationRating: supervisorFeedback.communicationRating,
+          professionalismRating: supervisorFeedback.professionalismRating,
+          writtenFeedback: supervisorFeedback.writtenFeedback,
+          improvementAreas: supervisorFeedback.improvementAreas,
+          strengths: supervisorFeedback.strengths,
+          recommendations: supervisorFeedback.recommendations,
+          actionItems: supervisorFeedback.actionItems,
+          nextReviewDate: supervisorFeedback.nextReviewDate,
+          createdAt: supervisorFeedback.createdAt,
+          // Include supervisor details
+          supervisorEmail: sql`supervisor.email`.as('supervisorEmail'),
+          supervisorFirstName: sql`supervisor.first_name`.as('supervisorFirstName'),
+          supervisorLastName: sql`supervisor.last_name`.as('supervisorLastName'),
+          // Include trainee details
+          traineeEmail: sql`trainee.email`.as('traineeEmail'),
+          traineeFirstName: sql`trainee.first_name`.as('traineeFirstName'),
+          traineeLastName: sql`trainee.last_name`.as('traineeLastName')
+        })
+        .from(supervisorFeedback)
+        .innerJoin(sql`users as supervisor`, sql`supervisor.id = ${supervisorFeedback.supervisorId}`)
+        .innerJoin(sql`users as trainee`, sql`trainee.id = ${supervisorFeedback.traineeId}`)
+        .where(and(...conditions))
+        .orderBy(desc(supervisorFeedback.createdAt));
+
+      return feedbackList.map(feedback => ({
+        id: feedback.id,
+        supervisorId: feedback.supervisorId,
+        traineeId: feedback.traineeId,
+        sessionId: feedback.sessionId,
+        feedbackType: feedback.feedbackType,
+        overallRating: feedback.overallRating,
+        clinicalKnowledgeRating: feedback.clinicalKnowledgeRating,
+        communicationRating: feedback.communicationRating,
+        professionalismRating: feedback.professionalismRating,
+        writtenFeedback: feedback.writtenFeedback,
+        improvementAreas: feedback.improvementAreas,
+        strengths: feedback.strengths,
+        recommendations: feedback.recommendations,
+        actionItems: feedback.actionItems,
+        nextReviewDate: feedback.nextReviewDate,
+        createdAt: feedback.createdAt,
+        supervisor: {
+          id: feedback.supervisorId,
+          email: feedback.supervisorEmail as string | null,
+          firstName: feedback.supervisorFirstName as string | null,
+          lastName: feedback.supervisorLastName as string | null,
+          profileImageUrl: null,
+          role: 'supervisor',
+          provider: null,
+          hashedPassword: null,
+          emailVerified: false,
+          institution: null,
+          licenseNumber: null,
+          specializations: [],
+          yearsExperience: null,
+          supervisorCertified: false,
+          lastLoginAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        trainee: {
+          id: feedback.traineeId,
+          email: feedback.traineeEmail as string | null,
+          firstName: feedback.traineeFirstName as string | null,
+          lastName: feedback.traineeLastName as string | null,
+          profileImageUrl: null,
+          role: 'student',
+          provider: null,
+          hashedPassword: null,
+          emailVerified: false,
+          institution: null,
+          licenseNumber: null,
+          specializations: [],
+          yearsExperience: null,
+          supervisorCertified: false,
+          lastLoginAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      }));
+    } catch (error) {
+      console.error('Error getting supervisor feedback:', error);
+      return [];
+    }
+  }
+
+  async getTraineeFeedback(traineeId: string): Promise<SupervisorFeedbackWithDetails[]> {
+    try {
+      const feedbackList = await db
+        .select({
+          id: supervisorFeedback.id,
+          supervisorId: supervisorFeedback.supervisorId,
+          traineeId: supervisorFeedback.traineeId,
+          sessionId: supervisorFeedback.sessionId,
+          feedbackType: supervisorFeedback.feedbackType,
+          overallRating: supervisorFeedback.overallRating,
+          clinicalKnowledgeRating: supervisorFeedback.clinicalKnowledgeRating,
+          communicationRating: supervisorFeedback.communicationRating,
+          professionalismRating: supervisorFeedback.professionalismRating,
+          writtenFeedback: supervisorFeedback.writtenFeedback,
+          improvementAreas: supervisorFeedback.improvementAreas,
+          strengths: supervisorFeedback.strengths,
+          recommendations: supervisorFeedback.recommendations,
+          actionItems: supervisorFeedback.actionItems,
+          nextReviewDate: supervisorFeedback.nextReviewDate,
+          createdAt: supervisorFeedback.createdAt,
+          // Include supervisor details
+          supervisorEmail: sql`supervisor.email`.as('supervisorEmail'),
+          supervisorFirstName: sql`supervisor.first_name`.as('supervisorFirstName'),
+          supervisorLastName: sql`supervisor.last_name`.as('supervisorLastName')
+        })
+        .from(supervisorFeedback)
+        .innerJoin(sql`users as supervisor`, sql`supervisor.id = ${supervisorFeedback.supervisorId}`)
+        .where(eq(supervisorFeedback.traineeId, traineeId))
+        .orderBy(desc(supervisorFeedback.createdAt));
+
+      return feedbackList.map(feedback => ({
+        id: feedback.id,
+        supervisorId: feedback.supervisorId,
+        traineeId: feedback.traineeId,
+        sessionId: feedback.sessionId,
+        feedbackType: feedback.feedbackType,
+        overallRating: feedback.overallRating,
+        clinicalKnowledgeRating: feedback.clinicalKnowledgeRating,
+        communicationRating: feedback.communicationRating,
+        professionalismRating: feedback.professionalismRating,
+        writtenFeedback: feedback.writtenFeedback,
+        improvementAreas: feedback.improvementAreas,
+        strengths: feedback.strengths,
+        recommendations: feedback.recommendations,
+        actionItems: feedback.actionItems,
+        nextReviewDate: feedback.nextReviewDate,
+        createdAt: feedback.createdAt,
+        supervisor: {
+          id: feedback.supervisorId,
+          email: feedback.supervisorEmail as string | null,
+          firstName: feedback.supervisorFirstName as string | null,
+          lastName: feedback.supervisorLastName as string | null,
+          profileImageUrl: null,
+          role: 'supervisor',
+          provider: null,
+          hashedPassword: null,
+          emailVerified: false,
+          institution: null,
+          licenseNumber: null,
+          specializations: [],
+          yearsExperience: null,
+          supervisorCertified: false,
+          lastLoginAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        trainee: {
+          id: feedback.traineeId,
+          email: null,
+          firstName: null,
+          lastName: null,
+          profileImageUrl: null,
+          role: 'student',
+          provider: null,
+          hashedPassword: null,
+          emailVerified: false,
+          institution: null,
+          licenseNumber: null,
+          specializations: [],
+          yearsExperience: null,
+          supervisorCertified: false,
+          lastLoginAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      }));
+    } catch (error) {
+      console.error('Error getting trainee feedback:', error);
+      return [];
+    }
+  }
+
+  async createSupervisorScenario(scenarioData: InsertSupervisorScenario): Promise<SupervisorScenario> {
+    try {
+      const [scenario] = await db
+        .insert(supervisorScenarios)
+        .values({
+          ...scenarioData,
+          createdAt: new Date()
+        })
+        .returning();
+
+      return scenario;
+    } catch (error) {
+      console.error('Error creating supervisor scenario:', error);
+      throw error;
+    }
+  }
+
+  async getSupervisorScenarios(supervisorId: string): Promise<SupervisorScenarioWithDetails[]> {
+    try {
+      const scenarios = await db
+        .select({
+          id: supervisorScenarios.id,
+          supervisorId: supervisorScenarios.supervisorId,
+          scenarioId: supervisorScenarios.scenarioId,
+          targetTraineeId: supervisorScenarios.targetTraineeId,
+          assignmentInstructions: supervisorScenarios.assignmentInstructions,
+          dueDate: supervisorScenarios.dueDate,
+          priorityLevel: supervisorScenarios.priorityLevel,
+          learningObjectives: supervisorScenarios.learningObjectives,
+          assessmentCriteria: supervisorScenarios.assessmentCriteria,
+          completionRequired: supervisorScenarios.completionRequired,
+          createdAt: supervisorScenarios.createdAt,
+          // Include scenario details
+          scenarioTitle: pharmacyScenarios.title,
+          scenarioModule: pharmacyScenarios.module,
+          scenarioTherapeuticArea: pharmacyScenarios.therapeuticArea,
+          scenarioPracticeArea: pharmacyScenarios.practiceArea,
+          scenarioProfessionalActivity: pharmacyScenarios.professionalActivity,
+          // Include trainee details if assigned
+          traineeEmail: sql`trainee.email`.as('traineeEmail'),
+          traineeFirstName: sql`trainee.first_name`.as('traineeFirstName'),
+          traineeLastName: sql`trainee.last_name`.as('traineeLastName')
+        })
+        .from(supervisorScenarios)
+        .innerJoin(pharmacyScenarios, eq(pharmacyScenarios.id, supervisorScenarios.scenarioId))
+        .leftJoin(sql`users as trainee`, sql`trainee.id = ${supervisorScenarios.targetTraineeId}`)
+        .where(eq(supervisorScenarios.supervisorId, supervisorId))
+        .orderBy(desc(supervisorScenarios.createdAt));
+
+      return scenarios.map(scenario => ({
+        id: scenario.id,
+        supervisorId: scenario.supervisorId,
+        scenarioId: scenario.scenarioId,
+        targetTraineeId: scenario.targetTraineeId,
+        assignmentInstructions: scenario.assignmentInstructions,
+        dueDate: scenario.dueDate,
+        priorityLevel: scenario.priorityLevel,
+        learningObjectives: scenario.learningObjectives,
+        assessmentCriteria: scenario.assessmentCriteria,
+        completionRequired: scenario.completionRequired,
+        createdAt: scenario.createdAt,
+        supervisor: {
+          id: scenario.supervisorId,
+          email: null,
+          firstName: null,
+          lastName: null,
+          profileImageUrl: null,
+          role: 'supervisor',
+          provider: null,
+          hashedPassword: null,
+          emailVerified: false,
+          institution: null,
+          licenseNumber: null,
+          specializations: [],
+          yearsExperience: null,
+          supervisorCertified: false,
+          lastLoginAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        scenario: {
+          id: scenario.scenarioId,
+          title: scenario.scenarioTitle,
+          module: scenario.scenarioModule,
+          therapeuticArea: scenario.scenarioTherapeuticArea,
+          practiceArea: scenario.scenarioPracticeArea,
+          caseType: '',
+          professionalActivity: scenario.scenarioProfessionalActivity,
+          supervisionLevel: 1,
+          patientAge: null,
+          patientGender: null,
+          patientBackground: '',
+          clinicalPresentation: '',
+          medicationHistory: '',
+          assessmentObjectives: '',
+          keyLearningOutcomes: null,
+          difficulty: 'intermediate',
+          status: 'active',
+          createdBy: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        targetTrainee: scenario.targetTraineeId ? {
+          id: scenario.targetTraineeId,
+          email: scenario.traineeEmail as string | null,
+          firstName: scenario.traineeFirstName as string | null,
+          lastName: scenario.traineeLastName as string | null,
+          profileImageUrl: null,
+          role: 'student',
+          provider: null,
+          hashedPassword: null,
+          emailVerified: false,
+          institution: null,
+          licenseNumber: null,
+          specializations: [],
+          yearsExperience: null,
+          supervisorCertified: false,
+          lastLoginAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } : undefined
+      }));
+    } catch (error) {
+      console.error('Error getting supervisor scenarios:', error);
+      return [];
+    }
+  }
+
+  async assignScenarioToTrainee(scenarioId: string, traineeId: string): Promise<SupervisorScenario> {
+    try {
+      const [assignment] = await db
+        .update(supervisorScenarios)
+        .set({
+          targetTraineeId: traineeId
+        })
+        .where(eq(supervisorScenarios.scenarioId, scenarioId))
+        .returning();
+
+      return assignment;
+    } catch (error) {
+      console.error('Error assigning scenario to trainee:', error);
+      throw error;
+    }
+  }
+
+  async getSupervisorDashboard(supervisorId: string): Promise<any> {
+    try {
+      // Get assigned trainees
+      const assignedTrainees = await this.getAssignedTrainees(supervisorId);
+      
+      // Get pending reviews (feedback needed)
+      const pendingReviews = await this.getPendingReviews(supervisorId);
+      
+      // Get recent activity from assigned trainees
+      const recentActivity = await this.getSupervisorRecentActivity(supervisorId, assignedTrainees.map(t => t.traineeId));
+      
+      // Calculate performance metrics
+      const performanceMetrics = {
+        totalTrainees: assignedTrainees.length,
+        averageProgress: assignedTrainees.length > 0 ? 
+          await this.calculateAverageTraineeProgress(assignedTrainees.map(t => t.traineeId)) : 0,
+        completedSessions: await this.getTotalCompletedSessions(assignedTrainees.map(t => t.traineeId)),
+        pendingFeedback: pendingReviews.length
+      };
+
+      return {
+        assignedTrainees: assignedTrainees.map(assignment => ({
+          id: assignment.trainee.id,
+          name: `${assignment.trainee.firstName} ${assignment.trainee.lastName}`,
+          email: assignment.trainee.email,
+          institution: assignment.trainee.institution,
+          assignedAt: assignment.assignedAt,
+          status: assignment.status
+        })),
+        pendingReviews,
+        recentActivity,
+        performanceMetrics
+      };
+    } catch (error) {
+      console.error('Error getting supervisor dashboard:', error);
+      return {
+        assignedTrainees: [],
+        pendingReviews: [],
+        recentActivity: [],
+        performanceMetrics: {
+          totalTrainees: 0,
+          averageProgress: 0,
+          completedSessions: 0,
+          pendingFeedback: 0
+        }
+      };
+    }
+  }
+
+  // Helper methods for supervisor dashboard
+  private async getPendingReviews(supervisorId: string): Promise<any[]> {
+    try {
+      const assignedTrainees = await this.getAssignedTrainees(supervisorId);
+      const traineeIds = assignedTrainees.map(t => t.traineeId);
+
+      if (traineeIds.length === 0) return [];
+
+      // Get completed sessions that don't have supervisor feedback
+      const completedSessions = await db
+        .select({
+          id: pharmacySessions.id,
+          userId: pharmacySessions.userId,
+          scenarioId: pharmacySessions.scenarioId,
+          completedAt: pharmacySessions.completedAt,
+          scenarioTitle: pharmacyScenarios.title,
+          module: pharmacyScenarios.module,
+          therapeuticArea: pharmacyScenarios.therapeuticArea,
+          userFirstName: users.firstName,
+          userLastName: users.lastName
+        })
+        .from(pharmacySessions)
+        .innerJoin(pharmacyScenarios, eq(pharmacyScenarios.id, pharmacySessions.scenarioId))
+        .innerJoin(users, eq(users.id, pharmacySessions.userId))
+        .where(and(
+          inArray(pharmacySessions.userId, traineeIds),
+          eq(pharmacySessions.status, 'completed'),
+          isNotNull(pharmacySessions.completedAt)
+        ))
+        .orderBy(desc(pharmacySessions.completedAt))
+        .limit(10);
+
+      // Filter out sessions that already have supervisor feedback
+      const pendingReviews = [];
+      for (const session of completedSessions) {
+        const existingFeedback = await db
+          .select({ id: supervisorFeedback.id })
+          .from(supervisorFeedback)
+          .where(and(
+            eq(supervisorFeedback.supervisorId, supervisorId),
+            eq(supervisorFeedback.sessionId, session.id)
+          ))
+          .limit(1);
+
+        if (existingFeedback.length === 0) {
+          const daysSinceCompletion = Math.floor((Date.now() - new Date(session.completedAt!).getTime()) / (1000 * 60 * 60 * 24));
+          pendingReviews.push({
+            sessionId: session.id,
+            trainee: `${session.userFirstName} ${session.userLastName}`,
+            scenario: session.scenarioTitle,
+            module: session.module,
+            therapeuticArea: session.therapeuticArea,
+            completedAt: session.completedAt,
+            priority: daysSinceCompletion > 7 ? 'high' : daysSinceCompletion > 3 ? 'medium' : 'low',
+            dueDate: daysSinceCompletion > 7 ? 'Overdue' : daysSinceCompletion > 3 ? 'Due soon' : 'Within timeframe'
+          });
+        }
+      }
+
+      return pendingReviews;
+    } catch (error) {
+      console.error('Error getting pending reviews:', error);
+      return [];
+    }
+  }
+
+  private async getSupervisorRecentActivity(supervisorId: string, traineeIds: string[]): Promise<any[]> {
+    try {
+      if (traineeIds.length === 0) return [];
+
+      // Get recent sessions from assigned trainees
+      const recentSessions = await db
+        .select({
+          id: pharmacySessions.id,
+          userId: pharmacySessions.userId,
+          status: pharmacySessions.status,
+          completedAt: pharmacySessions.completedAt,
+          startedAt: pharmacySessions.startedAt,
+          scenarioTitle: pharmacyScenarios.title,
+          module: pharmacyScenarios.module,
+          therapeuticArea: pharmacyScenarios.therapeuticArea,
+          userFirstName: users.firstName,
+          userLastName: users.lastName
+        })
+        .from(pharmacySessions)
+        .innerJoin(pharmacyScenarios, eq(pharmacyScenarios.id, pharmacySessions.scenarioId))
+        .innerJoin(users, eq(users.id, pharmacySessions.userId))
+        .where(inArray(pharmacySessions.userId, traineeIds))
+        .orderBy(desc(sql`COALESCE(${pharmacySessions.completedAt}, ${pharmacySessions.startedAt})`))
+        .limit(10);
+
+      return recentSessions.map(session => ({
+        id: session.id,
+        type: 'session',
+        trainee: `${session.userFirstName} ${session.userLastName}`,
+        title: session.scenarioTitle,
+        module: session.module,
+        therapeuticArea: session.therapeuticArea,
+        status: session.status,
+        date: session.completedAt || session.startedAt,
+        action: session.status === 'completed' ? 'Review needed' : 'In progress'
+      }));
+    } catch (error) {
+      console.error('Error getting supervisor recent activity:', error);
+      return [];
+    }
+  }
+
+  private async calculateAverageTraineeProgress(traineeIds: string[]): Promise<number> {
+    try {
+      if (traineeIds.length === 0) return 0;
+
+      let totalProgress = 0;
+      for (const traineeId of traineeIds) {
+        const sessions = await this.getUserPharmacySessions(traineeId);
+        const completedSessions = sessions.filter(s => s.status === 'completed').length;
+        const totalSessions = sessions.length;
+        const progress = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
+        totalProgress += progress;
+      }
+
+      return Math.round(totalProgress / traineeIds.length);
+    } catch (error) {
+      console.error('Error calculating average trainee progress:', error);
+      return 0;
+    }
+  }
+
+  private async getTotalCompletedSessions(traineeIds: string[]): Promise<number> {
+    try {
+      if (traineeIds.length === 0) return 0;
+
+      const [result] = await db
+        .select({ count: count() })
+        .from(pharmacySessions)
+        .where(and(
+          inArray(pharmacySessions.userId, traineeIds),
+          eq(pharmacySessions.status, 'completed')
+        ));
+
+      return result?.count || 0;
+    } catch (error) {
+      console.error('Error getting total completed sessions:', error);
+      return 0;
+    }
+  }
+
+  // Helper methods for progress calculation
+  private calculateModuleProgress(sessions: any[]): any {
+    if (sessions.length === 0) {
+      return {
+        completedSessions: 0,
+        totalSessions: 0,
+        averageScore: 0,
+        progressPercentage: 0
+      };
+    }
+
+    const completedSessions = sessions.filter(s => s.status === 'completed');
+    const totalScores = completedSessions.reduce((sum, session) => sum + (parseFloat(session.overallScore) || 0), 0);
+    const averageScore = completedSessions.length > 0 ? totalScores / completedSessions.length : 0;
+    const progressPercentage = Math.round((completedSessions.length / sessions.length) * 100);
+
+    return {
+      completedSessions: completedSessions.length,
+      totalSessions: sessions.length,
+      averageScore: Math.round(averageScore),
+      progressPercentage
+    };
+  }
+
+  private calculateCompetencyProgression(sessions: any[]): any {
+    const progression = {
+      PA1: { sessions: 0, averageScore: 0 },
+      PA2: { sessions: 0, averageScore: 0 },
+      PA3: { sessions: 0, averageScore: 0 },
+      PA4: { sessions: 0, averageScore: 0 }
+    };
+
+    const completedSessions = sessions.filter(s => s.status === 'completed');
+
+    completedSessions.forEach((session: any) => {
+      const pa = session.scenario?.professionalActivity;
+      if (pa && pa in progression) {
+        const paKey = pa as keyof typeof progression;
+        progression[paKey].sessions++;
+        progression[paKey].averageScore += parseFloat(session.overallScore) || 0;
+      }
+    });
+
+    // Calculate averages
+    Object.keys(progression).forEach((pa: string) => {
+      const paKey = pa as keyof typeof progression;
+      if (progression[paKey].sessions > 0) {
+        progression[paKey].averageScore = Math.round(progression[paKey].averageScore / progression[paKey].sessions);
+      }
+    });
+
+    return progression;
+  }
+
+  private calculateAverageScore(sessions: any[]): number {
+    const completedSessions = sessions.filter(s => s.status === 'completed' && s.overallScore);
+    if (completedSessions.length === 0) return 0;
+
+    const total = completedSessions.reduce((sum, session) => sum + parseFloat(session.overallScore), 0);
+    return Math.round(total / completedSessions.length);
+  }
+
+  private extractStrengths(sessions: any[]): string[] {
+    const completedSessions = sessions.filter(s => s.status === 'completed');
+    if (completedSessions.length === 0) return [];
+
+    const strengths = [];
+    const avgClinical = completedSessions.reduce((sum, s) => sum + (parseFloat(s.clinicalKnowledgeScore) || 0), 0) / completedSessions.length;
+    const avgTherapeutic = completedSessions.reduce((sum, s) => sum + (parseFloat(s.therapeuticReasoningScore) || 0), 0) / completedSessions.length;
+    const avgCommunication = completedSessions.reduce((sum, s) => sum + (parseFloat(s.patientCommunicationScore) || 0), 0) / completedSessions.length;
+
+    if (avgClinical >= 75) strengths.push("Strong clinical knowledge foundation");
+    if (avgTherapeutic >= 75) strengths.push("Excellent therapeutic reasoning skills");
+    if (avgCommunication >= 75) strengths.push("Effective patient communication");
+
+    return strengths;
+  }
+
+  private extractImprovementAreas(sessions: any[]): string[] {
+    const completedSessions = sessions.filter(s => s.status === 'completed');
+    if (completedSessions.length === 0) return [];
+
+    const improvements = [];
+    const avgClinical = completedSessions.reduce((sum, s) => sum + (parseFloat(s.clinicalKnowledgeScore) || 0), 0) / completedSessions.length;
+    const avgTherapeutic = completedSessions.reduce((sum, s) => sum + (parseFloat(s.therapeuticReasoningScore) || 0), 0) / completedSessions.length;
+    const avgCommunication = completedSessions.reduce((sum, s) => sum + (parseFloat(s.patientCommunicationScore) || 0), 0) / completedSessions.length;
+
+    if (avgClinical < 65) improvements.push("Clinical knowledge requires strengthening");
+    if (avgTherapeutic < 65) improvements.push("Therapeutic reasoning needs improvement");
+    if (avgCommunication < 65) improvements.push("Patient communication skills development needed");
+
+    return improvements;
   }
 }
 

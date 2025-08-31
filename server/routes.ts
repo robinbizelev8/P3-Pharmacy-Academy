@@ -25,7 +25,9 @@ import {
   USER_ROLES
 } from "@shared/schema";
 import { z } from "zod";
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
+import { db } from "./db";
+import { supervisorScenarios, pharmacyScenarios, users } from "@shared/schema";
 import { webSearchService } from "./services/web-search.js";
 import { singaporeKnowledgeService } from "./services/singapore-knowledge-simple.js";
 
@@ -1578,18 +1580,8 @@ This format helps students learn from expert examples before progressing. Focus 
     try {
       const supervisorId = req.user.id;
       
-      // This would be implemented with proper storage methods
-      const dashboardData = {
-        assignedTrainees: [], // TODO: Implement trainee assignment queries
-        pendingReviews: [],   // TODO: Implement pending review queries  
-        recentActivity: [],   // TODO: Implement activity feed
-        performanceMetrics: {
-          totalTrainees: 0,
-          averageProgress: 0,
-          completedSessions: 0,
-          pendingFeedback: 0
-        }
-      };
+      // Use the new storage methods to get real data
+      const dashboardData = await storage.getSupervisorDashboard(supervisorId);
 
       res.json(dashboardData);
     } catch (error) {
@@ -1603,8 +1595,7 @@ This format helps students learn from expert examples before progressing. Focus 
     try {
       const supervisorId = req.user.id;
       
-      // TODO: Implement actual trainee assignment queries
-      const trainees: any[] = [];
+      const trainees = await storage.getAssignedTrainees(supervisorId);
 
       res.json(trainees);
     } catch (error) {
@@ -1619,25 +1610,37 @@ This format helps students learn from expert examples before progressing. Focus 
       const { traineeId } = req.params;
       const supervisorId = req.user.id;
 
-      // TODO: Verify supervisor has access to this trainee
-      // TODO: Implement comprehensive progress query
+      // Verify supervisor has access to this trainee
+      const assignedTrainees = await storage.getAssignedTrainees(supervisorId);
+      const isAssigned = assignedTrainees.some(assignment => assignment.traineeId === traineeId);
+      
+      if (!isAssigned) {
+        return res.status(403).json({ message: "Access denied: Trainee not assigned to you" });
+      }
 
-      const progressData = {
-        trainee: null, // User data
-        modules: {
-          prepare: { completed: 0, total: 0, score: 0 },
-          practice: { completed: 0, total: 0, score: 0 },
-          perform: { completed: 0, total: 0, score: 0 }
-        },
-        recentSessions: [],
-        competencyProgression: [],
+      // Get comprehensive progress data
+      const progressData = await storage.getTraineeProgress(traineeId);
+      const traineeInfo = await storage.getUserById(traineeId);
+
+      res.json({
+        trainee: traineeInfo ? {
+          id: traineeInfo.id,
+          firstName: traineeInfo.firstName,
+          lastName: traineeInfo.lastName,
+          email: traineeInfo.email,
+          institution: traineeInfo.institution
+        } : null,
+        modules: progressData.moduleProgress,
+        recentSessions: progressData.recentSessions,
+        competencyProgression: progressData.competencyProgression,
         strengthsWeaknesses: {
-          strengths: [],
-          improvements: []
-        }
-      };
-
-      res.json(progressData);
+          strengths: progressData.strengths,
+          improvements: progressData.improvementAreas
+        },
+        totalSessionsCompleted: progressData.totalSessionsCompleted,
+        totalSessionsInProgress: progressData.totalSessionsInProgress,
+        averageScore: progressData.averageScore
+      });
     } catch (error) {
       console.error("Error fetching trainee progress:", error);
       res.status(500).json({ message: "Failed to fetch trainee progress" });
@@ -1648,13 +1651,40 @@ This format helps students learn from expert examples before progressing. Focus 
   app.post("/api/supervisor/feedback", requireSupervisor, async (req: any, res) => {
     try {
       const supervisorId = req.user.id;
+      const { traineeId, sessionId, feedbackType, overallRating, clinicalKnowledgeRating, communicationRating, professionalismRating, writtenFeedback, improvementAreas, strengths, recommendations, actionItems, nextReviewDate } = req.body;
       
-      // TODO: Validate feedback data
-      // TODO: Implement supervisor feedback storage
+      // Verify supervisor has access to this trainee
+      const assignedTrainees = await storage.getAssignedTrainees(supervisorId);
+      const isAssigned = assignedTrainees.some(assignment => assignment.traineeId === traineeId);
+      
+      if (!isAssigned) {
+        return res.status(403).json({ message: "Access denied: Trainee not assigned to you" });
+      }
+
+      // Create the feedback
+      const feedbackData = {
+        supervisorId,
+        traineeId,
+        sessionId,
+        feedbackType: feedbackType || 'session_review',
+        overallRating: overallRating ? parseFloat(overallRating).toString() : null,
+        clinicalKnowledgeRating: clinicalKnowledgeRating ? parseFloat(clinicalKnowledgeRating).toString() : null,
+        communicationRating: communicationRating ? parseFloat(communicationRating).toString() : null,
+        professionalismRating: professionalismRating ? parseFloat(professionalismRating).toString() : null,
+        writtenFeedback,
+        improvementAreas: improvementAreas || [],
+        strengths: strengths || [],
+        recommendations,
+        actionItems: actionItems || [],
+        nextReviewDate: nextReviewDate ? new Date(nextReviewDate) : null
+      };
+
+      const feedback = await storage.createSupervisorFeedback(feedbackData);
       
       res.json({
         success: true,
-        message: "Feedback submitted successfully"
+        message: "Feedback submitted successfully",
+        feedback
       });
     } catch (error) {
       console.error("Error submitting feedback:", error);
@@ -1667,8 +1697,7 @@ This format helps students learn from expert examples before progressing. Focus 
     try {
       const supervisorId = req.user.id;
       
-      // TODO: Implement supervisor scenario queries
-      const scenarios: any[] = [];
+      const scenarios = await storage.getSupervisorScenarios(supervisorId);
 
       res.json(scenarios);
     } catch (error) {
@@ -1677,17 +1706,94 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
+  // Get supervisor feedback history
+  app.get("/api/supervisor/feedback", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.user.id;
+      const { traineeId } = req.query;
+      
+      const feedback = await storage.getSupervisorFeedback(supervisorId, traineeId as string);
+
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error fetching supervisor feedback:", error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
+
+  // Assign trainee to supervisor
+  app.post("/api/supervisor/assign-trainee", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.user.id;
+      const { traineeId, institution } = req.body;
+      
+      if (!traineeId) {
+        return res.status(400).json({ message: "Trainee ID is required" });
+      }
+
+      // Verify trainee exists and is a student
+      const trainee = await storage.getUserById(traineeId);
+      if (!trainee || trainee.role !== 'student') {
+        return res.status(400).json({ message: "Invalid trainee ID" });
+      }
+
+      const assignment = await storage.assignTraineeToSupervisor(supervisorId, traineeId, institution);
+      
+      res.json({
+        success: true,
+        message: "Trainee assigned successfully",
+        assignment
+      });
+    } catch (error) {
+      console.error("Error assigning trainee:", error);
+      res.status(500).json({ message: "Failed to assign trainee" });
+    }
+  });
+
   // Create supervisor scenario
   app.post("/api/supervisor/scenarios", requireSupervisor, async (req: any, res) => {
     try {
       const supervisorId = req.user.id;
+      const { scenarioId, targetTraineeId, assignmentInstructions, dueDate, priorityLevel, learningObjectives, assessmentCriteria, completionRequired } = req.body;
       
-      // TODO: Validate scenario data  
-      // TODO: Create scenario and supervisor assignment
+      if (!scenarioId) {
+        return res.status(400).json({ message: "Scenario ID is required" });
+      }
+
+      // Verify scenario exists
+      const scenario = await storage.getPharmacyScenario(scenarioId);
+      if (!scenario) {
+        return res.status(400).json({ message: "Invalid scenario ID" });
+      }
+
+      // If targetTraineeId provided, verify supervisor has access
+      if (targetTraineeId) {
+        const assignedTrainees = await storage.getAssignedTrainees(supervisorId);
+        const isAssigned = assignedTrainees.some(assignment => assignment.traineeId === targetTraineeId);
+        
+        if (!isAssigned) {
+          return res.status(403).json({ message: "Access denied: Trainee not assigned to you" });
+        }
+      }
+
+      const scenarioData = {
+        supervisorId,
+        scenarioId,
+        targetTraineeId,
+        assignmentInstructions,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        priorityLevel: priorityLevel || 'medium',
+        learningObjectives: learningObjectives || [],
+        assessmentCriteria: assessmentCriteria || [],
+        completionRequired: completionRequired || false
+      };
+
+      const supervisorScenario = await storage.createSupervisorScenario(scenarioData);
       
       res.json({
         success: true,
-        message: "Scenario created successfully"
+        message: "Scenario assigned successfully",
+        scenario: supervisorScenario
       });
     } catch (error) {
       console.error("Error creating supervisor scenario:", error);
@@ -1704,8 +1810,30 @@ This format helps students learn from expert examples before progressing. Focus 
     try {
       const studentId = req.user.id;
       
-      // TODO: Implement assigned scenario queries
-      const assignedScenarios: any[] = [];
+      // Find supervisor scenarios assigned to this student
+      const assignedScenarios = await db
+        .select({
+          id: supervisorScenarios.id,
+          scenarioId: supervisorScenarios.scenarioId,
+          supervisorId: supervisorScenarios.supervisorId,
+          assignmentInstructions: supervisorScenarios.assignmentInstructions,
+          dueDate: supervisorScenarios.dueDate,
+          priorityLevel: supervisorScenarios.priorityLevel,
+          learningObjectives: supervisorScenarios.learningObjectives,
+          assessmentCriteria: supervisorScenarios.assessmentCriteria,
+          completionRequired: supervisorScenarios.completionRequired,
+          createdAt: supervisorScenarios.createdAt,
+          scenarioTitle: pharmacyScenarios.title,
+          scenarioModule: pharmacyScenarios.module,
+          scenarioTherapeuticArea: pharmacyScenarios.therapeuticArea,
+          supervisorFirstName: users.firstName,
+          supervisorLastName: users.lastName,
+          supervisorEmail: users.email
+        })
+        .from(supervisorScenarios)
+        .innerJoin(pharmacyScenarios, eq(pharmacyScenarios.id, supervisorScenarios.scenarioId))
+        .innerJoin(users, eq(users.id, supervisorScenarios.supervisorId))
+        .where(eq(supervisorScenarios.targetTraineeId, studentId));
 
       res.json(assignedScenarios);
     } catch (error) {
@@ -1719,8 +1847,7 @@ This format helps students learn from expert examples before progressing. Focus 
     try {
       const studentId = req.user.id;
       
-      // TODO: Implement feedback history queries
-      const feedbackHistory: any[] = [];
+      const feedbackHistory = await storage.getTraineeFeedback(studentId);
 
       res.json(feedbackHistory);
     } catch (error) {
