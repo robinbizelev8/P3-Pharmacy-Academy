@@ -28,23 +28,20 @@ describe('SupervisorDashboard Simple Tests', () => {
   it('should generate correct URLs for different tabs', () => {
     const currentPath = '/supervisor/dashboard';
     
+    const generateTabUrl = (tab: string) => {
+      return tab === 'overview' 
+        ? currentPath 
+        : `${currentPath}?tab=${tab}`;
+    };
+    
     // Test overview tab (should not have query params)
-    const overviewUrl = 'overview' === 'overview' 
-      ? currentPath 
-      : `${currentPath}?tab=overview`;
-    expect(overviewUrl).toBe('/supervisor/dashboard');
+    expect(generateTabUrl('overview')).toBe('/supervisor/dashboard');
 
     // Test trainees tab (should have query params)
-    const traineesUrl = 'trainees' === 'overview' 
-      ? currentPath 
-      : `${currentPath}?tab=trainees`;
-    expect(traineesUrl).toBe('/supervisor/dashboard?tab=trainees');
+    expect(generateTabUrl('trainees')).toBe('/supervisor/dashboard?tab=trainees');
 
     // Test analytics tab (should have query params)
-    const analyticsUrl = 'analytics' === 'overview' 
-      ? currentPath 
-      : `${currentPath}?tab=analytics`;
-    expect(analyticsUrl).toBe('/supervisor/dashboard?tab=analytics');
+    expect(generateTabUrl('analytics')).toBe('/supervisor/dashboard?tab=analytics');
   });
 
   it('should validate tab handling logic', () => {

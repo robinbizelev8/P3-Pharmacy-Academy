@@ -142,8 +142,8 @@ export function PharmacyNavigation() {
           const currentParams = new URLSearchParams(currentQuery || '');
           
           // Check if all item params are present in current params
-          for (const [key, value] of itemParams) {
-            if (currentParams.get(key) !== value) {
+          for (const key of Array.from(itemParams.keys())) {
+            if (currentParams.get(key) !== itemParams.get(key)) {
               return false;
             }
           }
