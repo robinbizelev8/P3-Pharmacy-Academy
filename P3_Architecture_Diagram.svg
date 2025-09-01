@@ -1,0 +1,206 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="frontendGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#1D4ED8;stop-opacity:0.1" />
+    </linearGradient>
+    <linearGradient id="backendGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#047857;stop-opacity:0.1" />
+    </linearGradient>
+    <linearGradient id="dbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#5B21B6;stop-opacity:0.1" />
+    </linearGradient>
+    <linearGradient id="aiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F59E0B;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#D97706;stop-opacity:0.1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="900" fill="#F8FAFC"/>
+  
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1F2937">P³ Pharmacy Academy - System Architecture</text>
+  
+  <!-- User Layer -->
+  <rect x="50" y="80" width="1100" height="80" rx="10" fill="#EEF2FF" stroke="#3B82F6" stroke-width="2"/>
+  <text x="600" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1F2937">User Interface Layer</text>
+  
+  <!-- Students -->
+  <rect x="150" y="125" width="120" height="25" rx="5" fill="#3B82F6" />
+  <text x="210" y="142" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Students</text>
+  
+  <!-- Supervisors -->
+  <rect x="320" y="125" width="120" height="25" rx="5" fill="#10B981" />
+  <text x="380" y="142" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Supervisors</text>
+  
+  <!-- Admin -->
+  <rect x="490" y="125" width="120" height="25" rx="5" fill="#8B5CF6" />
+  <text x="550" y="142" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Admin</text>
+  
+  <!-- Browser -->
+  <rect x="770" y="125" width="280" height="25" rx="5" fill="#6B7280" />
+  <text x="910" y="142" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">Web Browser (Desktop/Mobile)</text>
+  
+  <!-- Frontend Layer -->
+  <rect x="50" y="200" width="550" height="300" rx="10" fill="url(#frontendGrad)" stroke="#3B82F6" stroke-width="2"/>
+  <text x="325" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1F2937">Frontend (React 18 + TypeScript)</text>
+  
+  <!-- React Components -->
+  <rect x="70" y="250" width="160" height="120" rx="5" fill="white" stroke="#3B82F6"/>
+  <text x="150" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">UI Components</text>
+  <text x="80" y="290" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Shadcn/ui (Radix)</text>
+  <text x="80" y="305" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Tailwind CSS</text>
+  <text x="80" y="320" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Custom Design System</text>
+  <text x="80" y="335" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Progressive Disclosure</text>
+  <text x="80" y="350" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Accessibility Focus</text>
+  
+  <!-- State Management -->
+  <rect x="250" y="250" width="160" height="120" rx="5" fill="white" stroke="#3B82F6"/>
+  <text x="330" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">State Management</text>
+  <text x="260" y="290" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• React Context</text>
+  <text x="260" y="305" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• TanStack Query</text>
+  <text x="260" y="320" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Session State</text>
+  <text x="260" y="335" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Server State</text>
+  
+  <!-- Routing & Forms -->
+  <rect x="430" y="250" width="160" height="120" rx="5" fill="white" stroke="#3B82F6"/>
+  <text x="510" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">Routing & Forms</text>
+  <text x="440" y="290" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Wouter (Client Routing)</text>
+  <text x="440" y="305" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• React Hook Form</text>
+  <text x="440" y="320" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Zod Validation</text>
+  <text x="440" y="335" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Type Safety</text>
+  
+  <!-- Build Tools -->
+  <rect x="70" y="390" width="520" height="90" rx="5" fill="white" stroke="#3B82F6"/>
+  <text x="330" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">Build & Development Tools</text>
+  <text x="80" y="430" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Vite (Build Tool & Dev Server) • TypeScript (Type Safety) • Hot Module Replacement (HMR)</text>
+  <text x="80" y="445" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Server-Side Rendering (SSR) • Progressive Web App (PWA) Ready • Multi-language Support (10 SEA Languages)</text>
+  <text x="80" y="460" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Three-Stage Learning Framework: Prepare → Practice → Perform</text>
+  
+  <!-- Backend Layer -->
+  <rect x="650" y="200" width="500" height="300" rx="10" fill="url(#backendGrad)" stroke="#10B981" stroke-width="2"/>
+  <text x="900" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1F2937">Backend (Node.js + Express.js)</text>
+  
+  <!-- API Layer -->
+  <rect x="670" y="250" width="200" height="120" rx="5" fill="white" stroke="#10B981"/>
+  <text x="770" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">RESTful API</text>
+  <text x="680" y="290" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• TypeScript + ES Modules</text>
+  <text x="680" y="305" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Structured Error Handling</text>
+  <text x="680" y="320" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• JWT Authentication</text>
+  <text x="680" y="335" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Role-based Access Control</text>
+  <text x="680" y="350" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Session Management</text>
+  
+  <!-- Business Logic -->
+  <rect x="890" y="250" width="240" height="120" rx="5" fill="white" stroke="#10B981"/>
+  <text x="1010" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">Core Services</text>
+  <text x="900" y="290" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Competency Assessment Engine</text>
+  <text x="900" y="305" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Progress Tracking System</text>
+  <text x="900" y="320" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Portfolio Development</text>
+  <text x="900" y="335" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Clinical Scenario Generation</text>
+  <text x="900" y="350" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Multi-stage Training Support</text>
+  
+  <!-- Session & Auth -->
+  <rect x="670" y="390" width="460" height="90" rx="5" fill="white" stroke="#10B981"/>
+  <text x="900" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">Authentication & Session Management</text>
+  <text x="680" y="430" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Replit Auth Integration • PostgreSQL Session Store (connect-pg-simple)</text>
+  <text x="680" y="445" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Multi-stage Training Progress Auto-save • Secure JWT Token Management</text>
+  <text x="680" y="460" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Role-based Access (Student/Supervisor/Admin) • Singapore Healthcare Authority Compliance</text>
+  
+  <!-- Database Layer -->
+  <rect x="50" y="540" width="400" height="200" rx="10" fill="url(#dbGrad)" stroke="#8B5CF6" stroke-width="2"/>
+  <text x="250" y="570" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1F2937">Database Layer</text>
+  
+  <!-- PostgreSQL -->
+  <rect x="70" y="590" width="180" height="130" rx="5" fill="white" stroke="#8B5CF6"/>
+  <text x="160" y="610" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">PostgreSQL + Neon</text>
+  <text x="80" y="630" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Serverless Connection Pool</text>
+  <text x="80" y="645" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Users & Roles</text>
+  <text x="80" y="660" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Competency Assessments</text>
+  <text x="80" y="675" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Learning Resources</text>
+  <text x="80" y="690" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Progress Tracking</text>
+  <text x="80" y="705" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Sessions & Messages</text>
+  
+  <!-- ORM -->
+  <rect x="270" y="590" width="160" height="130" rx="5" fill="white" stroke="#8B5CF6"/>
+  <text x="350" y="610" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">Drizzle ORM</text>
+  <text x="280" y="630" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Type-safe Operations</text>
+  <text x="280" y="645" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Schema Validation</text>
+  <text x="280" y="660" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Migration Management</text>
+  <text x="280" y="675" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Competency Analytics</text>
+  <text x="280" y="690" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Portfolio Tracking</text>
+  <text x="280" y="705" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Real-time Queries</text>
+  
+  <!-- AI Services Layer -->
+  <rect x="490" y="540" width="400" height="200" rx="10" fill="url(#aiGrad)" stroke="#F59E0B" stroke-width="2"/>
+  <text x="690" y="570" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1F2937">AI & External Services</text>
+  
+  <!-- OpenAI -->
+  <rect x="510" y="590" width="180" height="130" rx="5" fill="white" stroke="#F59E0B"/>
+  <text x="600" y="610" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">OpenAI GPT-4o</text>
+  <text x="520" y="630" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Clinical Coaching</text>
+  <text x="520" y="645" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Dynamic Case Generation</text>
+  <text x="520" y="660" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Real-time Feedback</text>
+  <text x="520" y="675" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Therapeutic Area Focus</text>
+  <text x="520" y="690" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Medical Accuracy</text>
+  <text x="520" y="705" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Singapore Standards</text>
+  
+  <!-- Claude/Sealion -->
+  <rect x="710" y="590" width="160" height="130" rx="5" fill="white" stroke="#F59E0B"/>
+  <text x="790" y="610" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">Claude AI + Sealion</text>
+  <text x="720" y="630" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Multi-language Support</text>
+  <text x="720" y="645" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• SEA Language Processing</text>
+  <text x="720" y="660" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Structured Feedback</text>
+  <text x="720" y="675" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Model Answers</text>
+  <text x="720" y="690" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Learning Tips</text>
+  <text x="720" y="705" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Cultural Context</text>
+  
+  <!-- External Services -->
+  <rect x="920" y="540" width="230" height="200" rx="10" fill="#F3F4F6" stroke="#6B7280" stroke-width="2"/>
+  <text x="1035" y="570" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1F2937">External Resources</text>
+  
+  <rect x="940" y="590" width="190" height="130" rx="5" fill="white" stroke="#6B7280"/>
+  <text x="1035" y="610" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1F2937">Singapore Healthcare</text>
+  <text x="950" y="630" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• MOH Clinical Guidelines</text>
+  <text x="950" y="645" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• HSA Drug Information</text>
+  <text x="950" y="660" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• SPC Requirements</text>
+  <text x="950" y="675" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Competency Standards</text>
+  <text x="950" y="690" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• Evidence-based Content</text>
+  <text x="950" y="705" font-family="Arial, sans-serif" font-size="10" fill="#4B5563">• 7 Therapeutic Areas</text>
+  
+  <!-- Data Flow Arrows -->
+  <!-- User to Frontend -->
+  <path d="M 600 160 L 600 180" stroke="#3B82F6" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Frontend to Backend -->
+  <path d="M 600 250 L 650 250" stroke="#10B981" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Backend to Database -->
+  <path d="M 670 390 L 250 540" stroke="#8B5CF6" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Backend to AI -->
+  <path d="M 900 390 L 690 540" stroke="#F59E0B" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Backend to External -->
+  <path d="M 1000 390 L 1035 540" stroke="#6B7280" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#374151"/>
+    </marker>
+  </defs>
+  
+  <!-- Key Features Box -->
+  <rect x="50" y="780" width="1100" height="100" rx="10" fill="#F0FDF4" stroke="#22C55E" stroke-width="2"/>
+  <text x="600" y="805" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1F2937">Key Platform Features</text>
+  <text x="70" y="825" font-family="Arial, sans-serif" font-size="12" fill="#15803D">• Three-Stage Learning: Prepare → Practice → Perform</text>
+  <text x="70" y="845" font-family="Arial, sans-serif" font-size="12" fill="#15803D">• Dynamic Clinical Scenarios across 7 Therapeutic Areas</text>
+  <text x="70" y="865" font-family="Arial, sans-serif" font-size="12" fill="#15803D">• Real-time AI Coaching with Structured Feedback (Feedback, Model Answer, Learning Tip)</text>
+  
+  <text x="650" y="825" font-family="Arial, sans-serif" font-size="12" fill="#15803D">• Multi-language Support (10 Southeast Asian Languages)</text>
+  <text x="650" y="845" font-family="Arial, sans-serif" font-size="12" fill="#15803D">• Singapore Pre-registration Training Compliance</text>
+  <text x="650" y="865" font-family="Arial, sans-serif" font-size="12" fill="#15803D">• Comprehensive Portfolio Development & Progress Tracking</text>
+</svg>
