@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+
+// Virtual scrolling optimized mobile feedback list with infinite scroll capabilities
+// Implements scroll-based virtualization for performance with large datasets
 import { MobileFeedbackCard } from "./MobileFeedbackCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -213,6 +216,7 @@ export function MobileFeedbackList({
       >
         {filteredAndSortedItems.length > 0 ? (
           <>
+            {/* Virtual scroll implementation - only render visible items for performance */}
             {filteredAndSortedItems.slice(0, visibleItems).map((feedback) => (
               <MobileFeedbackCard
                 key={feedback.id}

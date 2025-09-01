@@ -10,7 +10,7 @@ import { execSync } from 'child_process';
 console.log('🚀 Starting Comprehensive Feedback System Tests...\n');
 
 // Test Configuration
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'http://localhost:5001';
 const DEV_USER_ID = 'dad80070-7b95-4380-bbfa-d56ccc6f4f98';
 
 // Test Results Tracker
@@ -86,11 +86,11 @@ async function testAnalyticsEndpoints(devUser) {
     return;
   }
   
-  // Test analytics endpoint (will be protected, should return HTML for unauthenticated)
+  // Test analytics endpoint (will be protected, should return 401 status)
   const { data: analyticsResponse, status: analyticsStatus } = await makeRequest(`/api/supervisor/analytics/${devUser.id}`);
   
-  // Since endpoint is protected, we expect HTML response (401 redirect to login)
-  const isProtected = typeof analyticsResponse === 'string' && analyticsResponse.includes('html');
+  // Since endpoint is protected, we expect 401 status for unauthenticated requests
+  const isProtected = analyticsStatus === 401;
   logTest('Analytics endpoint is properly protected', isProtected, `Status: ${analyticsStatus}`);
   
   // Test invalid analytics endpoint
@@ -101,14 +101,14 @@ async function testAnalyticsEndpoints(devUser) {
 async function testFeedbackEndpoints(devUser) {
   logSection('FEEDBACK API TESTS');
   
-  // Test student feedback endpoint (protected)
+  // Test student feedback endpoint (protected) - should return 401
   const { data: feedbackResponse, status: feedbackStatus } = await makeRequest('/api/student/feedback');
-  const isFeedbackProtected = typeof feedbackResponse === 'string' && feedbackResponse.includes('html');
+  const isFeedbackProtected = feedbackStatus === 401;
   logTest('Student feedback endpoint is protected', isFeedbackProtected, `Status: ${feedbackStatus}`);
   
-  // Test supervisor feedback endpoint (protected)
+  // Test supervisor feedback endpoint (protected) - should return 401
   const { data: supFeedbackResponse, status: supFeedbackStatus } = await makeRequest('/api/supervisor/feedback');
-  const isSupFeedbackProtected = typeof supFeedbackResponse === 'string' && supFeedbackResponse.includes('html');
+  const isSupFeedbackProtected = supFeedbackStatus === 401;
   logTest('Supervisor feedback endpoint is protected', isSupFeedbackProtected, `Status: ${supFeedbackStatus}`);
   
   // Test feedback response submission (protected)
@@ -353,7 +353,7 @@ async function runAllTests() {
   
   console.log('\n🔗 Next Steps:');
   console.log('   1. Review any failed tests above');
-  console.log('   2. Test the UI manually in browser at http://localhost:5000');
+  console.log('   2. Test the UI manually in browser at http://localhost:5001');
   console.log('   3. Test mobile responsiveness with browser dev tools');
   console.log('   4. Verify analytics dashboard functionality');
   console.log('   5. Test supervisor-student feedback flow end-to-end');

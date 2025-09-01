@@ -1,4 +1,7 @@
 import { useState } from "react";
+
+// Mobile-optimized feedback card with touch-friendly interactions
+// Features: touch-manipulation, 44px minimum touch targets, active states
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -121,12 +124,12 @@ export function MobileFeedbackCard({ feedback, onSubmitResponse, userRole }: Mob
             </div>
           </div>
           
-          {/* Mobile Action Button */}
+          {/* Mobile Touch-Optimized Action Button */}
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="ml-2 p-2"
+            className="ml-2 p-2 touch-manipulation min-h-[44px] min-w-[44px] hover:bg-gray-100 active:bg-gray-200"
           >
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </Button>
@@ -331,7 +334,7 @@ export function MobileFeedbackCard({ feedback, onSubmitResponse, userRole }: Mob
                     <Button
                       onClick={handleSubmitResponse}
                       disabled={!responseText.trim() || isSubmitting}
-                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3"
+                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:from-green-800 active:to-emerald-800 text-white py-3 touch-manipulation min-h-[44px]"
                     >
                       {isSubmitting ? (
                         <>

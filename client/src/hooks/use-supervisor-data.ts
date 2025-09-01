@@ -16,7 +16,7 @@ async function fetchWithAuth(url: string) {
 
 export function useSupervisorDashboard(supervisorId: string | undefined) {
   return useQuery({
-    queryKey: ["supervisor", "dashboard", supervisorId],
+    queryKey: ["supervisor", "dashboard", supervisorId || 'no-id'],
     queryFn: () => fetchWithAuth('/api/supervisor/dashboard'),
     enabled: !!supervisorId,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -26,7 +26,7 @@ export function useSupervisorDashboard(supervisorId: string | undefined) {
 
 export function useAssignedTrainees(supervisorId: string | undefined) {
   return useQuery({
-    queryKey: ["supervisor", "trainees", supervisorId],
+    queryKey: ["supervisor", "trainees", supervisorId || 'no-id'],
     queryFn: () => fetchWithAuth('/api/supervisor/trainees'),
     enabled: !!supervisorId,
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -36,8 +36,8 @@ export function useAssignedTrainees(supervisorId: string | undefined) {
 
 export function useTraineeProgress(traineeId: string | undefined) {
   return useQuery({
-    queryKey: ["supervisor", "trainee-progress", traineeId],
-    queryFn: () => fetchWithAuth(`/api/supervisor/trainee/${traineeId}/progress`),
+    queryKey: ["supervisor", "trainee-progress", traineeId || 'no-id'],
+    queryFn: () => fetchWithAuth(`/api/supervisor/trainee/${traineeId || 'no-id'}/progress`),
     enabled: !!traineeId,
     staleTime: 1 * 60 * 1000, // 1 minute
     retry: 2,
@@ -46,8 +46,8 @@ export function useTraineeProgress(traineeId: string | undefined) {
 
 export function useSupervisorFeedback(supervisorId: string | undefined, traineeId?: string) {
   const queryKey = traineeId 
-    ? ["supervisor", "feedback", supervisorId, traineeId]
-    : ["supervisor", "feedback", supervisorId];
+    ? ["supervisor", "feedback", supervisorId || 'no-id', traineeId]
+    : ["supervisor", "feedback", supervisorId || 'no-id'];
     
   return useQuery({
     queryKey,
@@ -64,7 +64,7 @@ export function useSupervisorFeedback(supervisorId: string | undefined, traineeI
 
 export function useSupervisorScenarios(supervisorId: string | undefined) {
   return useQuery({
-    queryKey: ["supervisor", "scenarios", supervisorId],
+    queryKey: ["supervisor", "scenarios", supervisorId || 'no-id'],
     queryFn: () => fetchWithAuth('/api/supervisor/scenarios'),
     enabled: !!supervisorId,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -73,7 +73,7 @@ export function useSupervisorScenarios(supervisorId: string | undefined) {
 
 export function useSupervisorAnalytics(supervisorId: string | undefined) {
   return useQuery({
-    queryKey: ["supervisor", "analytics", supervisorId],
+    queryKey: ["supervisor", "analytics", supervisorId || 'no-id'],
     queryFn: () => fetchWithAuth('/api/supervisor/analytics'),
     enabled: !!supervisorId,
     staleTime: 10 * 60 * 1000, // 10 minutes
