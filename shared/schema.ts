@@ -898,7 +898,7 @@ export const traineeAssignmentsRelations = relations(traineeAssignments, ({ one 
   }),
 }));
 
-export const supervisorFeedbackRelations = relations(supervisorFeedback, ({ one }) => ({
+export const supervisorFeedbackRelations = relations(supervisorFeedback, ({ one, many }) => ({
   supervisor: one(users, {
     fields: [supervisorFeedback.supervisorId],
     references: [users.id],
@@ -910,6 +910,28 @@ export const supervisorFeedbackRelations = relations(supervisorFeedback, ({ one 
   session: one(pharmacySessions, {
     fields: [supervisorFeedback.sessionId],
     references: [pharmacySessions.id],
+  }),
+  responses: many(feedbackResponses),
+}));
+
+// Student responses to supervisor feedback
+export const feedbackResponses = pgTable('feedback_responses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  feedbackId: uuid('feedback_id').notNull().references(() => supervisorFeedback.id, { onDelete: 'cascade' }),
+  studentId: varchar('student_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  responseText: text('response_text').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+export const feedbackResponsesRelations = relations(feedbackResponses, ({ one }) => ({
+  feedback: one(supervisorFeedback, {
+    fields: [feedbackResponses.feedbackId],
+    references: [supervisorFeedback.id],
+  }),
+  student: one(users, {
+    fields: [feedbackResponses.studentId],
+    references: [users.id],
   }),
 }));
 
@@ -945,6 +967,12 @@ export const insertSupervisorScenarioSchema = createInsertSchema(supervisorScena
   createdAt: true,
 });
 
+export const insertFeedbackResponseSchema = createInsertSchema(feedbackResponses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types for new tables
 export type InsertTraineeAssignment = z.infer<typeof insertTraineeAssignmentSchema>;
 export type TraineeAssignment = typeof traineeAssignments.$inferSelect;
@@ -952,6 +980,8 @@ export type InsertSupervisorFeedback = z.infer<typeof insertSupervisorFeedbackSc
 export type SupervisorFeedback = typeof supervisorFeedback.$inferSelect;
 export type InsertSupervisorScenario = z.infer<typeof insertSupervisorScenarioSchema>;
 export type SupervisorScenario = typeof supervisorScenarios.$inferSelect;
+export type InsertFeedbackResponse = z.infer<typeof insertFeedbackResponseSchema>;
+export type FeedbackResponse = typeof feedbackResponses.$inferSelect;
 
 // Enhanced types for API responses
 export type TraineeAssignmentWithDetails = TraineeAssignment & {

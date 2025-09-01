@@ -4,6 +4,8 @@ import { TraineeProgressModal } from "@/components/supervisor/TraineeProgressMod
 import { FeedbackModal } from "@/components/supervisor/FeedbackModal";
 import { AssignScenarioModal } from "@/components/supervisor/AssignScenarioModal";
 import { ManageTraineesModal } from "@/components/supervisor/ManageTraineesModal";
+import { StudentResponsesView } from "@/components/supervisor/StudentResponsesView";
+import { FeedbackAnalytics } from "@/components/supervisor/FeedbackAnalytics";
 import { 
   useSupervisorDashboard, 
   useAssignedTrainees, 
@@ -294,10 +296,11 @@ export default function SupervisorDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="trainees">Trainees</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="scenarios">Scenarios</TabsTrigger>
           </TabsList>
 
@@ -463,16 +466,29 @@ export default function SupervisorDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <MessageSquare className="w-5 h-5 mr-2" />
-                  Review Queue
+                  Student Feedback Responses
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No pending reviews</h3>
-                  <p className="text-gray-600">
-                    Reviews will appear here when trainees complete scenarios or assessments
-                  </p>
+              <CardContent className="p-0">
+                <div className="p-6">
+                  <StudentResponsesView supervisorId={user?.id || ''} />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <TrendingUp className="w-5 h-5 mr-2" />
+                  Feedback Analytics & Insights
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="p-6">
+                  <FeedbackAnalytics supervisorId={user?.id || ''} />
                 </div>
               </CardContent>
             </Card>

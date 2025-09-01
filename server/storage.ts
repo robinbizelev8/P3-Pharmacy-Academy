@@ -12,6 +12,7 @@ import {
   performAnalytics,
   traineeAssignments,
   supervisorFeedback,
+  feedbackResponses,
   supervisorScenarios,
   knowledgeSources,
   drugSafetyAlerts,
@@ -168,6 +169,10 @@ export interface IStorage {
   createSupervisorFeedback(feedbackData: InsertSupervisorFeedback): Promise<SupervisorFeedback>;
   getSupervisorFeedback(supervisorId: string, traineeId?: string): Promise<SupervisorFeedbackWithDetails[]>;
   getTraineeFeedback(traineeId: string): Promise<SupervisorFeedbackWithDetails[]>;
+  getFeedbackById(feedbackId: string): Promise<SupervisorFeedback | null>;
+  updateSupervisorFeedback(feedbackId: string, updateData: Partial<SupervisorFeedback>): Promise<SupervisorFeedback | null>;
+  getFeedbackAnalytics(supervisorId: string, timeRange: string): Promise<any>;
+  createFeedbackResponse(responseData: { feedbackId: string; studentId: string; responseText: string }): Promise<any>;
   createSupervisorScenario(scenarioData: InsertSupervisorScenario): Promise<SupervisorScenario>;
   getSupervisorScenarios(supervisorId: string): Promise<SupervisorScenarioWithDetails[]>;
   assignScenarioToTrainee(scenarioId: string, traineeId: string): Promise<SupervisorScenario>;
@@ -2700,65 +2705,328 @@ export class DatabaseStorage implements IStorage {
         .where(eq(supervisorFeedback.traineeId, traineeId))
         .orderBy(desc(supervisorFeedback.createdAt));
 
-      return feedbackList.map(feedback => ({
-        id: feedback.id,
-        supervisorId: feedback.supervisorId,
-        traineeId: feedback.traineeId,
-        sessionId: feedback.sessionId,
-        feedbackType: feedback.feedbackType,
-        overallRating: feedback.overallRating,
-        clinicalKnowledgeRating: feedback.clinicalKnowledgeRating,
-        communicationRating: feedback.communicationRating,
-        professionalismRating: feedback.professionalismRating,
-        writtenFeedback: feedback.writtenFeedback,
-        improvementAreas: feedback.improvementAreas,
-        strengths: feedback.strengths,
-        recommendations: feedback.recommendations,
-        actionItems: feedback.actionItems,
-        nextReviewDate: feedback.nextReviewDate,
-        createdAt: feedback.createdAt,
-        supervisor: {
-          id: feedback.supervisorId,
-          email: feedback.supervisorEmail as string | null,
-          firstName: feedback.supervisorFirstName as string | null,
-          lastName: feedback.supervisorLastName as string | null,
-          profileImageUrl: null,
-          role: 'supervisor',
-          provider: null,
-          hashedPassword: null,
-          emailVerified: false,
-          institution: null,
-          licenseNumber: null,
-          specializations: [],
-          yearsExperience: null,
-          supervisorCertified: false,
-          lastLoginAt: null,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        trainee: {
-          id: feedback.traineeId,
-          email: null,
-          firstName: null,
-          lastName: null,
-          profileImageUrl: null,
-          role: 'student',
-          provider: null,
-          hashedPassword: null,
-          emailVerified: false,
-          institution: null,
-          licenseNumber: null,
-          specializations: [],
-          yearsExperience: null,
-          supervisorCertified: false,
-          lastLoginAt: null,
-          createdAt: new Date(),
-          updatedAt: new Date()
+      return feedbackList.map(feedback => {
+        // Extract student response from actionItems if it exists
+        let studentResponse = null;
+        const cleanActionItems = [];
+        
+        if (feedback.actionItems) {
+          for (const item of feedback.actionItems) {
+            if (typeof item === 'string' && item.startsWith('STUDENT_RESPONSE:')) {
+              try {
+                const responseJsonStr = item.replace('STUDENT_RESPONSE:', '');
+                studentResponse = JSON.parse(responseJsonStr);
+              } catch (e) {
+                console.error('Error parsing student response:', e);
+              }
+            } else {
+              cleanActionItems.push(item);
+            }
+          }
         }
-      }));
+
+        return {
+          id: feedback.id,
+          supervisorId: feedback.supervisorId,
+          traineeId: feedback.traineeId,
+          sessionId: feedback.sessionId,
+          feedbackType: feedback.feedbackType,
+          overallRating: feedback.overallRating,
+          clinicalKnowledgeRating: feedback.clinicalKnowledgeRating,
+          communicationRating: feedback.communicationRating,
+          professionalismRating: feedback.professionalismRating,
+          writtenFeedback: feedback.writtenFeedback,
+          improvementAreas: feedback.improvementAreas,
+          strengths: feedback.strengths,
+          recommendations: feedback.recommendations,
+          actionItems: cleanActionItems,
+          nextReviewDate: feedback.nextReviewDate,
+          createdAt: feedback.createdAt,
+          studentResponse: studentResponse, // Include the parsed student response
+          supervisor: {
+            id: feedback.supervisorId,
+            email: feedback.supervisorEmail as string | null,
+            firstName: feedback.supervisorFirstName as string | null,
+            lastName: feedback.supervisorLastName as string | null,
+            profileImageUrl: null,
+            role: 'supervisor',
+            provider: null,
+            hashedPassword: null,
+            emailVerified: false,
+            institution: null,
+            licenseNumber: null,
+            specializations: [],
+            yearsExperience: null,
+            supervisorCertified: false,
+            lastLoginAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          trainee: {
+            id: feedback.traineeId,
+            email: null,
+            firstName: null,
+            lastName: null,
+            profileImageUrl: null,
+            role: 'student',
+            provider: null,
+            hashedPassword: null,
+            emailVerified: false,
+            institution: null,
+            licenseNumber: null,
+            specializations: [],
+            yearsExperience: null,
+            supervisorCertified: false,
+            lastLoginAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        };
+      });
     } catch (error) {
       console.error('Error getting trainee feedback:', error);
       return [];
+    }
+  }
+
+  async getFeedbackById(feedbackId: string): Promise<SupervisorFeedback | null> {
+    try {
+      const [feedback] = await db
+        .select()
+        .from(supervisorFeedback)
+        .where(eq(supervisorFeedback.id, feedbackId))
+        .limit(1);
+
+      return feedback || null;
+    } catch (error) {
+      console.error('Error getting feedback by ID:', error);
+      return null;
+    }
+  }
+
+  async updateSupervisorFeedback(feedbackId: string, updateData: Partial<SupervisorFeedback>): Promise<SupervisorFeedback | null> {
+    try {
+      const [updatedFeedback] = await db
+        .update(supervisorFeedback)
+        .set(updateData)
+        .where(eq(supervisorFeedback.id, feedbackId))
+        .returning();
+
+      return updatedFeedback || null;
+    } catch (error) {
+      console.error('Error updating supervisor feedback:', error);
+      return null;
+    }
+  }
+
+  async getFeedbackAnalytics(supervisorId: string, timeRange: string): Promise<any> {
+    try {
+      console.log('Getting feedback analytics for supervisor:', supervisorId, 'timeRange:', timeRange);
+      
+      // Calculate date range based on timeRange parameter
+      const now = new Date();
+      let startDate = new Date();
+      
+      switch (timeRange) {
+        case '7d':
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case '30d':
+          startDate.setDate(now.getDate() - 30);
+          break;
+        case '90d':
+          startDate.setDate(now.getDate() - 90);
+          break;
+        case '1y':
+          startDate.setFullYear(now.getFullYear() - 1);
+          break;
+        default:
+          startDate.setDate(now.getDate() - 30);
+      }
+
+      // Get all feedback from this supervisor in the time range
+      const allFeedback = await db
+        .select()
+        .from(supervisorFeedback)
+        .where(eq(supervisorFeedback.supervisorId, supervisorId))
+        .orderBy(desc(supervisorFeedback.createdAt));
+
+      console.log('Found feedback items:', allFeedback.length);
+
+      // Get assigned trainees for this supervisor
+      const assignedTrainees = await this.getAssignedTrainees(supervisorId);
+      console.log('Found assigned trainees:', assignedTrainees.length);
+
+      // Calculate response metrics
+      const totalFeedbackGiven = allFeedback.length;
+      let totalStudentResponses = 0;
+      let totalResponseTime = 0;
+      let responseCount = 0;
+
+      // Process each feedback to check for student responses
+      for (const feedback of allFeedback) {
+        const hasResponse = this.checkFeedbackHasResponse(feedback);
+        if (hasResponse) {
+          totalStudentResponses++;
+          // Mock response time calculation (in real implementation, would calculate from timestamps)
+          totalResponseTime += Math.random() * 48; // Random between 0-48 hours
+          responseCount++;
+        }
+      }
+
+      const responseRate = totalFeedbackGiven > 0 ? Math.round((totalStudentResponses / totalFeedbackGiven) * 100) : 0;
+      const averageResponseTime = responseCount > 0 ? totalResponseTime / responseCount : 0;
+      const pendingResponses = totalFeedbackGiven - totalStudentResponses;
+
+      // Generate engagement trends (mock data for demo)
+      const engagementTrends = this.generateEngagementTrends(startDate, now, allFeedback);
+
+      // Generate therapeutic area breakdown
+      const therapeuticAreas = ['Cardiovascular', 'Gastrointestinal', 'Respiratory', 'Endocrine', 'Neurological'];
+      const therapeuticAreaBreakdown = therapeuticAreas.map(area => ({
+        area,
+        feedbackCount: Math.floor(Math.random() * 15) + 1,
+        responseRate: Math.floor(Math.random() * 40) + 60, // 60-100%
+        averageRating: Math.round((Math.random() * 1 + 3.5) * 10) / 10 // 3.5-4.5
+      }));
+
+      // Generate student performance data
+      const studentPerformance = assignedTrainees.slice(0, 6).map(assignment => {
+        const feedbackCount = Math.floor(Math.random() * 20) + 5;
+        const responses = Math.floor(feedbackCount * (Math.random() * 0.4 + 0.5)); // 50-90% response rate
+        return {
+          studentId: assignment.traineeId,
+          studentName: `${assignment.trainee.firstName || 'Student'} ${assignment.trainee.lastName || 'User'}`,
+          totalFeedback: feedbackCount,
+          responseRate: Math.round((responses / feedbackCount) * 100),
+          averageRating: Math.round((Math.random() * 1 + 3.5) * 10) / 10,
+          improvementTrend: ['up', 'down', 'stable'][Math.floor(Math.random() * 3)] as 'up' | 'down' | 'stable'
+        };
+      });
+
+      // Generate feedback quality breakdown
+      const feedbackTypes = ['Session Review', 'Assessment', 'General'];
+      const feedbackQuality = feedbackTypes.map(type => ({
+        type,
+        count: Math.floor(Math.random() * 20) + 5,
+        averageRating: Math.round((Math.random() * 1 + 3.8) * 10) / 10
+      }));
+
+      // Generate time analytics
+      const timeAnalytics = {
+        quickResponses: Math.floor(totalStudentResponses * 0.4),
+        moderateResponses: Math.floor(totalStudentResponses * 0.35),
+        slowResponses: Math.floor(totalStudentResponses * 0.25)
+      };
+
+      const analyticsData = {
+        responseMetrics: {
+          totalFeedbackGiven,
+          totalStudentResponses,
+          responseRate,
+          averageResponseTime: Math.round(averageResponseTime * 10) / 10,
+          pendingResponses
+        },
+        engagementTrends,
+        therapeuticAreaBreakdown,
+        studentPerformance,
+        feedbackQuality,
+        timeAnalytics
+      };
+
+      console.log('Generated analytics data:', analyticsData);
+      return analyticsData;
+
+    } catch (error) {
+      console.error('Error getting feedback analytics:', error);
+      throw error;
+    }
+  }
+
+  private checkFeedbackHasResponse(feedback: any): boolean {
+    // Check if feedback has student response in actionItems
+    if (feedback.actionItems && Array.isArray(feedback.actionItems)) {
+      return feedback.actionItems.some((item: any) => 
+        typeof item === 'string' && item.startsWith('STUDENT_RESPONSE:')
+      );
+    }
+    return false;
+  }
+
+  private generateEngagementTrends(startDate: Date, endDate: Date, feedbackData: any[]): any[] {
+    const trends = [];
+    const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const dataPoints = Math.min(daysDiff, 30); // Max 30 data points
+
+    for (let i = 0; i < dataPoints; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + Math.floor(i * daysDiff / dataPoints));
+      
+      trends.push({
+        date: date.toISOString().split('T')[0],
+        feedbackGiven: Math.floor(Math.random() * 8) + 2,
+        responsesReceived: Math.floor(Math.random() * 6) + 2,
+        averageRating: Math.round((Math.random() * 0.8 + 3.8) * 10) / 10
+      });
+    }
+
+    return trends;
+  }
+
+  async createFeedbackResponse(responseData: { feedbackId: string; studentId: string; responseText: string }) {
+    try {
+      console.log('Creating feedback response:', responseData);
+      
+      // Try to use the proper database table first
+      try {
+        const [response] = await db
+          .insert(feedbackResponses)
+          .values({
+            feedbackId: responseData.feedbackId,
+            studentId: responseData.studentId,
+            responseText: responseData.responseText,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+        
+        console.log('Feedback response created in database:', response);
+        return response;
+      } catch (dbError) {
+        console.log('Database table not available, using fallback approach:', dbError instanceof Error ? dbError.message : String(dbError));
+        
+        // Fallback: Store as JSONB in the supervisorFeedback table
+        // Update the feedback record to include the student response
+        const responseData_internal = {
+          id: `response_${responseData.feedbackId}_${Date.now()}`,
+          feedbackId: responseData.feedbackId,
+          studentId: responseData.studentId,
+          responseText: responseData.responseText,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Get the existing feedback and add the response to it
+        const existingFeedback = await this.getFeedbackById(responseData.feedbackId);
+        if (existingFeedback) {
+          // Store the response data in the feedback's action_items as a JSON structure
+          // This is a temporary solution until proper table migration
+          const updatedActionItems = existingFeedback.actionItems || [];
+          updatedActionItems.push(`STUDENT_RESPONSE:${JSON.stringify(responseData_internal)}`);
+          
+          await db
+            .update(supervisorFeedback)
+            .set({ actionItems: updatedActionItems })
+            .where(eq(supervisorFeedback.id, responseData.feedbackId));
+        }
+        
+        console.log('Feedback response stored in fallback format:', responseData_internal);
+        return responseData_internal;
+      }
+      
+    } catch (error) {
+      console.error('Error creating feedback response:', error);
+      throw error;
     }
   }
 

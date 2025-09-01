@@ -1721,6 +1721,88 @@ This format helps students learn from expert examples before progressing. Focus 
     }
   });
 
+  // Get supervisor feedback with student responses
+  app.get("/api/supervisor/feedback/:supervisorId", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.params.supervisorId;
+      const requesterId = req.user.id;
+      
+      // Verify supervisor can only access their own feedback
+      if (supervisorId !== requesterId) {
+        return res.status(403).json({ message: "Access denied: Can only access your own feedback" });
+      }
+      
+      const feedback = await storage.getSupervisorFeedback(supervisorId);
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error fetching supervisor feedback with responses:", error);
+      res.status(500).json({ message: "Failed to fetch feedback data" });
+    }
+  });
+
+  // Submit supervisor reply to student response
+  app.post("/api/supervisor/feedback/reply", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.user.id;
+      const { feedbackId, replyText } = req.body;
+      
+      if (!feedbackId || !replyText?.trim()) {
+        return res.status(400).json({ message: "Feedback ID and reply text are required" });
+      }
+      
+      // Verify the feedback belongs to this supervisor
+      const feedback = await storage.getFeedbackById(feedbackId);
+      if (!feedback || feedback.supervisorId !== supervisorId) {
+        return res.status(403).json({ message: "Access denied: Feedback not found or not yours" });
+      }
+      
+      // For now, we'll append the supervisor reply to the feedback's recommendations field
+      // In a full implementation, this would be stored in a separate table
+      const updatedFeedback = {
+        ...feedback,
+        recommendations: feedback.recommendations 
+          ? `${feedback.recommendations}\n\n--- Supervisor Reply ---\n${replyText.trim()}`
+          : `--- Supervisor Reply ---\n${replyText.trim()}`
+      };
+      
+      // Update the feedback record (this is a simplified implementation)
+      await storage.updateSupervisorFeedback(feedbackId, {
+        recommendations: updatedFeedback.recommendations
+      });
+      
+      res.json({ 
+        success: true,
+        message: "Reply submitted successfully"
+      });
+    } catch (error) {
+      console.error("Error submitting supervisor reply:", error);
+      res.status(500).json({ 
+        error: "Failed to submit reply",
+        message: error instanceof Error ? error.message : "An error occurred"
+      });
+    }
+  });
+
+  // Get advanced feedback analytics for supervisor
+  app.get("/api/supervisor/analytics/:supervisorId", requireSupervisor, async (req: any, res) => {
+    try {
+      const supervisorId = req.params.supervisorId;
+      const requesterId = req.user.id;
+      const { timeRange = '30d' } = req.query;
+      
+      // Verify supervisor can only access their own analytics
+      if (supervisorId !== requesterId) {
+        return res.status(403).json({ message: "Access denied: Can only access your own analytics" });
+      }
+      
+      const analytics = await storage.getFeedbackAnalytics(supervisorId, timeRange as string);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching feedback analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics data" });
+    }
+  });
+
   // Assign trainee to supervisor
   app.post("/api/supervisor/assign-trainee", requireSupervisor, async (req: any, res) => {
     try {
@@ -1914,6 +1996,40 @@ This format helps students learn from expert examples before progressing. Focus 
     } catch (error) {
       console.error("Error fetching feedback history:", error);
       res.status(500).json({ message: "Failed to fetch feedback history" });
+    }
+  });
+
+  // Submit student response to supervisor feedback
+  app.post("/api/student/feedback/response", requireStudent, async (req: any, res) => {
+    try {
+      const studentId = req.user.id;
+      const { feedbackId, responseText } = req.body;
+
+      if (!feedbackId || !responseText?.trim()) {
+        return res.status(400).json({ message: "Feedback ID and response text are required" });
+      }
+
+      // Verify the feedback belongs to this student
+      const feedback = await storage.getFeedbackById(feedbackId);
+      if (!feedback || feedback.traineeId !== studentId) {
+        return res.status(403).json({ message: "Access denied: Feedback not found or not yours" });
+      }
+
+      // Create the response
+      const response = await storage.createFeedbackResponse({
+        feedbackId,
+        studentId,
+        responseText: responseText.trim()
+      });
+
+      res.json({
+        success: true,
+        message: "Response submitted successfully",
+        response
+      });
+    } catch (error) {
+      console.error("Error submitting feedback response:", error);
+      res.status(500).json({ message: "Failed to submit response" });
     }
   });
 

@@ -16,7 +16,12 @@
       "Bash(curl:*)",
       "Bash(npm install dotenv bcryptjs)",
       "Bash(npm run lint)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(grep:*)",
+      "Bash(netstat:*)",
+      "Bash(lsof:*)",
+      "Bash(npm install:*)",
+      "WebFetch(domain:localhost)"
     ],
     "deny": [],
     "ask": []

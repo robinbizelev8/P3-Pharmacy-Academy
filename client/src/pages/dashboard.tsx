@@ -443,7 +443,7 @@ export default function StudentDashboard() {
               </CardContent>
             </Card>
 
-            {/* Supervisor Feedback */}
+            {/* Supervisor Feedback - Enhanced Display */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -460,74 +460,171 @@ export default function StudentDashboard() {
               </CardHeader>
               <CardContent>
                 {(supervisorFeedback?.length ?? 0) > 0 ? (
-                  <div className="space-y-4">
-                    {(supervisorFeedback ?? []).slice(0, 3).map((feedback: any) => (
-                      <div key={feedback.id} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium text-blue-900">
-                              {feedback.supervisorName || 'Supervisor'}
-                            </span>
-                            <div className="flex items-center space-x-1">
-                              {[...Array(5)].map((_, i) => (
-                                <Star 
-                                  key={i} 
-                                  className={`w-3 h-3 ${i < (feedback.overallRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                                />
-                              ))}
+                  <div className="space-y-6">
+                    {(supervisorFeedback ?? []).slice(0, 2).map((feedback: any) => (
+                      <div key={feedback.id} className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 hover:shadow-sm transition-shadow">
+                        {/* Header with supervisor info and rating */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <User className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <span className="font-semibold text-blue-900">
+                                {feedback.supervisor?.firstName && feedback.supervisor?.lastName 
+                                  ? `${feedback.supervisor.firstName} ${feedback.supervisor.lastName}`
+                                  : feedback.supervisorName || 'Supervisor'}
+                              </span>
+                              <div className="flex items-center space-x-1 mt-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star 
+                                    key={i} 
+                                    className={`w-4 h-4 ${i < (feedback.overallRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                                  />
+                                ))}
+                                <span className="text-sm text-gray-600 ml-2">
+                                  ({feedback.overallRating || 'No rating'}/5)
+                                </span>
+                              </div>
                             </div>
                           </div>
-                          <span className="text-xs text-gray-500">
-                            {feedback.createdAt ? new Date(feedback.createdAt).toLocaleDateString() : 'Recently'}
-                          </span>
+                          <div className="text-right">
+                            <span className="text-sm text-gray-500">
+                              {feedback.createdAt ? new Date(feedback.createdAt).toLocaleDateString() : 'Recently'}
+                            </span>
+                            {feedback.feedbackType && (
+                              <div className="mt-1">
+                                <Badge variant="secondary" className="text-xs">
+                                  {feedback.feedbackType.replace('_', ' ').toUpperCase()}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        
-                        {feedback.scenarioTitle && (
-                          <p className="text-xs text-blue-700 mb-2 font-medium">
-                            Re: {feedback.scenarioTitle}
-                          </p>
-                        )}
-                        
-                        <p className="text-sm text-gray-700 mb-3">
-                          {feedback.feedbackText || feedback.strengths || 'General feedback provided'}
-                        </p>
-                        
-                        {feedback.recommendations && (
-                          <div className="mt-3 p-2 bg-yellow-50 rounded border border-yellow-200">
-                            <p className="text-xs font-medium text-yellow-800 mb-1">Recommendations:</p>
-                            <p className="text-xs text-yellow-700">{feedback.recommendations}</p>
+
+                        {/* Scenario context if available */}
+                        {(feedback.scenarioTitle || feedback.sessionId) && (
+                          <div className="mb-4 p-3 bg-white/60 rounded-md border border-blue-100">
+                            <p className="text-sm font-medium text-blue-800 flex items-center">
+                              <Target className="w-4 h-4 mr-2" />
+                              Context: {feedback.scenarioTitle || `Session #${feedback.sessionId}`}
+                            </p>
                           </div>
                         )}
                         
-                        {feedback.actionItems && feedback.actionItems.length > 0 && (
-                          <div className="mt-3">
-                            <p className="text-xs font-medium text-gray-700 mb-1">Action Items:</p>
-                            <ul className="text-xs text-gray-600 space-y-1">
-                              {feedback.actionItems.slice(0, 2).map((item: string, index: number) => (
-                                <li key={index} className="flex items-center">
-                                  <div className="w-1 h-1 bg-gray-400 rounded-full mr-2"></div>
-                                  {item}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
+                        {/* Main feedback content */}
+                        <div className="space-y-4">
+                          {feedback.writtenFeedback && (
+                            <div>
+                              <h4 className="font-medium text-gray-800 mb-2">Feedback:</h4>
+                              <p className="text-gray-700 leading-relaxed bg-white/60 p-3 rounded-md">
+                                {feedback.writtenFeedback}
+                              </p>
+                            </div>
+                          )}
+
+                          {feedback.strengths && (
+                            <div>
+                              <h4 className="font-medium text-green-800 mb-2 flex items-center">
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Strengths:
+                              </h4>
+                              <p className="text-green-700 bg-green-50/80 p-3 rounded-md leading-relaxed">
+                                {feedback.strengths}
+                              </p>
+                            </div>
+                          )}
+
+                          {feedback.improvementAreas && (
+                            <div>
+                              <h4 className="font-medium text-orange-800 mb-2 flex items-center">
+                                <TrendingUp className="w-4 h-4 mr-1" />
+                                Areas for Improvement:
+                              </h4>
+                              <p className="text-orange-700 bg-orange-50/80 p-3 rounded-md leading-relaxed">
+                                {feedback.improvementAreas}
+                              </p>
+                            </div>
+                          )}
+                        
+                          {feedback.recommendations && (
+                            <div>
+                              <h4 className="font-medium text-purple-800 mb-2 flex items-center">
+                                <Brain className="w-4 h-4 mr-1" />
+                                Recommendations:
+                              </h4>
+                              <p className="text-purple-700 bg-purple-50/80 p-3 rounded-md leading-relaxed">
+                                {feedback.recommendations}
+                              </p>
+                            </div>
+                          )}
+                        
+                          {feedback.actionItems && feedback.actionItems.length > 0 && (
+                            <div>
+                              <h4 className="font-medium text-gray-800 mb-2 flex items-center">
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Action Items:
+                              </h4>
+                              <ul className="space-y-2">
+                                {feedback.actionItems.slice(0, 3).map((item: string, index: number) => (
+                                  <li key={index} className="flex items-start bg-white/60 p-2 rounded">
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                                    <span className="text-gray-700">{item}</span>
+                                  </li>
+                                ))}
+                                {feedback.actionItems.length > 3 && (
+                                  <li className="text-sm text-gray-500 ml-5">
+                                    +{feedback.actionItems.length - 3} more items
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Detailed ratings if available */}
+                          {(feedback.clinicalKnowledgeRating || feedback.communicationRating || feedback.professionalismRating) && (
+                            <div className="border-t border-blue-200 pt-4 mt-4">
+                              <h4 className="font-medium text-gray-800 mb-3">Detailed Ratings:</h4>
+                              <div className="grid grid-cols-3 gap-4">
+                                {feedback.clinicalKnowledgeRating && (
+                                  <div className="text-center">
+                                    <p className="text-xs text-gray-600">Clinical Knowledge</p>
+                                    <p className="font-semibold text-blue-600">{feedback.clinicalKnowledgeRating}/5</p>
+                                  </div>
+                                )}
+                                {feedback.communicationRating && (
+                                  <div className="text-center">
+                                    <p className="text-xs text-gray-600">Communication</p>
+                                    <p className="font-semibold text-green-600">{feedback.communicationRating}/5</p>
+                                  </div>
+                                )}
+                                {feedback.professionalismRating && (
+                                  <div className="text-center">
+                                    <p className="text-xs text-gray-600">Professionalism</p>
+                                    <p className="font-semibold text-purple-600">{feedback.professionalismRating}/5</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                     
-                    {(supervisorFeedback?.length ?? 0) > 3 && (
-                      <Button variant="outline" className="w-full mt-3" asChild>
-                        <Link href="/feedback">
-                          View All Feedback ({supervisorFeedback?.length ?? 0})
-                        </Link>
-                      </Button>
-                    )}
+                    <Button variant="outline" className="w-full mt-4" asChild>
+                      <Link href="/feedback">
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        View All Feedback ({supervisorFeedback?.length ?? 0})
+                      </Link>
+                    </Button>
                   </div>
                 ) : (
-                  <div className="text-center py-6">
-                    <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-600">No supervisor feedback yet</p>
-                    <p className="text-sm text-gray-500">Complete scenarios and assessments to receive personalized feedback</p>
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <MessageSquare className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <p className="text-gray-600 font-medium">No supervisor feedback yet</p>
+                    <p className="text-sm text-gray-500 mt-1">Complete scenarios and assessments to receive personalized feedback</p>
                   </div>
                 )}
               </CardContent>

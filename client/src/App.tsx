@@ -22,6 +22,7 @@ import AssessmentReportPage from "@/pages/assessment-report";
 import AssessmentCreatorPage from "@/pages/assessment-creator";
 import AdaptiveAssessmentPage from "@/pages/adaptive-assessment";
 import AssessmentsPage from "@/pages/assessments";
+import FeedbackPage from "@/pages/feedback";
 
 import { useAuth } from "@/hooks/use-auth";
 import { PharmacyNavigation } from "@/components/navigation/pharmacy-navigation";
@@ -43,6 +44,7 @@ function Router() {
           <Route path="/student/dashboard" component={StudentDashboard} />
           <Route path="/supervisor/dashboard" component={SupervisorDashboard} />
           <Route path="/profile" component={Profile} />
+          <Route path="/feedback" component={FeedbackPage} />
           <Route path="/prepare" component={Prepare} />
           <Route path="/practice" component={Practice} />
           <Route path="/practice/*" component={Practice} />
