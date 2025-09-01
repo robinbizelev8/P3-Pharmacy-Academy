@@ -81,11 +81,12 @@ const supervisorNavigationItems = [
   },
   {
     name: "Feedback",
-    href: "/feedback",
+    href: "#",
     icon: MessageCircle,
-    color: "bg-purple-600",
-    gradient: "from-purple-500 to-violet-600", 
-    description: "Review & Respond"
+    color: "bg-gray-400",
+    gradient: "from-gray-400 to-gray-500", 
+    description: "Coming Soon",
+    disabled: true
   }
 ];
 
@@ -195,32 +196,46 @@ export function PharmacyNavigation() {
               const Icon = item.icon;
               const isActive = isItemActive(item.href);
               
-              return (
-                <Link key={item.name} href={item.href}>
-                  <div className="relative group">
-                    <div className={cn(
-                      "flex items-center space-x-3 px-5 py-3 rounded-xl transition-all duration-300",
-                      isActive
+              const linkContent = (
+                <div className="relative group">
+                  <div className={cn(
+                    "flex items-center space-x-3 px-5 py-3 rounded-xl transition-all duration-300",
+                    (item as any).disabled
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : isActive
                         ? `bg-gradient-to-br ${item.gradient} text-white shadow-lg`
                         : "hover:bg-white/70 text-gray-700 hover:text-gray-900 hover:shadow-sm"
-                    )}>
-                      <div className={cn(
-                        "p-2 rounded-lg transition-all duration-300",
-                        isActive 
+                  )}>
+                    <div className={cn(
+                      "p-2 rounded-lg transition-all duration-300",
+                      (item as any).disabled
+                        ? "bg-gray-200"
+                        : isActive 
                           ? "bg-white/20" 
                           : "bg-white/80 group-hover:bg-white"
-                      )}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold leading-tight">{item.name}</span>
-                        <span className={cn(
-                          "text-xs leading-tight",
-                          isActive ? "text-white/80" : "text-gray-500"
-                        )}>{item.description}</span>
-                      </div>
+                    )}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold leading-tight">{item.name}</span>
+                      <span className={cn(
+                        "text-xs leading-tight",
+                        (item as any).disabled 
+                          ? "text-gray-400"
+                          : isActive ? "text-white/80" : "text-gray-500"
+                      )}>{item.description}</span>
                     </div>
                   </div>
+                </div>
+              );
+
+              return (item as any).disabled ? (
+                <div key={item.name}>
+                  {linkContent}
+                </div>
+              ) : (
+                <Link key={item.name} href={item.href}>
+                  {linkContent}
                 </Link>
               );
             })}
@@ -289,29 +304,43 @@ export function PharmacyNavigation() {
                 const Icon = item.icon;
                 const isActive = isItemActive(item.href);
                 
-                return (
-                  <Link key={item.name} href={item.href}>
-                    <div 
-                      className={cn(
-                        "flex flex-col items-center p-4 rounded-2xl transition-all duration-300 relative",
-                        isActive
+                const mobileContent = (
+                  <div 
+                    className={cn(
+                      "flex flex-col items-center p-4 rounded-2xl transition-all duration-300 relative",
+                      (item as any).disabled
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : isActive
                           ? `bg-gradient-to-br ${item.gradient} text-white shadow-lg`
                           : "bg-white/80 text-gray-600 hover:bg-white hover:shadow-sm"
-                      )}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <div className={cn(
-                        "p-3 rounded-xl mb-2",
-                        isActive ? "bg-white/20" : "bg-white"
-                      )}>
-                        <Icon className="w-6 h-6" />
-                      </div>
-                      <span className="font-medium text-sm text-center">{item.name}</span>
-                      <span className={cn(
-                        "text-xs text-center mt-1",
-                        isActive ? "text-white/70" : "text-gray-500"
-                      )}>{item.description}</span>
+                    )}
+                    onClick={() => !(item as any).disabled && setIsMobileMenuOpen(false)}
+                  >
+                    <div className={cn(
+                      "p-3 rounded-xl mb-2",
+                      (item as any).disabled
+                        ? "bg-gray-200"
+                        : isActive ? "bg-white/20" : "bg-white"
+                    )}>
+                      <Icon className="w-6 h-6" />
                     </div>
+                    <span className="font-medium text-sm text-center">{item.name}</span>
+                    <span className={cn(
+                      "text-xs text-center mt-1",
+                      (item as any).disabled
+                        ? "text-gray-400"
+                        : isActive ? "text-white/70" : "text-gray-500"
+                    )}>{item.description}</span>
+                  </div>
+                );
+
+                return (item as any).disabled ? (
+                  <div key={item.name}>
+                    {mobileContent}
+                  </div>
+                ) : (
+                  <Link key={item.name} href={item.href}>
+                    {mobileContent}
                   </Link>
                 );
               })}
