@@ -234,7 +234,7 @@ export default function FeedbackPage() {
         </Card>
 
         {/* Mobile/Desktop Responsive Feedback List */}
-        {isMobile ? (
+        <div style={{ display: isMobile ? 'block' : 'none' }}>
           <MobileFeedbackList
             feedbackItems={sortedFeedback}
             userRole="student"
@@ -242,9 +242,10 @@ export default function FeedbackPage() {
             onRefresh={refetch}
             onSubmitResponse={handleSubmitResponse}
           />
-        ) : (
-          /* Desktop Feedback List */
-          sortedFeedback.length > 0 ? (
+        </div>
+        <div style={{ display: isMobile ? 'none' : 'block' }}>
+          {/* Desktop Feedback List */}
+          {sortedFeedback.length > 0 ? (
             <div className="space-y-6">
               {sortedFeedback.map((feedback: ExtendedFeedback) => (
               <Card key={feedback.id} className="overflow-hidden">
@@ -521,8 +522,8 @@ export default function FeedbackPage() {
                 </Button>
               </CardContent>
             </Card>
-          )
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

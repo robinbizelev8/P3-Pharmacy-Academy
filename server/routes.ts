@@ -96,13 +96,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Development auth route - will be replaced by new auth system
   app.get('/api/auth/user-dev', async (req: any, res) => {
     try {
-      // For development, create/return a mock user
+      // For development, always force update to supervisor user
       const user = await storage.upsertUser({
         email: "dev@example.com",
         firstName: "Dev",
-        lastName: "User",
-        role: "admin"
+        lastName: "Supervisor", 
+        role: "supervisor"
       });
+      console.log('Dev user created/updated:', user?.role, user?.firstName, user?.lastName);
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);

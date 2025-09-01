@@ -21,7 +21,8 @@
       "Bash(netstat:*)",
       "Bash(lsof:*)",
       "Bash(npm install:*)",
-      "WebFetch(domain:localhost)"
+      "WebFetch(domain:localhost)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []

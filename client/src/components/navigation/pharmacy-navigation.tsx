@@ -15,13 +15,18 @@ import {
   Activity,
   Target,
   MessageCircle,
-  Trophy
+  Trophy,
+  LayoutDashboard,
+  Users,
+  BarChart3,
+  Settings
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import logoImage from "@assets/generated_images/P3_Pharmacy_Academy_Logo_e0d57123.png";
 
-const navigationItems = [
+// Student navigation items (original structure)
+const studentNavigationItems = [
   {
     name: "Home",
     href: "/",
@@ -56,10 +61,102 @@ const navigationItems = [
   }
 ];
 
+// Supervisor navigation items
+const supervisorNavigationItems = [
+  {
+    name: "Dashboard",
+    href: "/supervisor/dashboard",
+    icon: LayoutDashboard,
+    color: "bg-blue-600",
+    gradient: "from-blue-500 to-indigo-600",
+    description: "Overview & Analytics"
+  },
+  {
+    name: "Trainees",
+    href: "/supervisor/dashboard?tab=trainees",
+    icon: Users,
+    color: "bg-emerald-600", 
+    gradient: "from-emerald-500 to-teal-600",
+    description: "Manage Trainees"
+  },
+  {
+    name: "Feedback",
+    href: "/feedback",
+    icon: MessageCircle,
+    color: "bg-purple-600",
+    gradient: "from-purple-500 to-violet-600", 
+    description: "Review & Respond"
+  }
+];
+
+// Get navigation items based on user role
+function getNavigationItems(userRole: string) {
+  switch (userRole) {
+    case 'supervisor':
+      return supervisorNavigationItems;
+    case 'student':
+      return studentNavigationItems;
+    default:
+      return studentNavigationItems; // Default to student navigation
+  }
+}
+
+// Get dashboard route based on user role
+function getDashboardRoute(userRole: string) {
+  switch (userRole) {
+    case 'supervisor':
+      return '/supervisor/dashboard';
+    case 'student':
+      return '/student/dashboard';
+    case 'admin':
+      return '/dashboard';
+    default:
+      return '/student/dashboard'; // Default to student dashboard
+  }
+}
+
 export function PharmacyNavigation() {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useAuth();
+  
+  // Get role-based navigation items
+  const navigationItems = getNavigationItems(user?.role || 'student');
+
+  // Enhanced active state detection that handles query parameters
+  const isItemActive = (itemHref: string) => {
+    // Simple exact match first
+    if (location === itemHref) return true;
+    
+    // Handle query parameter routes
+    if (itemHref.includes('?')) {
+      const [itemPath, itemQuery] = itemHref.split('?');
+      const [currentPath, currentQuery] = location.split('?');
+      
+      // Check if paths match
+      if (itemPath === currentPath) {
+        // If item has query params, check if current location includes those params
+        if (itemQuery) {
+          const itemParams = new URLSearchParams(itemQuery);
+          const currentParams = new URLSearchParams(currentQuery || '');
+          
+          // Check if all item params are present in current params
+          for (const [key, value] of itemParams) {
+            if (currentParams.get(key) !== value) {
+              return false;
+            }
+          }
+          return true;
+        }
+      }
+    }
+    
+    // Handle base path matching (e.g., /supervisor/dashboard should match /supervisor/dashboard?tab=anything)
+    const itemPath = itemHref.split('?')[0];
+    const currentPath = location.split('?')[0];
+    
+    return itemPath === currentPath && itemHref === itemPath; // Only for routes without query params
+  };
   
   const handleLogout = async () => {
     try {
@@ -96,7 +193,7 @@ export function PharmacyNavigation() {
           <div className="hidden md:flex items-center space-x-2">
             {navigationItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location === item.href;
+              const isActive = isItemActive(item.href);
               
               return (
                 <Link key={item.name} href={item.href}>
@@ -141,8 +238,8 @@ export function PharmacyNavigation() {
                 </div>
               </div>
               
-              <Link href="/student/dashboard">
-                <Button variant="ghost" size="sm" className="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-xl" title="Student Dashboard">
+              <Link href={getDashboardRoute(user?.role || 'student')}>
+                <Button variant="ghost" size="sm" className="p-2 hover:bg-blue-50 hover:text-blue-600 rounded-xl" title={`${user?.role === 'supervisor' ? 'Supervisor' : 'Student'} Dashboard`}>
                   <Activity className="w-4 h-4" />
                 </Button>
               </Link>
@@ -190,7 +287,7 @@ export function PharmacyNavigation() {
             <div className="grid grid-cols-2 gap-3 px-4 mb-4">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location === item.href;
+                const isActive = isItemActive(item.href);
                 
                 return (
                   <Link key={item.name} href={item.href}>

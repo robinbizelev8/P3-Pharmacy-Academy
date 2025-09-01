@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import { TraineeProgressModal } from "@/components/supervisor/TraineeProgressModal";
 import { FeedbackModal } from "@/components/supervisor/FeedbackModal";
 import { AssignScenarioModal } from "@/components/supervisor/AssignScenarioModal";
@@ -88,7 +89,35 @@ interface SupervisorDashboardData {
 
 export default function SupervisorDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
+
+  // URL parameter handling for tab navigation
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    
+    // Valid tab names
+    const validTabs = ['overview', 'trainees', 'analytics', 'feedback'];
+    
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [location]);
+
+  // Function to handle tab changes and update URL
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    
+    // Update URL with new tab parameter
+    const currentPath = window.location.pathname;
+    const newUrl = newTab === 'overview' 
+      ? currentPath 
+      : `${currentPath}?tab=${newTab}`;
+    
+    // Use pushState to update URL without full page reload
+    window.history.pushState({}, '', newUrl);
+  };
   
   // Modal state management
   const [progressModal, setProgressModal] = useState<{ isOpen: boolean; trainee: TraineeAssignmentWithDetails | null }>({
@@ -295,7 +324,7 @@ export default function SupervisorDashboard() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="trainees">Trainees</TabsTrigger>

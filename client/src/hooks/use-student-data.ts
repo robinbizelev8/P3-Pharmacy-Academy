@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 // API call functions
 async function fetchWithAuth(url: string) {
   const response = await fetch(url, {
+    credentials: "include",
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('token')}`,
       'Content-Type': 'application/json',
     },
   });
