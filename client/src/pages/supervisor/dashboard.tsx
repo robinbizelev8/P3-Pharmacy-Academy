@@ -92,6 +92,10 @@ export default function SupervisorDashboard() {
   const [location, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
 
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  const { data: dashboardData, isLoading: isDashboardLoading, error: dashboardError } = useSupervisorDashboard(user?.id);
+  const { data: assignedTrainees, isLoading: isTraineesLoading, error: traineesError } = useAssignedTrainees(user?.id);
+
   // URL parameter handling for tab navigation
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -185,9 +189,6 @@ export default function SupervisorDashboard() {
     window.location.href = redirectUrl;
     return null;
   }
-
-  const { data: dashboardData, isLoading: isDashboardLoading, error: dashboardError } = useSupervisorDashboard(user?.id);
-  const { data: assignedTrainees, isLoading: isTraineesLoading, error: traineesError } = useAssignedTrainees(user?.id);
 
   // Show error state if dashboard fails to load
   if (dashboardError || traineesError) {
