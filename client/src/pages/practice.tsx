@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -276,16 +277,11 @@ export default function PracticePage() {
   // Create new session mutation
   const createSessionMutation = useMutation({
     mutationFn: async (scenarioId: string) => {
-      const response = await fetch("/api/pharmacy/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          scenarioId,
-          module: "practice",
-          sessionType: "chat_simulation"
-        })
+      const response = await apiRequest("POST", "/api/pharmacy/sessions", { 
+        scenarioId,
+        module: "practice",
+        sessionType: "chat_simulation"
       });
-      if (!response.ok) throw new Error("Failed to create session");
       return response.json();
     },
     onSuccess: (session) => {
