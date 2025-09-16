@@ -231,6 +231,7 @@ export function setupJWTAuthRoutes(app: Express) {
         res.json({
           success: true,
           message: 'Login successful',
+          token: token, // Add token to response body for Replit compatibility
           user: {
             id: user.id,
             email: user.email,
