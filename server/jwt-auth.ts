@@ -37,16 +37,17 @@ export function setAuthCookie(res: Response, token: string): void {
   
   console.log(`Setting auth cookie - isReplitDeployment: ${isReplitDeployment}, NODE_ENV: ${process.env.NODE_ENV}`);
   
-  // Different cookie settings for Replit deployments vs development
+  // Cookie settings optimized for Replit compatibility
   const cookieOptions: any = {
-    httpOnly: false, // Set to false for Replit deployments to allow client access
-    secure: false,   // Always false for Replit
-    sameSite: 'lax',
+    httpOnly: false, // Allow client access in Replit  
+    secure: false,   // false for development/http
+    sameSite: 'lax', // Back to 'lax' since 'none' requires secure: true
     maxAge,
     path: '/'
+    // Removed domain to let browser set automatically
   };
   
-  // Also set a non-httpOnly version for client-side access
+  console.log('🔥 COOKIE DEBUG: Setting cookie with options:', cookieOptions);
   res.cookie('auth-token', token, cookieOptions);
   
   // Set an additional header for debugging
