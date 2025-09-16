@@ -84,8 +84,8 @@ function validatePassword(password: string): { isValid: boolean; errors: string[
 }
 
 export function setupJWTAuthRoutes(app: Express) {
-  // Add JWT middleware to all routes
-  app.use(jwtAuth);
+  // Add JWT middleware only to API routes (not static assets)
+  app.use('/api', jwtAuth);
 
   // Registration
   app.post('/api/auth/register', 

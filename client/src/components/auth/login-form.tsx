@@ -35,13 +35,9 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log('🔥 LOGIN DEBUG: Form submission started', data);
     try {
       setIsSubmitting(true);
       setError(null);
-
-      console.log('🔥 LOGIN DEBUG: About to make fetch request to /api/auth/login');
-      console.log('🔥 LOGIN DEBUG: Request data:', JSON.stringify(data));
 
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -52,43 +48,40 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
         credentials: 'include',
       });
 
-      console.log('🔥 LOGIN DEBUG: Received response:', response.status, response.statusText);
-
       const result = await response.json();
-      console.log('🔥 LOGIN DEBUG: Response body:', result);
 
       if (!response.ok) {
-        console.log('🔥 LOGIN DEBUG: Response not OK, throwing error');
         throw new Error(result.message || 'Login failed');
       }
-
-      console.log('🔥 LOGIN DEBUG: Login successful, proceeding with redirect');
       
       // REPLIT COOKIE WORKAROUND: Extract token from response body and store in localStorage
       if (result.token) {
-        console.log('🔥 LOGIN DEBUG: Extracted token from response body for localStorage:', result.token.substring(0, 20) + '...');
         localStorage.setItem('auth-token', result.token);
-      } else {
-        console.log('🔥 LOGIN DEBUG: No token found in response body');
       }
       
       // Login successful
       onSuccess?.();
       
-      // Invalidate auth cache to refetch user data with new JWT token
+      // Invalidate and refetch auth cache with new JWT token
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
-      // Small delay to ensure cache invalidation before redirect
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Force immediate refetch to ensure user data is available
+      try {
+        await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
+      } catch (refetchError) {
+        // Continue with redirect even if refetch fails
+        console.warn('Auth refetch failed, continuing with redirect:', refetchError);
+      }
+      
+      // Ensure all auth state is properly updated before redirect
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Redirect based on user role
       const userRole = result.user?.role || 'student';
       const redirectUrl = getRoleBasedRedirect(userRole);
-      console.log('🔥 LOGIN DEBUG: Redirecting to:', redirectUrl);
       window.location.href = redirectUrl;
 
     } catch (err) {
-      console.log('🔥 LOGIN DEBUG: Error caught:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during login');
     } finally {
       setIsSubmitting(false);

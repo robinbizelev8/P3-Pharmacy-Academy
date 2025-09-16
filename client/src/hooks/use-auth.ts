@@ -11,6 +11,15 @@ export function useAuth() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  // Debug authentication state (uncomment for debugging)
+  // console.log('🔥 USE_AUTH DEBUG:', {
+  //   hasUser: !!user,
+  //   userRole: user?.role,
+  //   isLoading,
+  //   error: error?.message,
+  //   hasAuthToken: !!localStorage.getItem('auth-token')
+  // });
+
   return {
     user,
     isLoading,
