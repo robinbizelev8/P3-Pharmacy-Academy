@@ -401,15 +401,22 @@ export async function seedDatabase() {
   try {
     console.log("Starting database seeding...");
     
-    // Check if scenarios already exist
-    const existingScenarios = await db.select().from(pharmacyScenarios);
+    // Check if curated scenarios already exist to prevent duplicates
+    const existingScenarios = await db.select().from(pharmacyScenarios).where(eq(pharmacyScenarios.module, "practice"));
     
     if (existingScenarios.length === 0) {
-      // Insert seed scenarios
+      // Insert seed scenarios with error handling for duplicates
+      let insertedCount = 0;
       for (const scenario of seedScenarios) {
-        await db.insert(pharmacyScenarios).values(scenario);
+        try {
+          await db.insert(pharmacyScenarios).values(scenario);
+          insertedCount++;
+        } catch (error) {
+          // Skip if duplicate due to unique constraint
+          console.log(`Skipping duplicate scenario: ${scenario.title}`);
+        }
       }
-      console.log(`Inserted ${seedScenarios.length} pharmacy training scenarios`);
+      console.log(`Inserted ${insertedCount} pharmacy training scenarios`);
     } else {
       console.log(`Database already contains ${existingScenarios.length} scenarios, skipping seeding`);
     }

@@ -10,6 +10,7 @@ import {
   index,
   uuid,
   numeric,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -85,7 +86,11 @@ export const pharmacyScenarios = pgTable("pharmacy_scenarios", {
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  // Unique constraint to prevent duplicate scenarios
+  uniqueScenario: uniqueIndex("unique_scenario_idx")
+    .on(table.module, table.therapeuticArea, table.practiceArea, table.professionalActivity, table.title),
+}));
 
 // Pharmacy training sessions table for Pre-registration Training
 export const pharmacySessions = pgTable("pharmacy_sessions", {
