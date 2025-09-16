@@ -60,8 +60,8 @@ interface ManageTraineesModalProps {
 export function ManageTraineesModal({ isOpen, onClose, onAssignmentChange }: ManageTraineesModalProps) {
   const { user } = useAuth();
   
-  // Use the hooks
-  const { data: trainees = [], isLoading, error: queryError, refetch } = useAllTrainees(user?.id);
+  // Use the hooks - only fetch when modal is open
+  const { data: trainees = [], isLoading, error: queryError, refetch } = useAllTrainees(user?.id, isOpen);
   const assignTraineeMutation = useAssignTrainee();
   const unassignTraineeMutation = useUnassignTrainee();
   

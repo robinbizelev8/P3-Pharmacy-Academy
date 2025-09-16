@@ -141,11 +141,11 @@ async function unassignTrainee(traineeId: string) {
 }
 
 // Trainee Management Hooks
-export function useAllTrainees(supervisorId: string | undefined) {
+export function useAllTrainees(supervisorId: string | undefined, enabled: boolean = true) {
   return useQuery({
     queryKey: ["supervisor", "all-trainees", supervisorId],
     queryFn: () => fetchWithAuth('/api/supervisor/all-trainees'),
-    enabled: !!supervisorId,
+    enabled: !!supervisorId && enabled,
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 2,
   });
