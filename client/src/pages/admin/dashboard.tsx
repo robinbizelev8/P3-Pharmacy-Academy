@@ -59,12 +59,15 @@ export default function AdminDashboard() {
               <span className="text-sm text-gray-600">
                 {user?.firstName || 'Admin'}
               </span>
-              <a
-                href="/api/logout"
-                className="text-sm text-gray-500 hover:text-gray-700"
+              <button
+                onClick={async () => {
+                  const { logout } = await import('@/lib/auth-logout');
+                  await logout();
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
               >
                 Log out
-              </a>
+              </button>
             </div>
           </div>
         </div>

@@ -67,18 +67,22 @@ export function clearAuthCookie(res: Response): void {
 // JWT Authentication Middleware
 export async function jwtAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    console.log(`🔐 JWT Auth: ${req.method} ${req.path}`);
+    
     // Try multiple ways to get the token - prioritize headers over cookies for Replit compatibility
     let token = req.headers['x-auth-token'] ||
                 req.headers['authorization']?.replace('Bearer ', '') ||
                 req.cookies['auth-token'];
     
     if (!token) {
+      console.log(`🔐 JWT Auth: No token found for ${req.path}`);
       (req as any).user = null;
       return next();
     }
 
     const payload = verifyToken(token);
     if (!payload) {
+      console.log(`🔐 JWT Auth: Invalid token for ${req.path}`);
       (req as any).user = null;
       return next();
     }
@@ -86,14 +90,17 @@ export async function jwtAuth(req: Request, res: Response, next: NextFunction): 
     // Get full user data from database
     const user = await storage.getUserById(payload.userId);
     if (!user) {
+      console.log(`🔐 JWT Auth: User not found for token payload ${payload.userId} on ${req.path}`);
       (req as any).user = null;
       return next();
     }
 
     // Attach user to request
     (req as any).user = user;
+    console.log(`🔐 JWT Auth: Authenticated user ${user.email} (${user.role}) for ${req.path}`);
     next();
   } catch (error) {
+    console.error(`🔐 JWT Auth: Error on ${req.path}:`, error);
     (req as any).user = null;
     next();
   }
@@ -124,7 +131,10 @@ export function requireRole(roles: string[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const user = (req as any).user;
     
+    console.log(`🔒 Role Auth: ${req.method} ${req.path} - Required: [${roles.join(', ')}], User: ${user ? `${user.email} (${user.role})` : 'none'}`);
+    
     if (!user) {
+      console.log(`🔒 Role Auth: DENIED - No authenticated user for ${req.path}`);
       res.status(401).json({
         error: 'Authentication required',
         message: 'Please log in to access this resource'
@@ -133,6 +143,7 @@ export function requireRole(roles: string[]) {
     }
     
     if (!roles.includes(user.role)) {
+      console.log(`🔒 Role Auth: DENIED - User ${user.email} role '${user.role}' not in required roles [${roles.join(', ')}] for ${req.path}`);
       res.status(403).json({
         error: 'Insufficient permissions',
         message: 'You do not have permission to access this resource'
@@ -140,6 +151,7 @@ export function requireRole(roles: string[]) {
       return;
     }
     
+    console.log(`🔒 Role Auth: ALLOWED - User ${user.email} (${user.role}) for ${req.path}`);
     next();
   };
 }

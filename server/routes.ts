@@ -50,8 +50,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT-based authentication routes
   setupJWTAuthRoutes(app);
   
-  // Apply JWT middleware to all API routes
-  app.use('/api', jwtAuth);
+  // JWT middleware is already applied in setupJWTAuthRoutes, no need to apply again
 
   // Profile update route
   app.put('/api/auth/profile', requireAuth, async (req: any, res) => {
@@ -1392,7 +1391,7 @@ This format helps students learn from expert examples before progressing. Focus 
   // ============================================================================
 
   // Enhanced student dashboard with comprehensive progress tracking
-  app.get("/api/student/dashboard", requireAuth, async (req: any, res) => {
+  app.get("/api/student/dashboard", requireStudent, async (req: any, res) => {
     try {
       const userId = req.user.id;
       
@@ -1463,7 +1462,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Get user's progress by specific module
-  app.get("/api/student/progress/:module", requireAuth, async (req: any, res) => {
+  app.get("/api/student/progress/:module", requireStudent, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const module = req.params.module;
@@ -1481,7 +1480,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Get all uncompleted sessions for resume functionality
-  app.get("/api/student/progress/uncompleted", requireAuth, async (req: any, res) => {
+  app.get("/api/student/progress/uncompleted", requireStudent, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const uncompletedSessions = await storage.getUserPharmacySessions(userId);
@@ -1510,7 +1509,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Get competency progression across PA1-PA4 professional activities
-  app.get("/api/student/progress/competencies", requireAuth, async (req: any, res) => {
+  app.get("/api/student/progress/competencies", requireStudent, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const competencyProgression = await getDetailedCompetencyProgression(userId, storage);
@@ -1522,7 +1521,7 @@ This format helps students learn from expert examples before progressing. Focus 
   });
 
   // Get chronological activity timeline
-  app.get("/api/student/progress/timeline", requireAuth, async (req: any, res) => {
+  app.get("/api/student/progress/timeline", requireStudent, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { limit = 20 } = req.query;

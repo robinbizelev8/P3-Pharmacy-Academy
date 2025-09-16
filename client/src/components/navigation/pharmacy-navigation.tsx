@@ -160,23 +160,9 @@ export function PharmacyNavigation() {
   };
   
   const handleLogout = async () => {
-    try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        // Redirect to login page
-        window.location.href = '/login';
-      } else {
-        console.error('Logout failed');
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force redirect anyway
-      window.location.href = '/login';
-    }
+    // Import logout utility function
+    const { logout } = await import('@/lib/auth-logout');
+    await logout();
   };
 
   return (
