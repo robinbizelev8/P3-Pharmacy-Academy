@@ -390,7 +390,7 @@ export default function PracticePage() {
       setMessages(prev => [...prev, patientResponse, coachingResponse]);
       
       // Check if stage should advance
-      if (response.advanceStage && currentStage < 4) {
+      if (response.stageComplete && currentStage < 4) {
         setCurrentStage(prev => prev + 1);
         toast({
           title: "Stage Complete",
