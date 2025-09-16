@@ -363,17 +363,12 @@ export default function PracticePage() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ message, stage }: { message: string; stage: number }) => {
-      const response = await fetch(`/api/pharmacy/sessions/${currentSession.id}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: message,
-          role: "user",
-          stage: stage,
-          scenarioContext: selectedScenario
-        })
+      const response = await apiRequest("POST", `/api/pharmacy/sessions/${currentSession.id}/chat`, {
+        content: message,
+        role: "user",
+        stage: stage,
+        scenarioContext: selectedScenario
       });
-      if (!response.ok) throw new Error("Failed to send message");
       return response.json();
     },
     onSuccess: (response) => {
