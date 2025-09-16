@@ -66,10 +66,16 @@ export function clearAuthCookie(res: Response): void {
 // JWT Authentication Middleware
 export async function jwtAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    // Debug: Log all cookies received
+    console.log('🔥 JWT AUTH DEBUG: All cookies received:', JSON.stringify(req.cookies));
+    console.log('🔥 JWT AUTH DEBUG: All headers:', JSON.stringify(req.headers.cookie));
+    
     // Try multiple ways to get the token for Replit deployment compatibility
     let token = req.cookies['auth-token'] || 
                 req.headers['authorization']?.replace('Bearer ', '') ||
                 req.headers['x-auth-token'];
+    
+    console.log('🔥 JWT AUTH DEBUG: Extracted token:', token ? 'Found' : 'Not found');
     
     if (!token) {
       console.log('JWT Auth: No token found in cookies or headers');
