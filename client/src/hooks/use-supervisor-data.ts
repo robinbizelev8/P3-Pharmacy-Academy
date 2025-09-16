@@ -1,12 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// API call functions using session-based authentication
+// API call functions using localStorage token authentication
 async function fetchWithAuth(url: string) {
+  // Get auth token from localStorage for Replit compatibility
+  const authToken = localStorage.getItem('auth-token');
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (authToken) {
+    headers['X-Auth-Token'] = authToken;
+    console.log(`🔥 SUPERVISOR API: Adding auth token to GET ${url}`);
+  } else {
+    console.warn(`⚠️ SUPERVISOR API: No auth token found for GET ${url}`);
+  }
+
   const response = await fetch(url, {
-    credentials: "include", // Use session cookies instead of Bearer tokens
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    credentials: "include",
+    headers,
   });
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
@@ -82,10 +94,18 @@ export function useSupervisorAnalytics(supervisorId: string | undefined) {
 
 // Trainee Management API functions
 async function assignTrainee(traineeId: string, institution?: string) {
+  // Get auth token from localStorage for Replit compatibility
+  const authToken = localStorage.getItem('auth-token');
+  
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (authToken) {
+    headers['X-Auth-Token'] = authToken;
+  }
+
   const response = await fetch('/api/supervisor/assign-trainee', {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ traineeId, institution }),
   });
   
@@ -98,9 +118,18 @@ async function assignTrainee(traineeId: string, institution?: string) {
 }
 
 async function unassignTrainee(traineeId: string) {
+  // Get auth token from localStorage for Replit compatibility
+  const authToken = localStorage.getItem('auth-token');
+  
+  const headers: Record<string, string> = {};
+  if (authToken) {
+    headers['X-Auth-Token'] = authToken;
+  }
+
   const response = await fetch(`/api/supervisor/trainees/${traineeId}`, {
     method: 'DELETE',
     credentials: 'include',
+    headers,
   });
   
   if (!response.ok) {
