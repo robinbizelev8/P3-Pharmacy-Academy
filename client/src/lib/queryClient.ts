@@ -12,9 +12,21 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Get auth token from localStorage for Replit compatibility
+  const authToken = localStorage.getItem('auth-token');
+  
+  const headers: Record<string, string> = {};
+  if (data) {
+    headers['Content-Type'] = 'application/json';
+  }
+  if (authToken) {
+    headers['X-Auth-Token'] = authToken;
+    console.log('🔥 API REQUEST: Adding auth token to request');
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -31,7 +43,17 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     // Handle complex queryKey arrays by filtering out non-string values
     const url = queryKey.filter(key => typeof key === 'string').join("/");
+    
+    // Get auth token from localStorage for Replit compatibility
+    const authToken = localStorage.getItem('auth-token');
+    const headers: Record<string, string> = {};
+    if (authToken) {
+      headers['X-Auth-Token'] = authToken;
+      console.log('🔥 QUERY REQUEST: Adding auth token to request');
+    }
+    
     const res = await fetch(url, {
+      headers,
       credentials: "include",
     });
 

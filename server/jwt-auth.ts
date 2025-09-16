@@ -67,14 +67,16 @@ export function clearAuthCookie(res: Response): void {
 // JWT Authentication Middleware
 export async function jwtAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    // Debug: Log all cookies received
+    // Debug: Log all cookies and headers received
     console.log('🔥 JWT AUTH DEBUG: All cookies received:', JSON.stringify(req.cookies));
     console.log('🔥 JWT AUTH DEBUG: All headers:', JSON.stringify(req.headers.cookie));
+    console.log('🔥 JWT AUTH DEBUG: Authorization header:', req.headers.authorization);
+    console.log('🔥 JWT AUTH DEBUG: X-Auth-Token header:', req.headers['x-auth-token']);
     
-    // Try multiple ways to get the token for Replit deployment compatibility
-    let token = req.cookies['auth-token'] || 
+    // Try multiple ways to get the token - prioritize headers over cookies for Replit compatibility
+    let token = req.headers['x-auth-token'] ||
                 req.headers['authorization']?.replace('Bearer ', '') ||
-                req.headers['x-auth-token'];
+                req.cookies['auth-token'];
     
     console.log('🔥 JWT AUTH DEBUG: Extracted token:', token ? 'Found' : 'Not found');
     

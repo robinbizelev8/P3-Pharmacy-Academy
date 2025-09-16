@@ -64,6 +64,20 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
 
       console.log('🔥 LOGIN DEBUG: Login successful, proceeding with redirect');
       
+      // REPLIT COOKIE WORKAROUND: Extract token from Set-Cookie header and store in localStorage
+      const setCookieHeader = response.headers.get('set-cookie');
+      console.log('🔥 LOGIN DEBUG: Set-Cookie header:', setCookieHeader);
+      
+      if (setCookieHeader) {
+        // Extract JWT token from Set-Cookie header
+        const tokenMatch = setCookieHeader.match(/auth-token=([^;]+)/);
+        if (tokenMatch && tokenMatch[1]) {
+          const token = tokenMatch[1];
+          console.log('🔥 LOGIN DEBUG: Extracted token for localStorage:', token.substring(0, 20) + '...');
+          localStorage.setItem('auth-token', token);
+        }
+      }
+      
       // Login successful
       onSuccess?.();
       
