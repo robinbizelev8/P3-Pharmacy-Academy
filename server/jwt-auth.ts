@@ -67,28 +67,18 @@ export function clearAuthCookie(res: Response): void {
 // JWT Authentication Middleware
 export async function jwtAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    // Debug: Log all cookies and headers received
-    console.log('🔥 JWT AUTH DEBUG: All cookies received:', JSON.stringify(req.cookies));
-    console.log('🔥 JWT AUTH DEBUG: All headers:', JSON.stringify(req.headers.cookie));
-    console.log('🔥 JWT AUTH DEBUG: Authorization header:', req.headers.authorization);
-    console.log('🔥 JWT AUTH DEBUG: X-Auth-Token header:', req.headers['x-auth-token']);
-    
     // Try multiple ways to get the token - prioritize headers over cookies for Replit compatibility
     let token = req.headers['x-auth-token'] ||
                 req.headers['authorization']?.replace('Bearer ', '') ||
                 req.cookies['auth-token'];
     
-    console.log('🔥 JWT AUTH DEBUG: Extracted token:', token ? 'Found' : 'Not found');
-    
     if (!token) {
-      console.log('JWT Auth: No token found in cookies or headers');
       (req as any).user = null;
       return next();
     }
 
     const payload = verifyToken(token);
     if (!payload) {
-      console.log('JWT Auth: Invalid or expired token');
       (req as any).user = null;
       return next();
     }
@@ -96,17 +86,14 @@ export async function jwtAuth(req: Request, res: Response, next: NextFunction): 
     // Get full user data from database
     const user = await storage.getUserById(payload.userId);
     if (!user) {
-      console.log('JWT Auth: User not found for token payload');
       (req as any).user = null;
       return next();
     }
 
     // Attach user to request
     (req as any).user = user;
-    console.log(`JWT Auth: Successfully authenticated user ${user.email}`);
     next();
   } catch (error) {
-    console.error('JWT Auth error:', error);
     (req as any).user = null;
     next();
   }
