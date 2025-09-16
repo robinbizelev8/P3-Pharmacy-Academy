@@ -35,9 +35,13 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
   });
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log('🔥 LOGIN DEBUG: Form submission started', data);
     try {
       setIsSubmitting(true);
       setError(null);
+
+      console.log('🔥 LOGIN DEBUG: About to make fetch request to /api/auth/login');
+      console.log('🔥 LOGIN DEBUG: Request data:', JSON.stringify(data));
 
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -48,12 +52,18 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
         credentials: 'include',
       });
 
+      console.log('🔥 LOGIN DEBUG: Received response:', response.status, response.statusText);
+
       const result = await response.json();
+      console.log('🔥 LOGIN DEBUG: Response body:', result);
 
       if (!response.ok) {
+        console.log('🔥 LOGIN DEBUG: Response not OK, throwing error');
         throw new Error(result.message || 'Login failed');
       }
 
+      console.log('🔥 LOGIN DEBUG: Login successful, proceeding with redirect');
+      
       // Login successful
       onSuccess?.();
       
@@ -66,9 +76,11 @@ export function LoginForm({ onSuccess, onSwitchToSignup, isLoading = false }: Lo
       // Redirect based on user role
       const userRole = result.user?.role || 'student';
       const redirectUrl = getRoleBasedRedirect(userRole);
+      console.log('🔥 LOGIN DEBUG: Redirecting to:', redirectUrl);
       window.location.href = redirectUrl;
 
     } catch (err) {
+      console.log('🔥 LOGIN DEBUG: Error caught:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during login');
     } finally {
       setIsSubmitting(false);
