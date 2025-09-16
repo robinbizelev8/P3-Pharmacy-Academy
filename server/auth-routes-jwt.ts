@@ -170,7 +170,7 @@ export function setupJWTAuthRoutes(app: Express) {
 
   // Login
   app.post('/api/auth/login',
-    rateLimitAuth(5, 15 * 60 * 1000),
+    rateLimitAuth(50, 5 * 60 * 1000), // Temporarily increased to 50 attempts per 5 minutes for debugging
     logAuthEvent('LOGIN_ATTEMPT'),
     async (req: Request, res: Response) => {
       try {
