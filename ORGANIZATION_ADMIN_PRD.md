@@ -1,8 +1,8 @@
 # P³ Pharmacy Academy - Organization Admin & Multi-Tenant System
 ## Product Requirements Document (PRD)
 
-**Version:** 1.0
-**Last Updated:** 2025-01-15 (Auto-generated on creation)
+**Version:** 1.1
+**Last Updated:** 2025-01-15 14:15 UTC (Roles updated to 4)
 **Branch:** OrgAdmin
 **Status:** IN DEVELOPMENT
 **Owner:** Development Team
@@ -24,7 +24,7 @@
 - [ ] **Phase 3: Backend Features & API Routes** (0%) - Days 9-12
 - [ ] **Phase 4: Storage Layer Implementation** (0%) - Days 13-15
 - [ ] **Phase 5: Frontend - Org Admin Dashboard** (0%) - Days 16-19
-- [ ] **Phase 6: Frontend - Super Admin Dashboard** (0%) - Days 20-22
+- [ ] **Phase 6: Frontend - Admin Dashboard** (0%) - Days 20-22
 - [ ] **Phase 7: Services & Utilities** (0%) - Days 23-24
 - [ ] **Phase 8: Routing & Navigation** (0%) - Day 25
 - [ ] **Phase 9: Signup Flow Enhancement** (0%) - Day 25
@@ -53,6 +53,30 @@
 
 ---
 
+### 2025-01-15 14:15 - Role Structure Updated
+**Status:** PRD roles consolidated from 5 to 4
+**Completed:**
+- ✅ Merged `super_admin` and `admin` into single `admin` role
+- ✅ Updated all PRD sections with 4-role structure
+- ✅ Updated permissions matrix
+- ✅ Updated API endpoint documentation
+- ✅ Updated decision log with rationale
+
+**Rationale:**
+- Simplifies architecture (4 roles instead of 5)
+- Admin role has full platform-wide access (super admin capabilities)
+- Clearer role hierarchy: student → supervisor → org_admin → admin
+
+**Impact:**
+- Database: Will use 4 role values instead of 5
+- Middleware: Simpler role checking logic
+- UI: 4 dashboards instead of 5
+
+**Next Steps:**
+- Proceed with Phase 1 implementation using 4-role model
+
+---
+
 ## 🐛 Error & Learning Log
 
 *No errors logged yet. This section will be updated as implementation progresses.*
@@ -62,29 +86,29 @@
 ## 🔍 Decision Log
 
 ### Decision #001 - Role Structure
-**Date:** 2025-01-15
+**Date:** 2025-01-15 (Updated: 2025-01-15)
 **Context:** Determining user role hierarchy for multi-tenant system
-**Decision:** Implement five distinct roles:
+**Decision:** Implement four distinct roles:
 - `student` - End users
 - `supervisor` - Student oversight
 - `org_admin` - Organization-level administration
-- `super_admin` - Platform-wide administration
-- `admin` - Technical/platform administration (existing)
+- `admin` - Platform-wide administration and super admin capabilities
 
 **Rationale:**
-- Separates concerns between organizational management and platform management
-- Maintains existing admin role for backward compatibility
-- Allows org_admin to manage only their organization
-- Super_admin provides cross-org visibility
+- Simplifies role hierarchy while maintaining necessary separation
+- Admin role combines platform management and cross-org oversight
+- Clear distinction between org-scoped (org_admin) and platform-wide (admin) access
+- Reduces complexity in middleware and routing
 
 **Alternatives Considered:**
-- Single admin role (rejected - insufficient granularity)
+- Separate super_admin and admin roles (rejected - unnecessary complexity for same access level)
+- Single admin role without org_admin (rejected - insufficient granularity)
 - Org_admin as subset of admin (rejected - unclear hierarchy)
 
 **Impact:**
-- Database: New role values in users table
-- Auth: New middleware functions required
-- UI: Role-specific dashboards needed
+- Database: 4 role values in users table (student, supervisor, org_admin, admin)
+- Auth: Simplified middleware with 4 role checks instead of 5
+- UI: 4 distinct dashboards
 
 **Stakeholders:** Product Owner, Development Team
 
@@ -157,11 +181,10 @@
 ## 📋 Executive Summary
 
 ### Project Goals
-Implement multi-tenant organization management system for P³ Pharmacy Academy with three levels of administration:
+Implement multi-tenant organization management system for P³ Pharmacy Academy with two levels of administration:
 
 1. **Organization Administrators** - Manage users, content, and knowledge within their organization
-2. **Super Administrators** - Cross-organizational visibility and access control
-3. **Platform Administrators** - Technical system administration (existing)
+2. **Administrators** - Cross-organizational visibility, access control, and platform management
 
 ### Business Objectives
 - Enable pharmaceutical institutions to independently manage their training programs
@@ -186,30 +209,29 @@ Implement multi-tenant organization management system for P³ Pharmacy Academy w
 ### Role Hierarchy
 
 ```
-super_admin (Platform-wide access)
-    ├── org_admin (Organization-scoped access)
-    │   ├── supervisor (Trainee oversight)
-    │   └── student (End user)
-    └── admin (Technical/platform administration)
+admin (Platform-wide access - super admin)
+    └── org_admin (Organization-scoped access)
+        ├── supervisor (Trainee oversight)
+        └── student (End user)
 ```
 
 ### Permissions Matrix
 
-| Capability | Student | Supervisor | Org Admin | Super Admin | Admin |
-|------------|---------|------------|-----------|-------------|-------|
-| View own data | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Complete modules | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Provide feedback | ❌ | ✅ | ❌ | ❌ | ❌ |
-| View org users | ❌ | ✅ | ✅ | ✅ | ❌ |
-| Suspend users | ❌ | ❌ | ✅* | ✅ | ❌ |
-| Terminate users | ❌ | ❌ | ✅** | ✅ | ❌ |
-| Create scenarios | ❌ | ❌ | ✅ | ✅ | ❌ |
-| Upload documents | ❌ | ❌ | ✅ | ✅ | ❌ |
-| Manage knowledge base | ❌ | ❌ | ✅ | ✅ | ❌ |
-| View org analytics | ❌ | ✅ | ✅ | ✅ | ❌ |
-| View all orgs | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Manage organizations | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Technical admin | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Capability | Student | Supervisor | Org Admin | Admin |
+|------------|---------|------------|-----------|-------|
+| View own data | ✅ | ✅ | ✅ | ✅ |
+| Complete modules | ✅ | ✅ | ❌ | ❌ |
+| Provide feedback | ❌ | ✅ | ❌ | ❌ |
+| View org users | ❌ | ✅ | ✅ | ✅ |
+| Suspend users | ❌ | ❌ | ✅* | ✅ |
+| Terminate users | ❌ | ❌ | ✅** | ✅ |
+| Create scenarios | ❌ | ❌ | ✅ | ✅ |
+| Upload documents | ❌ | ❌ | ✅ | ✅ |
+| Manage knowledge base | ❌ | ❌ | ✅ | ✅ |
+| View org analytics | ❌ | ✅ | ✅ | ✅ |
+| View all orgs | ❌ | ❌ | ❌ | ✅ |
+| Manage organizations | ❌ | ❌ | ❌ | ✅ |
+| Platform management | ❌ | ❌ | ❌ | ✅ |
 
 *\* Requires `canSuspendUsers` permission*
 *\** Requires `canTerminateUsers` permission*
@@ -224,8 +246,8 @@ super_admin (Platform-wide access)
 ┌─────────────────────────────────────────────────────────────┐
 │                        Frontend (React)                      │
 ├─────────────────────────────────────────────────────────────┤
-│  Student      Supervisor    Org Admin     Super Admin  Admin│
-│  Dashboard    Dashboard     Dashboard     Dashboard    Panel│
+│  Student      Supervisor    Org Admin     Admin             │
+│  Dashboard    Dashboard     Dashboard     Dashboard         │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -294,7 +316,7 @@ super_admin (Platform-wide access)
 
 **Layer 4: Organization Context Validation**
 - Verify user can only access their organization's data
-- Exception: super_admin can access all orgs
+- Exception: admin can access all orgs
 
 ### Session Invalidation Strategy
 When user is suspended or terminated:
@@ -386,9 +408,9 @@ CREATE INDEX idx_activity_timestamp ON user_activity_logs(timestamp);
 
 ## 🔌 API Endpoints Specification
 
-### Organization Management (Super Admin)
+### Organization Management (Admin)
 
-#### POST /api/super-admin/organizations
+#### POST /api/admin/organizations
 Create new organization
 
 **Request:**
@@ -411,7 +433,7 @@ Create new organization
 }
 ```
 
-#### GET /api/super-admin/organizations
+#### GET /api/admin/organizations
 List all organizations
 
 **Query Params:**
@@ -724,24 +746,26 @@ Organization analytics overview
 
 ---
 
-### Phase 6: Frontend - Super Admin Dashboard
+### Phase 6: Frontend - Admin Dashboard
 **Duration:** Days 20-22
 **Status:** 0% Complete
 
 **Tasks:**
-- [ ] Create super admin dashboard
+- [ ] Create admin dashboard (platform-wide)
 - [ ] Create organization management page
 - [ ] Create platform analytics page
 - [ ] Implement access control UI
 - [ ] Integration with backend APIs
 
 **Deliverables:**
-- Super admin pages
+- Admin dashboard pages
 - Cross-org visibility features
+- Organization CRUD interface
 
 **Testing:**
-- Super admin access tests
+- Admin access tests
 - Organization management tests
+- Cross-org data access tests
 
 ---
 
@@ -845,8 +869,8 @@ Organization analytics overview
 | 5 | Org admin can assign scenarios to specific users/supervisors | ⏳ Pending | 3, 5 | |
 | 6 | Org admin can upload org-specific documents | ⏳ Pending | 3, 5 | |
 | 7 | Org admin sees analytics only for their organization | ⏳ Pending | 3, 5 | |
-| 8 | Super admin can see across all organizations | ⏳ Pending | 3, 6 | |
-| 9 | Login redirects to correct dashboard based on role | ⏳ Pending | 2, 8 | |
+| 8 | Admin can see across all organizations | ⏳ Pending | 3, 6 | |
+| 9 | Login redirects to correct dashboard based on role (4 dashboards) | ⏳ Pending | 2, 8 | |
 | 10 | Signup requires organization assignment | ⏳ Pending | 9 | |
 | 11 | All users must belong to an organization | ⏳ Pending | 1, 9 | |
 | 12 | Different permission levels enforced (suspend vs terminate) | ⏳ Pending | 2, 3 | |
@@ -967,5 +991,5 @@ Organization analytics overview
 
 *This document will be updated throughout the implementation process. Check git history for detailed change log.*
 
-**Last Updated:** 2025-01-15 14:00 UTC
+**Last Updated:** 2025-01-15 14:15 UTC
 **Next Review:** After Phase 1 completion
