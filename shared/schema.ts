@@ -43,6 +43,20 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// Organizations table for multi-tenant support
+export const organizations = pgTable("organizations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }).notNull(),
+  code: varchar("code", { length: 50 }).notNull().unique(), // Unique code for signup
+  type: varchar("type", { length: 50 }).notNull(), // hospital, community_pharmacy, training_center
+  isActive: boolean("is_active").notNull().default(true),
+  maxUsers: integer("max_users").default(100), // Subscription limit
+  subscriptionTier: varchar("subscription_tier", { length: 50 }).default("basic"), // basic, professional, enterprise
+  subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Enhanced user storage table for multi-role authentication
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -50,10 +64,29 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role").default("student"), // student, supervisor, admin
+  role: varchar("role").default("student"), // student, supervisor, org_admin, admin
   provider: varchar("provider").default("email"), // google, email, replit
   hashedPassword: varchar("hashed_password"), // for email authentication
   emailVerified: boolean("email_verified").default(false),
+
+  // Organization management
+  organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
+
+  // Account status management
+  accountStatus: varchar("account_status", { length: 20 }).default("active"), // active, suspended, terminated
+  suspendedAt: timestamp("suspended_at"),
+  suspendedBy: varchar("suspended_by").references(() => users.id),
+  suspensionReason: text("suspension_reason"),
+  terminatedAt: timestamp("terminated_at"),
+  terminatedBy: varchar("terminated_by").references(() => users.id),
+  terminationReason: text("termination_reason"),
+  reactivatedAt: timestamp("reactivated_at"),
+  reactivatedBy: varchar("reactivated_by").references(() => users.id),
+
+  // Permissions for org admins
+  canSuspendUsers: boolean("can_suspend_users").default(false),
+  canTerminateUsers: boolean("can_terminate_users").default(false),
+
   institution: varchar("institution"), // hospital/pharmacy name
   licenseNumber: varchar("license_number"), // for supervisors
   specializations: text("specializations").array().default([]), // therapeutic areas
@@ -67,6 +100,7 @@ export const users = pgTable("users", {
 // Pharmacy clinical scenarios table for Pre-registration Training
 export const pharmacyScenarios = pgTable("pharmacy_scenarios", {
   id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 255 }).notNull(),
   module: varchar("module", { length: 50 }).notNull(), // prepare, practice, perform
   therapeuticArea: varchar("therapeutic_area", { length: 100 }).notNull(), // cardiovascular, gi, renal, etc.
@@ -329,6 +363,7 @@ export const competencyAssessments = pgTable('competency_assessments', {
 
 export const learningResources = pgTable('learning_resources', {
   id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
   title: text('title').notNull(),
   description: text('description').notNull(),
   resourceType: text('resource_type').notNull(), // guideline, monograph, protocol, video, pdf, hsa_alert, drug_recall, formulary_update, competency_standard, singapore_protocol, multicultural_guidance, regulatory_update
@@ -364,6 +399,7 @@ export const learningProgress = pgTable('learning_progress', {
 // Official Singapore Healthcare Sources
 export const knowledgeSources = pgTable('knowledge_sources', {
   id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
   sourceType: text('source_type').notNull(), // 'hsa', 'moh', 'spc', 'ndf', 'psa', 'healthhub', 'smj'
   sourceName: text('source_name').notNull(),
   baseUrl: text('base_url').notNull(),
@@ -988,6 +1024,82 @@ export type SupervisorScenario = typeof supervisorScenarios.$inferSelect;
 export type InsertFeedbackResponse = z.infer<typeof insertFeedbackResponseSchema>;
 export type FeedbackResponse = typeof feedbackResponses.$inferSelect;
 
+// Organization Admin - Document Management
+export const uploadedDocuments = pgTable('uploaded_documents', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  uploadedBy: varchar('uploaded_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  fileName: varchar('file_name', { length: 255 }).notNull(),
+  fileType: varchar('file_type', { length: 50 }).notNull(), // pdf, docx, xlsx, etc.
+  filePath: text('file_path').notNull(), // Storage path or URL
+  fileSize: integer('file_size'), // Size in bytes
+  category: varchar('category', { length: 100 }), // guidelines, protocols, forms, training_materials
+  therapeuticAreas: text('therapeutic_areas').array().default([]),
+  practiceAreas: text('practice_areas').array().default([]),
+  professionalActivities: text('professional_activities').array().default([]),
+  isPublic: boolean('is_public').default(false), // Visible to all users in org
+  targetUserIds: text('target_user_ids').array().default([]), // Specific users
+  targetRoles: text('target_roles').array().default([]), // student, supervisor
+  status: varchar('status', { length: 20 }).default('active'), // active, archived, deleted
+  downloadCount: integer('download_count').default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Organization Admin - Activity Logging
+export const userActivityLogs = pgTable('user_activity_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  userId: varchar('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  activityType: varchar('activity_type', { length: 100 }).notNull(), // login, logout, scenario_start, scenario_complete, document_view, etc.
+  activityCategory: varchar('activity_category', { length: 50 }).notNull(), // authentication, learning, assessment, documentation
+  description: text('description'),
+  metadata: jsonb('metadata'), // Additional activity-specific data
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  sessionId: varchar('session_id'),
+  resourceType: varchar('resource_type', { length: 50 }), // scenario, document, assessment
+  resourceId: varchar('resource_id'),
+  result: varchar('result', { length: 50 }), // success, failure, error
+  duration: integer('duration'), // Activity duration in seconds
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+// Organization Admin - Usage Statistics (Pre-aggregated for performance)
+export const usageStatistics = pgTable('usage_statistics', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  userId: varchar('user_id').references(() => users.id, { onDelete: 'cascade' }), // Null for org-level stats
+  statisticType: varchar('statistic_type', { length: 100 }).notNull(), // daily_active_users, scenario_completions, avg_session_duration
+  statisticCategory: varchar('statistic_category', { length: 50 }).notNull(), // engagement, performance, learning, usage
+  periodType: varchar('period_type', { length: 20 }).notNull(), // daily, weekly, monthly, quarterly
+  periodStart: timestamp('period_start').notNull(),
+  periodEnd: timestamp('period_end').notNull(),
+  metricValue: numeric('metric_value', { precision: 10, scale: 2 }).notNull(),
+  metricUnit: varchar('metric_unit', { length: 50 }), // count, percentage, minutes, hours
+  metadata: jsonb('metadata'), // Additional breakdown data
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// Organization Admin - Credential Management
+export const orgAdminCredentials = pgTable('org_admin_credentials', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  userId: varchar('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  loginId: varchar('login_id', { length: 50 }).notNull().unique(), // Generated login ID
+  credentialType: varchar('credential_type', { length: 20 }).default('password'), // password, mfa, etc.
+  isTemporary: boolean('is_temporary').default(true),
+  mustChangePassword: boolean('must_change_password').default(true),
+  expiresAt: timestamp('expires_at'),
+  lastUsedAt: timestamp('last_used_at'),
+  generatedBy: varchar('generated_by').notNull().references(() => users.id), // Admin who generated
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
 // Enhanced types for API responses
 export type TraineeAssignmentWithDetails = TraineeAssignment & {
   supervisor: User;
@@ -1010,6 +1122,7 @@ export type SupervisorScenarioWithDetails = SupervisorScenario & {
 export const USER_ROLES = {
   'student': 'Student/Trainee',
   'supervisor': 'Supervisor/Preceptor',
+  'org_admin': 'Organization Administrator',
   'admin': 'Administrator'
 } as const;
 
@@ -1077,3 +1190,96 @@ export type EnhancedResourceType = keyof typeof ENHANCED_RESOURCE_TYPES;
 export type AlertSeverity = keyof typeof ALERT_SEVERITIES;
 export type AlertType = keyof typeof ALERT_TYPES;
 export type SyncFrequency = keyof typeof SYNC_FREQUENCIES;
+
+// Organization Admin - Insert Schemas
+export const insertOrganizationSchema = createInsertSchema(organizations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUploadedDocumentSchema = createInsertSchema(uploadedDocuments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserActivityLogSchema = createInsertSchema(userActivityLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUsageStatisticsSchema = createInsertSchema(usageStatistics).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertOrgAdminCredentialSchema = createInsertSchema(orgAdminCredentials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Organization Admin - Types
+export type InsertOrganization = z.infer<typeof insertOrganizationSchema>;
+export type Organization = typeof organizations.$inferSelect;
+export type InsertUploadedDocument = z.infer<typeof insertUploadedDocumentSchema>;
+export type UploadedDocument = typeof uploadedDocuments.$inferSelect;
+export type InsertUserActivityLog = z.infer<typeof insertUserActivityLogSchema>;
+export type UserActivityLog = typeof userActivityLogs.$inferSelect;
+export type InsertUsageStatistics = z.infer<typeof insertUsageStatisticsSchema>;
+export type UsageStatistics = typeof usageStatistics.$inferSelect;
+export type InsertOrgAdminCredential = z.infer<typeof insertOrgAdminCredentialSchema>;
+export type OrgAdminCredential = typeof orgAdminCredentials.$inferSelect;
+
+// Organization Admin - Constants
+export const ORGANIZATION_TYPES = {
+  'hospital': 'Hospital',
+  'community_pharmacy': 'Community Pharmacy',
+  'training_center': 'Training Center',
+  'educational_institution': 'Educational Institution'
+} as const;
+
+export const SUBSCRIPTION_TIERS = {
+  'basic': 'Basic (Up to 50 users)',
+  'professional': 'Professional (Up to 200 users)',
+  'enterprise': 'Enterprise (Unlimited users)'
+} as const;
+
+export const ACCOUNT_STATUSES = {
+  'active': 'Active',
+  'suspended': 'Suspended',
+  'terminated': 'Terminated'
+} as const;
+
+export const ACTIVITY_TYPES = {
+  'login': 'User Login',
+  'logout': 'User Logout',
+  'scenario_start': 'Scenario Started',
+  'scenario_complete': 'Scenario Completed',
+  'document_upload': 'Document Uploaded',
+  'document_view': 'Document Viewed',
+  'document_download': 'Document Downloaded',
+  'user_created': 'User Account Created',
+  'user_suspended': 'User Account Suspended',
+  'user_terminated': 'User Account Terminated',
+  'user_reactivated': 'User Account Reactivated',
+  'assessment_start': 'Assessment Started',
+  'assessment_complete': 'Assessment Completed'
+} as const;
+
+export const ACTIVITY_CATEGORIES = {
+  'authentication': 'Authentication',
+  'learning': 'Learning & Training',
+  'assessment': 'Assessment',
+  'documentation': 'Documentation',
+  'administration': 'Administration',
+  'user_management': 'User Management'
+} as const;
+
+export type OrganizationType = keyof typeof ORGANIZATION_TYPES;
+export type SubscriptionTier = keyof typeof SUBSCRIPTION_TIERS;
+export type AccountStatus = keyof typeof ACCOUNT_STATUSES;
+export type ActivityType = keyof typeof ACTIVITY_TYPES;
+export type ActivityCategory = keyof typeof ACTIVITY_CATEGORIES;
