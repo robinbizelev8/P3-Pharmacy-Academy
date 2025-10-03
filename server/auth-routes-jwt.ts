@@ -13,11 +13,12 @@ const registerSchema = z.object({
   password: z.string().min(8),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  role: z.enum(['student', 'supervisor', 'admin']).default('student'),
+  role: z.enum(['student', 'supervisor', 'org_admin', 'admin']).default('student'),
   institution: z.string().optional(),
   licenseNumber: z.string().optional(),
   specializations: z.array(z.string()).default([]),
   yearsExperience: z.number().optional(),
+  organizationId: z.string().optional(), // Organization ID for multi-tenant
 });
 
 const loginSchema = z.object({
@@ -102,7 +103,7 @@ export function setupJWTAuthRoutes(app: Express) {
           });
         }
 
-        const { email, password, firstName, lastName, role, institution, licenseNumber, specializations, yearsExperience } = validation.data;
+        const { email, password, firstName, lastName, role, institution, licenseNumber, specializations, yearsExperience, organizationId } = validation.data;
 
         // Check if user already exists
         const existingUser = await storage.getUserByEmail(email);
@@ -139,6 +140,8 @@ export function setupJWTAuthRoutes(app: Express) {
           specializations,
           yearsExperience,
           supervisorCertified: role === 'supervisor' ? false : undefined,
+          organizationId: organizationId || undefined,
+          accountStatus: 'active' as const,
         };
 
         const user = await storage.createUser(userData);
@@ -211,6 +214,27 @@ export function setupJWTAuthRoutes(app: Express) {
           });
         }
 
+        // Check account status
+        if (user.accountStatus === 'suspended') {
+          return res.status(403).json({
+            error: 'Account suspended',
+            message: 'Your account has been suspended. Please contact your organization administrator.',
+            accountStatus: 'suspended',
+            suspendedAt: user.suspendedAt,
+            suspensionReason: user.suspensionReason
+          });
+        }
+
+        if (user.accountStatus === 'terminated') {
+          return res.status(403).json({
+            error: 'Account terminated',
+            message: 'Your account has been terminated. Please contact your organization administrator.',
+            accountStatus: 'terminated',
+            terminatedAt: user.terminatedAt,
+            terminationReason: user.terminationReason
+          });
+        }
+
         // Update last login
         await storage.updateUser(user.id, {
           lastLoginAt: new Date()
@@ -226,12 +250,32 @@ export function setupJWTAuthRoutes(app: Express) {
         // Set HTTP-only cookie
         setAuthCookie(res, token);
 
-        console.log(`User logged in: ${user.id} (${user.email})`);
-        
+        // Determine redirect path based on role
+        let redirectPath = '/';
+        switch (user.role) {
+          case 'student':
+            redirectPath = '/student/dashboard';
+            break;
+          case 'supervisor':
+            redirectPath = '/supervisor/dashboard';
+            break;
+          case 'org_admin':
+            redirectPath = '/org-admin/dashboard';
+            break;
+          case 'admin':
+            redirectPath = '/admin/dashboard';
+            break;
+          default:
+            redirectPath = '/student/dashboard';
+        }
+
+        console.log(`User logged in: ${user.id} (${user.email}) - Role: ${user.role} - Redirect: ${redirectPath}`);
+
         res.json({
           success: true,
           message: 'Login successful',
           token: token, // Add token to response body for Replit compatibility
+          redirectPath: redirectPath, // Role-based redirect path
           user: {
             id: user.id,
             email: user.email,
@@ -239,7 +283,9 @@ export function setupJWTAuthRoutes(app: Express) {
             lastName: user.lastName,
             role: user.role,
             emailVerified: user.emailVerified,
-            institution: user.institution
+            institution: user.institution,
+            organizationId: user.organizationId,
+            accountStatus: user.accountStatus
           }
         });
 

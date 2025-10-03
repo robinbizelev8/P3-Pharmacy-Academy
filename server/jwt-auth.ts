@@ -112,9 +112,9 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   if (req.path === '/api/knowledge/initialize' || (req as any).skipAuth) {
     return next();
   }
-  
+
   const user = (req as any).user;
-  
+
   if (!user) {
     res.status(401).json({
       error: 'Authentication required',
@@ -122,7 +122,83 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     });
     return;
   }
-  
+
+  next();
+}
+
+// Account Status Checking Middleware
+export function checkAccountStatus(req: Request, res: Response, next: NextFunction): void {
+  const user = (req as any).user;
+
+  if (!user) {
+    return next(); // Let requireAuth handle this
+  }
+
+  // Check if account is suspended or terminated
+  if (user.accountStatus === 'suspended') {
+    // Clear auth cookie to force logout
+    clearAuthCookie(res);
+    res.status(403).json({
+      error: 'Account suspended',
+      message: 'Your account has been suspended. Please contact your organization administrator.',
+      accountStatus: 'suspended',
+      suspendedAt: user.suspendedAt,
+      suspensionReason: user.suspensionReason
+    });
+    return;
+  }
+
+  if (user.accountStatus === 'terminated') {
+    // Clear auth cookie to force logout
+    clearAuthCookie(res);
+    res.status(403).json({
+      error: 'Account terminated',
+      message: 'Your account has been terminated. Please contact your organization administrator.',
+      accountStatus: 'terminated',
+      terminatedAt: user.terminatedAt,
+      terminationReason: user.terminationReason
+    });
+    return;
+  }
+
+  next();
+}
+
+// Organization Context Validation Middleware
+export function requireSameOrganization(req: Request, res: Response, next: NextFunction): void {
+  const user = (req as any).user;
+
+  if (!user) {
+    return next(); // Let requireAuth handle this
+  }
+
+  // Admin can access any organization
+  if (user.role === 'admin') {
+    return next();
+  }
+
+  // Get target organization ID from params, query, or body
+  const targetOrgId = req.params.organizationId ||
+                      req.params.orgId ||
+                      req.query.organizationId ||
+                      req.body.organizationId;
+
+  // If no target org specified, check will be done at data access layer
+  if (!targetOrgId) {
+    return next();
+  }
+
+  // Org admin and supervisors can only access their own organization
+  if (user.organizationId !== targetOrgId) {
+    console.log(`🔒 Org Context: DENIED - User ${user.email} (org: ${user.organizationId}) attempted to access org ${targetOrgId}`);
+    res.status(403).json({
+      error: 'Access denied',
+      message: 'You do not have permission to access resources from another organization'
+    });
+    return;
+  }
+
+  console.log(`🔒 Org Context: ALLOWED - User ${user.email} accessing own org ${user.organizationId}`);
   next();
 }
 
@@ -158,5 +234,6 @@ export function requireRole(roles: string[]) {
 
 // Helper functions for specific roles
 export const requireStudent = requireRole(['student']);
-export const requireSupervisor = requireRole(['supervisor', 'admin']);
+export const requireSupervisor = requireRole(['supervisor', 'org_admin', 'admin']);
+export const requireOrgAdmin = requireRole(['org_admin', 'admin']);
 export const requireAdmin = requireRole(['admin']);
