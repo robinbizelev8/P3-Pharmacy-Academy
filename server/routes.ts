@@ -5,6 +5,8 @@ import { storage } from "./storage";
 import { sealionService } from "./services/sealion";
 import { openaiService } from "./services/openai";
 import { setupJWTAuthRoutes } from "./auth-routes-jwt";
+import { setupOrgAdminRoutes } from "./org-admin-routes";
+import { setupOrgAdminContentRoutes } from "./org-admin-content-routes";
 import { jwtAuth, requireAuth, requireRole, requireStudent, requireSupervisor, requireAdmin } from "./jwt-auth";
 import { 
   insertPharmacyScenarioSchema, 
@@ -49,7 +51,11 @@ declare global {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup JWT-based authentication routes
   setupJWTAuthRoutes(app);
-  
+
+  // Setup organization admin routes
+  setupOrgAdminRoutes(app);
+  setupOrgAdminContentRoutes(app);
+
   // JWT middleware is already applied in setupJWTAuthRoutes, no need to apply again
 
   // Profile update route
