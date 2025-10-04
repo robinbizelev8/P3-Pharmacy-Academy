@@ -24,6 +24,13 @@ import AdaptiveAssessmentPage from "@/pages/adaptive-assessment";
 import AssessmentsPage from "@/pages/assessments";
 import FeedbackPage from "@/pages/feedback";
 
+// Org Admin Pages
+import OrgAdminDashboard from "@/pages/org-admin/dashboard";
+import OrgAdminUsers from "@/pages/org-admin/users";
+import OrgAdminDocuments from "@/pages/org-admin/documents";
+import OrgAdminScenarios from "@/pages/org-admin/scenarios";
+import OrgAdminAnalytics from "@/pages/org-admin/analytics";
+
 import { useAuth } from "@/hooks/use-auth";
 import { PharmacyNavigation } from "@/components/navigation/pharmacy-navigation";
 
@@ -54,6 +61,12 @@ function Router() {
           <Route path="/perform/create-assessment" component={AssessmentCreatorPage} />
           <Route path="/perform/adaptive-assessment/:sessionId" component={AdaptiveAssessmentPage} />
           <Route path="/admin/knowledge" component={AdminKnowledgePage} />
+          <Route path="/org-admin/dashboard" component={OrgAdminDashboard} />
+          <Route path="/org-admin/users" component={OrgAdminUsers} />
+          <Route path="/org-admin/documents" component={OrgAdminDocuments} />
+          <Route path="/org-admin/scenarios" component={OrgAdminScenarios} />
+          <Route path="/org-admin/analytics" component={OrgAdminAnalytics} />
+          <Route path="/org-admin/knowledge" component={AdminKnowledgePage} />
           <Route component={NotFound} />
         </Switch>
       </main>
