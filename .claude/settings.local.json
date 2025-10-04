@@ -24,7 +24,9 @@
       "WebFetch(domain:localhost)",
       "Bash(npm test:*)",
       "Bash(PORT=5002 npm run dev)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

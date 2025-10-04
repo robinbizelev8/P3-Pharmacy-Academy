@@ -58,7 +58,7 @@ export const organizations = pgTable("organizations", {
 });
 
 // Enhanced user storage table for multi-role authentication
-export const users = pgTable("users", {
+export const users: any = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
@@ -70,18 +70,18 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").default(false),
 
   // Organization management
-  organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id").references((): any => organizations.id, { onDelete: "cascade" }),
 
   // Account status management
   accountStatus: varchar("account_status", { length: 20 }).default("active"), // active, suspended, terminated
   suspendedAt: timestamp("suspended_at"),
-  suspendedBy: varchar("suspended_by").references(() => users.id),
+  suspendedBy: varchar("suspended_by").references((): any => users.id),
   suspensionReason: text("suspension_reason"),
   terminatedAt: timestamp("terminated_at"),
-  terminatedBy: varchar("terminated_by").references(() => users.id),
+  terminatedBy: varchar("terminated_by").references((): any => users.id),
   terminationReason: text("termination_reason"),
   reactivatedAt: timestamp("reactivated_at"),
-  reactivatedBy: varchar("reactivated_by").references(() => users.id),
+  reactivatedBy: varchar("reactivated_by").references((): any => users.id),
 
   // Permissions for org admins
   canSuspendUsers: boolean("can_suspend_users").default(false),

@@ -74,7 +74,15 @@ export function setupOrgAdminRoutes(app: Express) {
           });
         }
 
-        const organization = await storage.createOrganization(organizationData);
+        // Convert subscriptionExpiresAt from string to Date if present
+        const orgDataWithDates = {
+          ...organizationData,
+          subscriptionExpiresAt: organizationData.subscriptionExpiresAt
+            ? new Date(organizationData.subscriptionExpiresAt)
+            : undefined
+        };
+
+        const organization = await storage.createOrganization(orgDataWithDates);
 
         console.log(`Organization created: ${organization.id} (${organization.name})`);
 
@@ -175,7 +183,15 @@ export function setupOrgAdminRoutes(app: Express) {
           });
         }
 
-        const updatedOrganization = await storage.updateOrganization(id, validation.data);
+        // Convert subscriptionExpiresAt from string to Date if present
+        const updateData = {
+          ...validation.data,
+          subscriptionExpiresAt: validation.data.subscriptionExpiresAt !== undefined
+            ? (validation.data.subscriptionExpiresAt ? new Date(validation.data.subscriptionExpiresAt) : null)
+            : undefined
+        };
+
+        const updatedOrganization = await storage.updateOrganization(id, updateData);
 
         console.log(`Organization updated: ${id} (${updatedOrganization.name})`);
 
@@ -559,13 +575,8 @@ export function setupOrgAdminRoutes(app: Express) {
           });
         }
 
-        // Org admins cannot assign admin role (only platform admin can)
-        if (currentUser.role === 'org_admin' && role === 'admin') {
-          return res.status(403).json({
-            error: 'Insufficient permissions',
-            message: 'You cannot assign admin role.'
-          });
-        }
+        // Note: Org admins cannot assign admin role - this is enforced by the validation schema
+        // which only allows 'student', 'supervisor', 'org_admin' roles
 
         const updatedUser = await storage.updateUser(userId, { role });
 

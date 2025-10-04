@@ -19,6 +19,11 @@ import {
   guidelineUpdates,
   singaporeFormulary,
   clinicalProtocols,
+  organizations,
+  uploadedDocuments,
+  userActivityLogs,
+  usageStatistics,
+  orgAdminCredentials,
   type User,
   type UpsertUser,
   type InsertPharmacyScenario,
@@ -56,6 +61,16 @@ import {
   type TraineeAssignmentWithDetails,
   type SupervisorFeedbackWithDetails,
   type SupervisorScenarioWithDetails,
+  type Organization,
+  type InsertOrganization,
+  type UploadedDocument,
+  type InsertUploadedDocument,
+  type UserActivityLog,
+  type InsertUserActivityLog,
+  type UsageStatistics,
+  type InsertUsageStatistics,
+  type OrgAdminCredential,
+  type InsertOrgAdminCredential,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, count, avg, sql, ne, gte, isNotNull, inArray } from "drizzle-orm";
@@ -202,6 +217,46 @@ export interface IStorage {
   getUserSessionsByModule(userId: string, module: string): Promise<PharmacySessionWithScenario[]>;
   getStudentProgressSummary(userId: string): Promise<any>;
   getDetailedStudentProgress(userId: string, module?: string): Promise<any>;
+
+  // Organization management operations
+  getOrganizationByCode(code: string): Promise<Organization | undefined>;
+  createOrganization(data: InsertOrganization): Promise<Organization>;
+  getAllOrganizations(filters?: { isActive?: boolean; search?: string }): Promise<Organization[]>;
+  getOrganizationById(id: string): Promise<Organization | undefined>;
+  updateOrganization(id: string, data: Partial<InsertOrganization>): Promise<Organization>;
+  getOrganizationStats(id: string): Promise<any>;
+
+  // User management operations (org admin)
+  getUsersByOrganization(organizationId: string, filters?: { role?: string; status?: string; search?: string }): Promise<User[]>;
+  suspendUser(userId: string, suspendedBy: string, reason: string): Promise<User>;
+  terminateUser(userId: string, terminatedBy: string, reason: string): Promise<User>;
+  reactivateUser(userId: string, reactivatedBy: string): Promise<User>;
+
+  // Document management operations
+  createDocument(data: InsertUploadedDocument): Promise<UploadedDocument>;
+  getDocumentsByOrganization(organizationId: string): Promise<UploadedDocument[]>;
+  getDocumentById(documentId: string): Promise<UploadedDocument | undefined>;
+  deleteDocument(documentId: string): Promise<void>;
+
+  // Scenario management operations (unified for all modules)
+  createScenario(data: any): Promise<any>;
+  getScenariosByOrganization(organizationId: string, module?: string): Promise<any[]>;
+  getScenarioById(scenarioId: string): Promise<any>;
+  updateScenario(scenarioId: string, data: any): Promise<any>;
+  deleteScenario(scenarioId: string): Promise<void>;
+
+  // Knowledge base operations
+  createKnowledgeSource(data: any): Promise<any>;
+  getKnowledgeSourcesByOrganization(organizationId: string): Promise<any[]>;
+
+  // Analytics operations
+  getOrganizationAnalytics(organizationId: string, dateRange?: { startDate?: Date; endDate?: Date }): Promise<any>;
+  getActivityLogs(organizationId: string, filters?: { userId?: string; activityType?: string; startDate?: Date; endDate?: Date }): Promise<UserActivityLog[]>;
+  getUsageStatistics(organizationId: string, filters?: { periodType?: string; startDate?: Date; endDate?: Date }): Promise<UsageStatistics[]>;
+  exportAnalytics(organizationId: string, options: { format: string; startDate?: Date; endDate?: Date }): Promise<any>;
+
+  // Activity logging operations
+  logActivity(data: InsertUserActivityLog): Promise<UserActivityLog>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -222,7 +277,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
+    const result: any = await db
       .insert(users)
       .values({
         ...userData,
@@ -230,7 +285,7 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .returning();
-    return user;
+    return result[0] as User;
   }
 
   async updateUser(id: string, userData: Partial<UpsertUser>): Promise<User> {
@@ -246,7 +301,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
+    const result: any = await db
       .insert(users)
       .values(userData)
       .onConflictDoUpdate({
@@ -257,7 +312,7 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
-    return user;
+    return result[0] as User;
   }
 
   // Pharmacy scenario operations
@@ -265,6 +320,7 @@ export class DatabaseStorage implements IStorage {
     const baseQuery = db
       .select({
         id: pharmacyScenarios.id,
+        organizationId: pharmacyScenarios.organizationId,
         title: pharmacyScenarios.title,
         module: pharmacyScenarios.module,
         therapeuticArea: pharmacyScenarios.therapeuticArea,
@@ -3112,6 +3168,7 @@ export class DatabaseStorage implements IStorage {
         },
         scenario: {
           id: scenario.scenarioId,
+          organizationId: null,
           title: scenario.scenarioTitle,
           module: scenario.scenarioModule,
           therapeuticArea: scenario.scenarioTherapeuticArea,
@@ -3515,6 +3572,547 @@ export class DatabaseStorage implements IStorage {
     if (avgCommunication < 65) improvements.push("Patient communication skills development needed");
 
     return improvements;
+  }
+
+  // ============================================
+  // ORGANIZATION MANAGEMENT OPERATIONS
+  // ============================================
+
+  async getOrganizationByCode(code: string): Promise<Organization | undefined> {
+    const [organization] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.code, code));
+    return organization;
+  }
+
+  async createOrganization(data: InsertOrganization): Promise<Organization> {
+    const [organization] = await db
+      .insert(organizations)
+      .values({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return organization;
+  }
+
+  async getAllOrganizations(filters?: { isActive?: boolean; search?: string }): Promise<Organization[]> {
+    let query = db.select().from(organizations);
+
+    const conditions = [];
+    if (filters?.isActive !== undefined) {
+      conditions.push(eq(organizations.isActive, filters.isActive));
+    }
+    if (filters?.search) {
+      conditions.push(
+        sql`${organizations.name} ILIKE ${`%${filters.search}%`} OR ${organizations.code} ILIKE ${`%${filters.search}%`}`
+      );
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    const orgs = await query.orderBy(desc(organizations.createdAt));
+    return orgs;
+  }
+
+  async getOrganizationById(id: string): Promise<Organization | undefined> {
+    const [organization] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, id));
+    return organization;
+  }
+
+  async updateOrganization(id: string, data: Partial<InsertOrganization>): Promise<Organization> {
+    const [organization] = await db
+      .update(organizations)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(organizations.id, id))
+      .returning();
+    return organization;
+  }
+
+  async getOrganizationStats(id: string): Promise<any> {
+    // Get organization details
+    const organization = await this.getOrganizationById(id);
+    if (!organization) {
+      throw new Error('Organization not found');
+    }
+
+    // Get user counts
+    const userCounts = await db
+      .select({
+        total: count(),
+        role: users.role,
+        status: users.accountStatus,
+      })
+      .from(users)
+      .where(eq(users.organizationId, id))
+      .groupBy(users.role, users.accountStatus);
+
+    // Calculate totals
+    const totalUsers = userCounts.reduce((sum, row) => sum + Number(row.total), 0);
+    const activeUsers = userCounts
+      .filter(row => row.status === 'active')
+      .reduce((sum, row) => sum + Number(row.total), 0);
+    const suspendedUsers = userCounts
+      .filter(row => row.status === 'suspended')
+      .reduce((sum, row) => sum + Number(row.total), 0);
+    const terminatedUsers = userCounts
+      .filter(row => row.status === 'terminated')
+      .reduce((sum, row) => sum + Number(row.total), 0);
+
+    // Get session counts (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const sessionStats = await db
+      .select({
+        totalSessions: count(),
+      })
+      .from(pharmacySessions)
+      .innerJoin(users, eq(pharmacySessions.userId, users.id))
+      .where(
+        and(
+          eq(users.organizationId, id),
+          gte(pharmacySessions.createdAt, thirtyDaysAgo)
+        )
+      );
+
+    const totalSessions = Number(sessionStats[0]?.totalSessions || 0);
+
+    return {
+      organization: {
+        id: organization.id,
+        name: organization.name,
+        code: organization.code,
+      },
+      users: {
+        total: totalUsers,
+        active: activeUsers,
+        suspended: suspendedUsers,
+        terminated: terminatedUsers,
+        byRole: userCounts.reduce((acc, row) => {
+          if (!acc[row.role]) acc[row.role] = 0;
+          acc[row.role] += Number(row.total);
+          return acc;
+        }, {} as Record<string, number>),
+      },
+      sessions: {
+        last30Days: totalSessions,
+      },
+    };
+  }
+
+  // ============================================
+  // USER MANAGEMENT OPERATIONS (ORG ADMIN)
+  // ============================================
+
+  async getUsersByOrganization(
+    organizationId: string,
+    filters?: { role?: string; status?: string; search?: string }
+  ): Promise<User[]> {
+    let query = db.select().from(users).where(eq(users.organizationId, organizationId));
+
+    const conditions = [eq(users.organizationId, organizationId)];
+
+    if (filters?.role) {
+      conditions.push(eq(users.role, filters.role));
+    }
+    if (filters?.status) {
+      conditions.push(eq(users.accountStatus, filters.status));
+    }
+    if (filters?.search) {
+      conditions.push(
+        sql`${users.firstName} ILIKE ${`%${filters.search}%`} OR ${users.lastName} ILIKE ${`%${filters.search}%`} OR ${users.email} ILIKE ${`%${filters.search}%`}`
+      );
+    }
+
+    const userList = await db
+      .select()
+      .from(users)
+      .where(and(...conditions))
+      .orderBy(desc(users.createdAt));
+
+    return userList;
+  }
+
+  async suspendUser(userId: string, suspendedBy: string, reason: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        accountStatus: 'suspended',
+        suspendedAt: new Date(),
+        suspendedBy,
+        suspensionReason: reason,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async terminateUser(userId: string, terminatedBy: string, reason: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        accountStatus: 'terminated',
+        terminatedAt: new Date(),
+        terminatedBy,
+        terminationReason: reason,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async reactivateUser(userId: string, reactivatedBy: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        accountStatus: 'active',
+        suspendedAt: null,
+        suspendedBy: null,
+        suspensionReason: null,
+        terminatedAt: null,
+        terminatedBy: null,
+        terminationReason: null,
+        reactivatedAt: new Date(),
+        reactivatedBy,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  // ============================================
+  // DOCUMENT MANAGEMENT OPERATIONS
+  // ============================================
+
+  async createDocument(data: InsertUploadedDocument): Promise<UploadedDocument> {
+    const [document] = await db
+      .insert(uploadedDocuments)
+      .values({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return document;
+  }
+
+  async getDocumentsByOrganization(organizationId: string): Promise<UploadedDocument[]> {
+    const documents = await db
+      .select()
+      .from(uploadedDocuments)
+      .where(eq(uploadedDocuments.organizationId, organizationId))
+      .orderBy(desc(uploadedDocuments.createdAt));
+    return documents;
+  }
+
+  async getDocumentById(documentId: string): Promise<UploadedDocument | undefined> {
+    const [document] = await db
+      .select()
+      .from(uploadedDocuments)
+      .where(eq(uploadedDocuments.id, documentId));
+    return document;
+  }
+
+  async deleteDocument(documentId: string): Promise<void> {
+    await db
+      .delete(uploadedDocuments)
+      .where(eq(uploadedDocuments.id, documentId));
+  }
+
+  // ============================================
+  // SCENARIO MANAGEMENT OPERATIONS
+  // ============================================
+
+  async createScenario(data: any): Promise<any> {
+    // This is a unified method for creating scenarios across all modules
+    // For now, we'll use the pharmacy scenarios table as it supports all modules
+    const [scenario] = await db
+      .insert(pharmacyScenarios)
+      .values({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return scenario;
+  }
+
+  async getScenariosByOrganization(organizationId: string, module?: string): Promise<any[]> {
+    const conditions = [eq(pharmacyScenarios.organizationId, organizationId)];
+
+    if (module) {
+      conditions.push(eq(pharmacyScenarios.module, module));
+    }
+
+    const scenarios = await db
+      .select()
+      .from(pharmacyScenarios)
+      .where(and(...conditions))
+      .orderBy(desc(pharmacyScenarios.createdAt));
+
+    return scenarios;
+  }
+
+  async getScenarioById(scenarioId: string): Promise<any> {
+    const [scenario] = await db
+      .select()
+      .from(pharmacyScenarios)
+      .where(eq(pharmacyScenarios.id, scenarioId));
+    return scenario;
+  }
+
+  async updateScenario(scenarioId: string, data: any): Promise<any> {
+    const [scenario] = await db
+      .update(pharmacyScenarios)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(pharmacyScenarios.id, scenarioId))
+      .returning();
+    return scenario;
+  }
+
+  async deleteScenario(scenarioId: string): Promise<void> {
+    await db
+      .delete(pharmacyScenarios)
+      .where(eq(pharmacyScenarios.id, scenarioId));
+  }
+
+  // ============================================
+  // KNOWLEDGE BASE OPERATIONS
+  // ============================================
+
+  async createKnowledgeSource(data: any): Promise<any> {
+    const [source] = await db
+      .insert(knowledgeSources)
+      .values({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return source;
+  }
+
+  async getKnowledgeSourcesByOrganization(organizationId: string): Promise<any[]> {
+    const sources = await db
+      .select()
+      .from(knowledgeSources)
+      .where(eq(knowledgeSources.organizationId, organizationId))
+      .orderBy(desc(knowledgeSources.createdAt));
+    return sources;
+  }
+
+  // ============================================
+  // ANALYTICS OPERATIONS
+  // ============================================
+
+  async getOrganizationAnalytics(
+    organizationId: string,
+    dateRange?: { startDate?: Date; endDate?: Date }
+  ): Promise<any> {
+    const startDate = dateRange?.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default: 30 days ago
+    const endDate = dateRange?.endDate || new Date();
+
+    // Get user statistics
+    const userStats = await db
+      .select({
+        total: count(),
+        role: users.role,
+        status: users.accountStatus,
+      })
+      .from(users)
+      .where(eq(users.organizationId, organizationId))
+      .groupBy(users.role, users.accountStatus);
+
+    const totalUsers = userStats.reduce((sum, row) => sum + Number(row.total), 0);
+    const activeUsers = userStats
+      .filter(row => row.status === 'active')
+      .reduce((sum, row) => sum + Number(row.total), 0);
+
+    // Get session statistics
+    const sessionStats = await db
+      .select({
+        totalSessions: count(),
+        avgScore: avg(pharmacySessions.overallScore),
+      })
+      .from(pharmacySessions)
+      .innerJoin(users, eq(pharmacySessions.userId, users.id))
+      .where(
+        and(
+          eq(users.organizationId, organizationId),
+          gte(pharmacySessions.createdAt, startDate),
+          sql`${pharmacySessions.createdAt} <= ${endDate}`
+        )
+      );
+
+    const totalSessions = Number(sessionStats[0]?.totalSessions || 0);
+    const averageScore = Number(sessionStats[0]?.avgScore || 0);
+
+    // Get module completion rates
+    const moduleStats = await db
+      .select({
+        module: pharmacySessions.module,
+        completed: count(),
+      })
+      .from(pharmacySessions)
+      .innerJoin(users, eq(pharmacySessions.userId, users.id))
+      .where(
+        and(
+          eq(users.organizationId, organizationId),
+          eq(pharmacySessions.status, 'completed'),
+          gte(pharmacySessions.createdAt, startDate),
+          sql`${pharmacySessions.createdAt} <= ${endDate}`
+        )
+      )
+      .groupBy(pharmacySessions.module);
+
+    return {
+      period: {
+        startDate,
+        endDate,
+      },
+      users: {
+        total: totalUsers,
+        active: activeUsers,
+        byRole: userStats.reduce((acc, row) => {
+          if (!acc[row.role]) acc[row.role] = 0;
+          acc[row.role] += Number(row.total);
+          return acc;
+        }, {} as Record<string, number>),
+      },
+      sessions: {
+        total: totalSessions,
+        averageScore: Math.round(averageScore * 100) / 100,
+      },
+      modules: moduleStats.reduce((acc, row) => {
+        acc[row.module] = Number(row.completed);
+        return acc;
+      }, {} as Record<string, number>),
+    };
+  }
+
+  async getActivityLogs(
+    organizationId: string,
+    filters?: {
+      userId?: string;
+      activityType?: string;
+      startDate?: Date;
+      endDate?: Date;
+    }
+  ): Promise<UserActivityLog[]> {
+    const conditions = [eq(userActivityLogs.organizationId, organizationId)];
+
+    if (filters?.userId) {
+      conditions.push(eq(userActivityLogs.userId, filters.userId));
+    }
+    if (filters?.activityType) {
+      conditions.push(eq(userActivityLogs.activityType, filters.activityType));
+    }
+    if (filters?.startDate) {
+      conditions.push(gte(userActivityLogs.createdAt, filters.startDate));
+    }
+    if (filters?.endDate) {
+      conditions.push(sql`${userActivityLogs.createdAt} <= ${filters.endDate}`);
+    }
+
+    const logs = await db
+      .select()
+      .from(userActivityLogs)
+      .where(and(...conditions))
+      .orderBy(desc(userActivityLogs.createdAt))
+      .limit(1000); // Limit to prevent huge result sets
+
+    return logs;
+  }
+
+  async getUsageStatistics(
+    organizationId: string,
+    filters?: {
+      periodType?: string;
+      startDate?: Date;
+      endDate?: Date;
+    }
+  ): Promise<UsageStatistics[]> {
+    const conditions = [eq(usageStatistics.organizationId, organizationId)];
+
+    if (filters?.periodType) {
+      conditions.push(eq(usageStatistics.periodType, filters.periodType));
+    }
+    if (filters?.startDate) {
+      conditions.push(gte(usageStatistics.periodStart, filters.startDate));
+    }
+    if (filters?.endDate) {
+      conditions.push(sql`${usageStatistics.periodEnd} <= ${filters.endDate}`);
+    }
+
+    const stats = await db
+      .select()
+      .from(usageStatistics)
+      .where(and(...conditions))
+      .orderBy(desc(usageStatistics.periodStart));
+
+    return stats;
+  }
+
+  async exportAnalytics(
+    organizationId: string,
+    options: { format: string; startDate?: Date; endDate?: Date }
+  ): Promise<any> {
+    // Get comprehensive analytics for export
+    const analytics = await this.getOrganizationAnalytics(organizationId, {
+      startDate: options.startDate,
+      endDate: options.endDate,
+    });
+
+    const activityLogs = await this.getActivityLogs(organizationId, {
+      startDate: options.startDate,
+      endDate: options.endDate,
+    });
+
+    const usageStats = await this.getUsageStatistics(organizationId, {
+      startDate: options.startDate,
+      endDate: options.endDate,
+    });
+
+    // Return raw data - formatting will be handled by the route/service layer
+    return {
+      format: options.format,
+      analytics,
+      activityLogs,
+      usageStats,
+      exportedAt: new Date(),
+    };
+  }
+
+  // ============================================
+  // ACTIVITY LOGGING OPERATIONS
+  // ============================================
+
+  async logActivity(data: InsertUserActivityLog): Promise<UserActivityLog> {
+    const [log] = await db
+      .insert(userActivityLogs)
+      .values({
+        ...data,
+        createdAt: new Date(),
+      })
+      .returning();
+    return log;
   }
 }
 

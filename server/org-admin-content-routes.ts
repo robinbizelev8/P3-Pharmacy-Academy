@@ -570,8 +570,8 @@ export function setupOrgAdminContentRoutes(app: Express) {
         const { startDate, endDate, userId, activityType } = req.query;
 
         const activityLogs = await storage.getActivityLogs(organizationId, {
-          startDate: startDate as string,
-          endDate: endDate as string,
+          startDate: startDate ? new Date(startDate as string) : undefined,
+          endDate: endDate ? new Date(endDate as string) : undefined,
           userId: userId as string,
           activityType: activityType as string,
         });
@@ -615,8 +615,8 @@ export function setupOrgAdminContentRoutes(app: Express) {
 
         const usageStats = await storage.getUsageStatistics(organizationId, {
           periodType: periodType as string,
-          startDate: startDate as string,
-          endDate: endDate as string,
+          startDate: startDate ? new Date(startDate as string) : undefined,
+          endDate: endDate ? new Date(endDate as string) : undefined,
         });
 
         res.json({
@@ -658,9 +658,8 @@ export function setupOrgAdminContentRoutes(app: Express) {
 
         const exportData = await storage.exportAnalytics(organizationId, {
           format: format as string || 'csv',
-          reportType: reportType as string,
-          startDate: startDate as string,
-          endDate: endDate as string,
+          startDate: startDate ? new Date(startDate as string) : undefined,
+          endDate: endDate ? new Date(endDate as string) : undefined,
         });
 
         // Set appropriate headers for download
